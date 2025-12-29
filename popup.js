@@ -492,8 +492,10 @@ function setupSortButtons() {
       btn.classList.add('active');
 
       const sortType = btn.getAttribute('data-sort');
-      currentSort = sortType;
-      displayWordDex(sortType);
+      if (sortType) {
+        currentSort = sortType;
+        displayWordDex(sortType);
+      }
     });
   });
 }
@@ -558,11 +560,185 @@ function setupDarkMode() {
   });
 }
 
+let quizMode = false;
+let quizData = {
+  questions: [],
+  currentIndex: 0,
+  score: 0,
+  total: 5
+};
+
+function setupQuizButton() {
+  const quizBtn = document.getElementById('quizBtn');
+  if (quizBtn) {
+    quizBtn.addEventListener('click', () => {
+      toggleQuizMode();
+    });
+  }
+}
+
+function toggleQuizMode() {
+  quizMode = !quizMode;
+  const mainContent = document.getElementById('mainContent');
+  const quizContainer = document.getElementById('quizContainer');
+  const searchBar = document.getElementById('searchBar');
+  const controls = document.querySelector('.controls');
+
+  if (quizMode) {
+    // Enter quiz mode - hide everything except quiz
+    mainContent.style.display = 'none';
+    searchBar.style.display = 'none';
+    controls.style.display = 'none';
+    quizContainer.style.display = 'block';
+
+    startQuiz();
+  } else {
+    // Exit quiz mode - show everything
+    mainContent.style.display = 'block';
+    searchBar.style.display = 'block';
+    controls.style.display = 'flex';
+    quizContainer.style.display = 'none';
+  }
+}
+
+function startQuiz() {
+  chrome.storage.local.get(['wordDex'], (data) => {
+    const wordDex = data.wordDex || {};
+    const words = Object.entries(wordDex);
+
+    if (words.length < 3) {
+      const quizContainer = document.getElementById('quizContainer');
+      quizContainer.innerHTML = '<p>You need at least 3 words in your collection to start a quiz. Catch more words!</p>';
+
+      const backBtn = document.createElement('button');
+      backBtn.className = 'quiz-btn';
+      backBtn.textContent = 'Back';
+      backBtn.addEventListener('click', toggleQuizMode);
+      quizContainer.appendChild(backBtn);
+      return;
+    }
+
+    // Select random words
+    const shuffled = words.sort(() => 0.5 - Math.random());
+    quizData.questions = shuffled.slice(0, Math.min(5, words.length));
+    quizData.currentIndex = 0;
+    quizData.score = 0;
+    quizData.total = quizData.questions.length;
+
+    showQuestion();
+  });
+}
+
+function showQuestion() {
+  const quizContainer = document.getElementById('quizContainer');
+  if (quizData.currentIndex >= quizData.questions.length) {
+    showResults();
+    return;
+  }
+
+  const [word, info] = quizData.questions[quizData.currentIndex];
+  const definition = info.origin || 'No definition available';
+
+  quizContainer.innerHTML = `
+    <div class="quiz-score">Question ${quizData.currentIndex + 1} of ${quizData.total}</div>
+    <div class="quiz-question">
+      <strong>Definition:</strong><br>
+      ${escapeHtml(definition)}
+    </div>
+    <div class="quiz-question">
+      <strong>Fill in the blank:</strong><br>
+      The word is: <input type="text" class="quiz-input" id="quizAnswer" placeholder="Type your answer...">
+    </div>
+    <button class="quiz-btn" id="submitAnswer">Submit</button>
+    <button class="quiz-btn" id="skipQuestion">Skip</button>
+  `;
+
+  const input = document.getElementById('quizAnswer');
+  const submitBtn = document.getElementById('submitAnswer');
+  const skipBtn = document.getElementById('skipQuestion');
+
+  input.focus();
+
+  input.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      checkAnswer(word);
+    }
+  });
+
+  submitBtn.addEventListener('click', () => checkAnswer(word));
+  skipBtn.addEventListener('click', () => {
+    quizData.currentIndex++;
+    showQuestion();
+  });
+}
+
+function checkAnswer(correctWord) {
+  const input = document.getElementById('quizAnswer');
+  const answer = input.value.trim().toLowerCase();
+  const isCorrect = answer === correctWord;
+
+  if (isCorrect) {
+    quizData.score++;
+  }
+
+  const quizContainer = document.getElementById('quizContainer');
+  const resultDiv = document.createElement('div');
+  resultDiv.className = `quiz-result ${isCorrect ? 'correct' : 'incorrect'}`;
+  resultDiv.innerHTML = isCorrect
+    ? `Correct! The word is "${correctWord}".`
+    : `Incorrect. The correct answer is "${correctWord}".`;
+
+  quizContainer.insertBefore(resultDiv, quizContainer.firstChild);
+
+  setTimeout(() => {
+    quizData.currentIndex++;
+    showQuestion();
+  }, 2000);
+}
+
+function showResults() {
+  const quizContainer = document.getElementById('quizContainer');
+  const percentage = Math.round((quizData.score / quizData.total) * 100);
+
+  let message = '';
+  if (percentage === 100) {
+    message = 'Perfect! You know your words!';
+  } else if (percentage >= 80) {
+    message = 'Great job! You know most of your words!';
+  } else if (percentage >= 60) {
+    message = 'Good effort! Keep learning!';
+  } else {
+    message = 'Keep practicing! Review your words more often.';
+  }
+
+  quizContainer.innerHTML = `
+    <div class="quiz-score">Quiz Complete!</div>
+    <div class="quiz-result ${percentage >= 60 ? 'correct' : 'incorrect'}">
+      <strong>Your Score: ${quizData.score} / ${quizData.total} (${percentage}%)</strong><br><br>
+      ${message}
+    </div>
+  `;
+
+  const tryAgainBtn = document.createElement('button');
+  tryAgainBtn.className = 'quiz-btn';
+  tryAgainBtn.textContent = 'Try Again';
+  tryAgainBtn.addEventListener('click', startQuiz);
+
+  const backBtn = document.createElement('button');
+  backBtn.className = 'quiz-btn';
+  backBtn.textContent = 'Back to WordDex';
+  backBtn.addEventListener('click', toggleQuizMode);
+
+  quizContainer.appendChild(tryAgainBtn);
+  quizContainer.appendChild(backBtn);
+}
+
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
     setupDarkMode();
     setupSortButtons();
     setupSearchBar();
+    setupQuizButton();
     displayWordDex(currentSort);
     initKofi();
   });
@@ -570,6 +746,7 @@ if (document.readyState === 'loading') {
   setupDarkMode();
   setupSortButtons();
   setupSearchBar();
+  setupQuizButton();
   displayWordDex(currentSort);
   initKofi();
 }

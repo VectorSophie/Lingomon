@@ -297,6 +297,96 @@
       height: 100%;
       transition: width 0.3s ease;
     }
+    #quizContainer {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 20px;
+      border: 2px solid #e0e0e0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    body.dark-mode #quizContainer {
+      background: #2a2a2a;
+      border-color: #404040;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .quiz-question {
+      font-size: 14px;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+    .quiz-input {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #e0e0e0;
+      border-radius: 6px;
+      font-size: 14px;
+      margin-bottom: 12px;
+      box-sizing: border-box;
+    }
+    body.dark-mode .quiz-input {
+      background: #1a1a1a;
+      border-color: #404040;
+      color: #e0e0e0;
+    }
+    .quiz-btn {
+      padding: 10px 20px;
+      background: #000000;
+      color: #ffffff;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-right: 8px;
+    }
+    .quiz-btn:hover {
+      background: #333333;
+    }
+    body.dark-mode .quiz-btn {
+      background: #e0e0e0;
+      color: #1a1a1a;
+    }
+    .quiz-score {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+    .quiz-result {
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      font-size: 13px;
+    }
+    .quiz-result.correct {
+      background: #d4edda;
+      border: 2px solid #a1ff96;
+      color: #155724;
+    }
+    .quiz-result.incorrect {
+      background: #f8d7da;
+      border: 2px solid #ff6969;
+      color: #721c24;
+    }
+    .quiz-start-btn {
+      width: 100%;
+      padding: 14px 20px;
+      margin-top: 16px;
+      background: linear-gradient(135deg, #96c7ff, #b996ff);
+      color: #ffffff;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .quiz-start-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+    }
+    body.dark-mode .quiz-start-btn {
+      background: linear-gradient(135deg, #5a8fd4, #8a6bc4);
+    }
   </style>
 </head>
 <body>
@@ -310,12 +400,16 @@
     <button class="sort-btn" data-sort="rarity">Rarity</button>
   </div>
   <input type="text" id="searchBar" placeholder="Search words...">
-  <div id="dex"></div>
-  <hr>
-  <div id="badges"></div>
-  <hr>
-  <div id="stats"></div>
-  <hr>
+  <div id="quizContainer" style="display: none;"></div>
+  <div id="mainContent">
+    <div id="dex"></div>
+    <hr>
+    <div id="badges"></div>
+    <hr>
+    <div id="stats"></div>
+    <button class="quiz-start-btn" id="quizBtn">Start Quiz</button>
+    <hr>
+  </div>
   <div id="kofi-container"></div>
   <script src="kofi-widget.js"></script>
   <script src="popup.js"></script>
