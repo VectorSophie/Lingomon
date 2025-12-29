@@ -182,8 +182,20 @@ if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
     setupSortButtons();
     displayWordDex(currentSort);
+    initKofi();
   });
 } else {
   setupSortButtons();
   displayWordDex(currentSort);
+  initKofi();
+}
+
+function initKofi() {
+  if (typeof kofiwidget2 !== 'undefined') {
+    kofiwidget2.init('Support me on Ko-fi', '#72a4f2', 'E1E21LP8M8');
+    const container = document.getElementById('kofi-container');
+    if (container) {
+      container.innerHTML = kofiwidget2.getHTML();
+    }
+  }
 }
