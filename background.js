@@ -27,7 +27,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   // Check if catching from extension pages (Meta badge)
   const isMetaCatch = tab.url && (tab.url.startsWith('chrome-extension://') || tab.url.startsWith('moz-extension://'));
 
-  const word = info.selectionText.trim().toLowerCase();
+  const word = info.selectionText.trim().toLowerCase().replace(/[-'']/g, '');
   if (!word.match(/^[a-zA-Z]{3,}$/)) {
     let errorMessage = "Invalid word format.";
     if (word.length < 3) {

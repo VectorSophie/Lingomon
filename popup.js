@@ -330,15 +330,18 @@ function displayCharts(wordDex, achievements) {
     pieSegments.style.overflow = 'hidden';
     pieSegments.style.marginBottom = '8px';
 
-    Object.entries(achievements).forEach(([rarity, count]) => {
-      if (count > 0) {
-        const percent = (count / total) * 100;
-        const segment = document.createElement('div');
-        segment.style.width = `${percent}%`;
-        segment.style.background = rarityColors[rarity] || '#cccccc';
-        segment.title = `${rarity}: ${count} (${percent.toFixed(1)}%)`;
-        pieSegments.appendChild(segment);
-      }
+    // Sort by count (percentage) in descending order
+    const sortedAchievements = Object.entries(achievements)
+      .filter(([_, count]) => count > 0)
+      .sort((a, b) => b[1] - a[1]);
+
+    sortedAchievements.forEach(([rarity, count]) => {
+      const percent = (count / total) * 100;
+      const segment = document.createElement('div');
+      segment.style.width = `${percent}%`;
+      segment.style.background = rarityColors[rarity] || '#cccccc';
+      segment.title = `${rarity}: ${count} (${percent.toFixed(1)}%)`;
+      pieSegments.appendChild(segment);
     });
 
     pieDiv.appendChild(pieSegments);
@@ -350,27 +353,25 @@ function displayCharts(wordDex, achievements) {
     legend.style.gap = '8px';
     legend.style.fontSize = '11px';
 
-    Object.entries(achievements).forEach(([rarity, count]) => {
-      if (count > 0) {
-        const item = document.createElement('div');
-        item.style.display = 'flex';
-        item.style.alignItems = 'center';
-        item.style.gap = '4px';
+    sortedAchievements.forEach(([rarity, count]) => {
+      const item = document.createElement('div');
+      item.style.display = 'flex';
+      item.style.alignItems = 'center';
+      item.style.gap = '4px';
 
-        const box = document.createElement('div');
-        box.style.width = '12px';
-        box.style.height = '12px';
-        box.style.background = rarityColors[rarity] || '#cccccc';
-        box.style.borderRadius = '2px';
-        item.appendChild(box);
+      const box = document.createElement('div');
+      box.style.width = '12px';
+      box.style.height = '12px';
+      box.style.background = rarityColors[rarity] || '#cccccc';
+      box.style.borderRadius = '2px';
+      item.appendChild(box);
 
-        const text = document.createElement('span');
-        const percent = ((count / total) * 100).toFixed(1);
-        text.textContent = `${rarity.charAt(0).toUpperCase() + rarity.slice(1)}: ${percent}%`;
-        item.appendChild(text);
+      const text = document.createElement('span');
+      const percent = ((count / total) * 100).toFixed(1);
+      text.textContent = `${rarity.charAt(0).toUpperCase() + rarity.slice(1)}: ${percent}%`;
+      item.appendChild(text);
 
-        legend.appendChild(item);
-      }
+      legend.appendChild(item);
     });
 
     pieDiv.appendChild(legend);

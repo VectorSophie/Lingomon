@@ -100,6 +100,8 @@ function showCatchAnimation(word, origin, rarity, isNew, firstCaught) {
   wordTitle.style.textAlign = 'center';
   wordTitle.style.marginBottom = '8px';
   wordTitle.style.textShadow = `2px 2px 8px ${rarityScale[rarity]}80, 0 0 20px ${rarityScale[rarity]}40`;
+  wordTitle.style.overflowWrap = 'break-word';
+  wordTitle.style.wordBreak = 'break-word';
   wordTitle.textContent = word;
 
   const rarityBadge = document.createElement('div');
@@ -307,6 +309,8 @@ function showFailureAnimation(word, error) {
   wordTitle.style.color = '#333333';
   wordTitle.style.textAlign = 'center';
   wordTitle.style.marginBottom = '16px';
+  wordTitle.style.overflowWrap = 'break-word';
+  wordTitle.style.wordBreak = 'break-word';
   wordTitle.textContent = word;
 
   const errorText = document.createElement('div');
