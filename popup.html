@@ -8,12 +8,51 @@
       width: 350px;
       background: #ffffff;
       margin: 0;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    body.dark-mode {
+      background: #1a1a1a;
+      color: #e0e0e0;
     }
     h3 {
       margin: 0 0 12px 0;
       color: #000000;
       font-size: 20px;
       font-weight: 700;
+      display: inline-block;
+    }
+    body.dark-mode h3 {
+      color: #e0e0e0;
+    }
+    .header-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .dark-mode-toggle {
+      background: #f0f0f0;
+      border: 2px solid #e0e0e0;
+      cursor: pointer;
+      font-size: 12px;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-weight: 600;
+      transition: all 0.2s;
+      color: #000000;
+    }
+    .dark-mode-toggle:hover {
+      background: #e0e0e0;
+      border-color: #000000;
+    }
+    body.dark-mode .dark-mode-toggle {
+      background: #2a2a2a;
+      border-color: #404040;
+      color: #e0e0e0;
+    }
+    body.dark-mode .dark-mode-toggle:hover {
+      background: #333333;
+      border-color: #e0e0e0;
     }
     .controls {
       display: flex;
@@ -44,6 +83,43 @@
       border-color: #000000;
       box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     }
+    body.dark-mode .sort-btn {
+      background: #2a2a2a;
+      border-color: #404040;
+      color: #e0e0e0;
+    }
+    body.dark-mode .sort-btn:hover {
+      background: #333333;
+      border-color: #e0e0e0;
+    }
+    body.dark-mode .sort-btn.active {
+      background: #e0e0e0;
+      color: #1a1a1a;
+      border-color: #e0e0e0;
+    }
+    #searchBar {
+      width: 100%;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      box-sizing: border-box;
+      transition: border-color 0.2s, background-color 0.3s, color 0.3s;
+    }
+    body.dark-mode #searchBar {
+      background: #2a2a2a;
+      border-color: #404040;
+      color: #e0e0e0;
+    }
+    #searchBar:focus {
+      outline: none;
+      border-color: #000000;
+    }
+    body.dark-mode #searchBar:focus {
+      border-color: #e0e0e0;
+    }
     #dex {
       max-height: 400px;
       overflow-y: auto;
@@ -52,16 +128,28 @@
       padding: 14px;
       border: 2px solid #e0e0e0;
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      transition: background-color 0.3s, border-color 0.3s;
+    }
+    body.dark-mode #dex {
+      background: #2a2a2a;
+      border-color: #404040;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     }
     .word-entry {
       border-bottom: 1px solid #e0e0e0;
       padding: 10px 0;
       transition: all 0.2s;
     }
+    body.dark-mode .word-entry {
+      border-bottom-color: #404040;
+    }
     .word-entry:hover {
       background: #f8f8f8;
       border-radius: 6px;
       padding-left: 6px;
+    }
+    body.dark-mode .word-entry:hover {
+      background: #333333;
     }
     .word-entry:last-child {
       border-bottom: none;
@@ -81,10 +169,17 @@
       margin-top: 4px;
       line-height: 1.4;
     }
+    body.dark-mode .word-info {
+      color: #b0b0b0;
+    }
     hr {
       border: none;
       border-top: 2px solid #e0e0e0;
       margin: 16px 0;
+      transition: border-color 0.3s;
+    }
+    body.dark-mode hr {
+      border-top-color: #404040;
     }
     #stats {
       background: #ffffff;
@@ -94,21 +189,130 @@
       font-size: 13px;
       color: #000000;
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+    }
+    body.dark-mode #stats {
+      background: #2a2a2a;
+      border-color: #404040;
+      color: #e0e0e0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     }
     #stats strong {
       color: #000000;
       font-size: 14px;
     }
+    body.dark-mode #stats strong {
+      color: #e0e0e0;
+    }
+    #badges {
+      background: #ffffff;
+      padding: 14px;
+      border-radius: 12px;
+      border: 2px solid #e0e0e0;
+      font-size: 13px;
+      color: #000000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+    }
+    body.dark-mode #badges {
+      background: #2a2a2a;
+      border-color: #404040;
+      color: #e0e0e0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .badge-section {
+      margin-bottom: 16px;
+    }
+    .badge-section:last-child {
+      margin-bottom: 0;
+    }
+    .badge-section strong {
+      display: block;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+    .badge-container {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .badge-hexagon {
+      position: relative;
+      width: 80px;
+      height: 46px;
+      margin: 23px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: help;
+      --badge-color: #cccccc;
+    }
+    .badge-hexagon:before,
+    .badge-hexagon:after {
+      content: "";
+      position: absolute;
+      width: 0;
+      border-left: 40px solid transparent;
+      border-right: 40px solid transparent;
+    }
+    .badge-hexagon:before {
+      bottom: 100%;
+      border-bottom: 23px solid var(--badge-color);
+    }
+    .badge-hexagon:after {
+      top: 100%;
+      border-top: 23px solid var(--badge-color);
+    }
+    .badge-content {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      color: white;
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 1.2;
+      padding: 0 4px;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+    .badge-progress {
+      margin-top: 8px;
+      font-size: 11px;
+      color: #666666;
+    }
+    body.dark-mode .badge-progress {
+      color: #999999;
+    }
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background: #e0e0e0;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 4px;
+    }
+    body.dark-mode .progress-bar {
+      background: #404040;
+    }
+    .progress-fill {
+      height: 100%;
+      transition: width 0.3s ease;
+    }
   </style>
 </head>
 <body>
-  <h3>Lingomon</h3>
+  <div class="header-container">
+    <h3>WordDex</h3>
+    <button class="dark-mode-toggle" id="darkModeToggle" title="Toggle dark mode">Dark</button>
+  </div>
   <div class="controls">
     <button class="sort-btn active" data-sort="alpha">A-Z</button>
     <button class="sort-btn" data-sort="recent">Recent</button>
     <button class="sort-btn" data-sort="rarity">Rarity</button>
   </div>
+  <input type="text" id="searchBar" placeholder="Search words...">
   <div id="dex"></div>
+  <hr>
+  <div id="badges"></div>
   <hr>
   <div id="stats"></div>
   <hr>

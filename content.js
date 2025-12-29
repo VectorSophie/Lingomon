@@ -20,7 +20,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.type === 'wordCaught') {
     console.log('Lingomon: Showing success popup for:', message.word);
-    showCatchAnimation(message.word, message.origin, message.rarity, message.isNew);
+    showCatchAnimation(message.word, message.origin, message.rarity, message.isNew, message.firstCaught);
     sendResponse({ received: true });
   } else if (message.type === 'wordFailed') {
     console.log('Lingomon: Showing failure popup for:', message.word);
@@ -30,7 +30,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   return true;
 });
 
-function showCatchAnimation(word, origin, rarity, isNew) {
+function showCatchAnimation(word, origin, rarity, isNew, firstCaught) {
   console.log('Lingomon: Creating catch popup for:', word, 'rarity:', rarity);
 
   if (lastClickedElement) {
@@ -56,14 +56,39 @@ function showCatchAnimation(word, origin, rarity, isNew) {
   catchPopup.style.opacity = '0';
   catchPopup.style.transition = 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
 
+  // Add pulsing glow for legendary and mythic
+  if (rarity === 'legendary' || rarity === 'mythic') {
+    const glowKeyframes = `
+      @keyframes pulseGlow {
+        0%, 100% { box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 0 20px ${rarityScale[rarity]}, 0 0 0 1px ${rarityScale[rarity]}40 inset; }
+        50% { box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 0 40px ${rarityScale[rarity]}, 0 0 60px ${rarityScale[rarity]}80, 0 0 0 1px ${rarityScale[rarity]}80 inset; }
+      }
+    `;
+    const styleSheet = document.createElement('style');
+    styleSheet.textContent = glowKeyframes;
+    document.head.appendChild(styleSheet);
+    catchPopup.style.animation = 'pulseGlow 1.5s ease-in-out infinite';
+  }
+
   const title = document.createElement('div');
   title.style.fontSize = '16px';
   title.style.fontWeight = '500';
-  title.style.marginBottom = '12px';
+  title.style.marginBottom = isNew ? '12px' : '4px';
   title.style.textAlign = 'center';
   title.style.color = '#666666';
   title.style.letterSpacing = '0.5px';
-  title.textContent = isNew ? 'New Word Caught!' : 'Word Updated!';
+  title.textContent = isNew ? 'New Word Caught!' : 'Already Caught! Definition Updated';
+
+  const firstCaughtDiv = document.createElement('div');
+  if (!isNew && firstCaught) {
+    const date = new Date(firstCaught);
+    const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    firstCaughtDiv.style.fontSize = '12px';
+    firstCaughtDiv.style.textAlign = 'center';
+    firstCaughtDiv.style.color = '#999999';
+    firstCaughtDiv.style.marginBottom = '12px';
+    firstCaughtDiv.textContent = `First caught: ${dateStr}`;
+  }
 
   const wordTitle = document.createElement('div');
   wordTitle.style.fontSize = '36px';
@@ -137,6 +162,9 @@ function showCatchAnimation(word, origin, rarity, isNew) {
   };
 
   catchPopup.appendChild(title);
+  if (!isNew && firstCaught) {
+    catchPopup.appendChild(firstCaughtDiv);
+  }
   catchPopup.appendChild(wordTitle);
   catchPopup.appendChild(rarityContainer);
   catchPopup.appendChild(originText);
@@ -155,7 +183,7 @@ function showCatchAnimation(word, origin, rarity, isNew) {
       catchPopup.style.transform = 'translate(-50%, -50%) scale(0.8)';
       setTimeout(() => catchPopup.remove(), 300);
     }
-  }, 8000);
+  }, 12500);
 }
 
 function animateWordCatch(element, rarity) {
@@ -182,34 +210,67 @@ function animateWordCatch(element, rarity) {
 
 function createParticles(element, rarity) {
   const rect = element.getBoundingClientRect();
-  const particleCount = 12;
+  let particleCount = 12;
+  let particleSymbols = ['*'];
+
+  // Enhanced particles for legendary and mythic
+  if (rarity === 'legendary') {
+    particleCount = 24;
+    particleSymbols = ['*', '+', '◆', '●'];
+  } else if (rarity === 'mythic') {
+    particleCount = 40;
+    particleSymbols = ['*', '+', '◆', '●', '★', '▲'];
+    createScreenShake();
+  }
 
   for (let i = 0; i < particleCount; i++) {
     const particle = document.createElement('div');
-    particle.textContent = '✨';
+    const symbol = particleSymbols[Math.floor(Math.random() * particleSymbols.length)];
+    particle.textContent = symbol;
     particle.style.position = 'fixed';
     particle.style.left = `${rect.left + rect.width / 2}px`;
     particle.style.top = `${rect.top + rect.height / 2}px`;
-    particle.style.fontSize = '20px';
+    particle.style.fontSize = (15 + Math.random() * 15) + 'px';
     particle.style.pointerEvents = 'none';
     particle.style.zIndex = '9999998';
     particle.style.color = rarityScale[rarity];
-    particle.style.transition = 'all 1s ease-out';
+    particle.style.textShadow = `0 0 10px ${rarityScale[rarity]}`;
+    particle.style.transition = 'all ' + (1 + Math.random() * 0.5) + 's ease-out';
 
     document.body.appendChild(particle);
 
     const angle = (i / particleCount) * Math.PI * 2;
-    const distance = 50 + Math.random() * 50;
+    const distance = (rarity === 'mythic' ? 100 : rarity === 'legendary' ? 80 : 50) + Math.random() * 80;
     const tx = Math.cos(angle) * distance;
-    const ty = Math.sin(angle) * distance;
+    const ty = Math.sin(angle) * distance - Math.random() * 30;
 
     setTimeout(() => {
-      particle.style.transform = `translate(${tx}px, ${ty}px) scale(0)`;
+      particle.style.transform = `translate(${tx}px, ${ty}px) scale(0) rotate(${Math.random() * 360}deg)`;
       particle.style.opacity = '0';
     }, 10);
 
-    setTimeout(() => particle.remove(), 1000);
+    setTimeout(() => particle.remove(), 1500);
   }
+}
+
+function createScreenShake() {
+  const body = document.body;
+  const originalTransform = body.style.transform;
+  let shakeCount = 0;
+  const maxShakes = 8;
+
+  const shake = setInterval(() => {
+    if (shakeCount >= maxShakes) {
+      clearInterval(shake);
+      body.style.transform = originalTransform;
+      return;
+    }
+
+    const x = (Math.random() - 0.5) * 10;
+    const y = (Math.random() - 0.5) * 10;
+    body.style.transform = `translate(${x}px, ${y}px)`;
+    shakeCount++;
+  }, 50);
 }
 
 function showFailureAnimation(word, error) {
@@ -223,6 +284,8 @@ function showFailureAnimation(word, error) {
   failPopup.style.borderRadius = '20px';
   failPopup.style.padding = '32px';
   failPopup.style.maxWidth = '440px';
+  failPopup.style.maxHeight = '80vh';
+  failPopup.style.overflow = 'auto';
   failPopup.style.boxShadow = '0 20px 60px rgba(255,68,68,0.3)';
   failPopup.style.zIndex = '9999999';
   failPopup.style.color = '#000000';
@@ -236,7 +299,7 @@ function showFailureAnimation(word, error) {
   title.style.marginBottom = '12px';
   title.style.textAlign = 'center';
   title.style.color = '#ff4444';
-  title.textContent = '❌ Failed to Catch';
+  title.textContent = 'Failed to Catch';
 
   const wordTitle = document.createElement('div');
   wordTitle.style.fontSize = '32px';
