@@ -11,11 +11,16 @@ Lingomon is an educational browser extension that makes learning new words fun a
 ## Features
 
 - **Catch Words**: Right-click any word on any website to add it to your WordDex
-- **Rarity System**: Words are assigned rarity tiers based on length and complexity
+- **Real Frequency-Based Rarity**: Words assigned tiers based on actual linguistic data from Datamuse API (NEW v2.0!)
 - **Beautiful Popups**: Enjoy vibrant, color-coded notifications when you catch a new word
-- **WordDex**: View your entire collection of caught words in a convenient popup
-- **Dictionary Integration**: Get definitions for words you catch
+- **WordDex**: View your entire collection with frequency scores and rarity tiers
+- **Dictionary Integration**: Get definitions and etymology for words you catch
 - **Persistent Storage**: Your WordDex is saved locally and never lost
+- **Dark Mode**: Toggle between light and dark themes
+- **Statistics & Charts**: Track your collection with visual analytics
+- **Badges & Achievements**: Unlock badges for milestones
+- **Daily Streaks**: Build vocabulary learning habits
+- **Quiz Mode**: Test your knowledge of caught words
 
 ## Installation
 
@@ -35,54 +40,96 @@ Lingomon is an educational browser extension that makes learning new words fun a
 
 ## Rarity Tiers
 
-Words are classified into six rarity tiers based on their length and a bit of randomness to keep things exciting:
+**NEW in v2.0:** Words are now classified based on **real linguistic frequency data** from the Google Trillion Word Corpus via **Datamuse API**! No more randomness - rarity reflects actual word usage in English.
+
+### How Rarity Works
+
+Each word's rarity is determined by its **frequency per million words** in real-world usage:
+- **Primary Source:** Datamuse API (real-time linguistic data)
+- **Fallback:** Local database (~400 common words)
+- **Caching:** Frequency stored permanently with each word
+- **Display:** Shows frequency score in word details (e.g., "76.07 per million")
 
 ### Tier 1: COMMON ![#ebebeb](https://via.placeholder.com/15/ebebeb/ebebeb.png)
-Your everyday words - the foundation of language!
-- Words in predefined common word list (the, and, is, have, etc.) are always common
-- Short words (≤5 letters): 85% chance
-- Medium words (6-7 letters): 65% chance
-- Examples: hello, world, people, reading
+**≥ 100 per million** - Your everyday words, the foundation of language
+- **Examples:** the (5000), and (2000), have (740), time (500), people (160)
+- **Description:** Basic grammar, common verbs, everyday nouns
+- **Usage:** Found in nearly every conversation and text
 
 ### Tier 2: UNCOMMON ![#a1ff96](https://via.placeholder.com/15/a1ff96/a1ff96.png)
-Getting more interesting!
-- Short words (≤5 letters): 15% chance
-- Medium words (6-7 letters): 23% chance
-- Examples: quirk, puzzle, chapter, beautiful
+**25-99 per million** - Educated vocabulary and formal contexts
+- **Examples:** friend (76), education (7.1), technology (3.6), government (1.34)
+- **Description:** Formal nouns, business terms, specialized fields
+- **Usage:** Common in writing but less frequent in casual speech
 
 ### Tier 3: RARE ![#96c7ff](https://via.placeholder.com/15/96c7ff/96c7ff.png)
-Now we're talking!
-- Medium words (6-7 letters): 10% chance
-- Longer words (8-10 letters): 23% chance
-- Examples: zealous, paradigm, algorithm, magnificent
+**5-24 per million** - Advanced vocabulary and academic writing
+- **Examples:** based (5.0), special (4.4), interesting (3.9), significant (3.3)
+- **Description:** Academic adjectives, sophisticated descriptors
+- **Usage:** Found in professional discourse and literature
 
 ### Tier 4: EPIC ![#b996ff](https://via.placeholder.com/15/b996ff/b996ff.png)
-Impressive vocabulary!
-- Medium words (6-7 letters): 2% chance (rare drop!)
-- Longer words (8-10 letters): 15% chance
-- Extra long (11-13 letters): 30% chance
-- Examples: epitome, ephemeral, serendipity, philosophical
+**1-4 per million** - High-level specialized vocabulary
+- **Examples:** author (0.23), process (0.145), advanced (0.1), medical (0.012)
+- **Description:** Technical jargon, specialized fields
+- **Usage:** Academic papers, professional contexts
 
 ### Tier 5: LEGENDARY ![#fffa96](https://via.placeholder.com/15/fffa96/fffa96.png)
-You're becoming a word master!
-- Longer words (8-10 letters): 6% chance (very rare!)
-- Extra long (11-13 letters): 25% chance
-- Super long (14+ letters): 40% chance
-- Examples: zeitgeist, nomenclature, infrastructure, phenomenological
+**0.1-0.99 per million** - Rare, sophisticated vocabulary
+- **Examples:** register (0.06), action (0.05), movie (0.02), story (0.004)
+- **Description:** Highly specialized terms, uncommon contexts
+- **Usage:** Specialized literature, advanced academic writing
 
 ### Tier 6: MYTHIC ![#ff6969](https://via.placeholder.com/15/ff6969/ff6969.png)
-The rarest of the rare!
-- Longer words (8-10 letters): 1% chance (ultra rare!)
-- Extra long (11-13 letters): 10% chance
-- Super long (14+ letters): 40% chance
-- Examples: Byzantine, uncomfortable, uncharacteristically, antidisestablishmentarianism
+**< 0.1 per million** - Extremely rare and archaic words
+- **Examples:** ephemeral (0.003), serendipity (0.0025), juxtaposition (0.001), perspicacious (0.0002)
+- **Description:** Literary devices, archaic terms, highly technical vocabulary
+- **Usage:** Rare in modern usage, specialized academic/literary contexts
+
+### Important Notes
+
+- **Real Data:** Frequencies may surprise you! Common social words like "friend" are Uncommon (76/million), not super common.
+- **API vs Intuition:** Linguistic frequency doesn't always match perceived commonness.
+- **Legacy Words:** Words caught before v2.0 retain their old randomized rarity.
+- **Unknown Words:** Words not in database/API default to Mythic.
+
+## Frequency Scale Reference
+
+```
+5,000+  ████████████████████ Ultra-common (the, and, of)
+1,000   ███████████████      Very common (for, by, this)
+  100   ██████████           Common threshold
+   25   ████                 Uncommon threshold
+    5   ██                   Rare threshold
+    1   █                    Epic threshold
+  0.1   ▓                    Legendary threshold
+< 0.1   ░                    Mythic (extremely rare)
+```
+
+## Word Distribution
+
+Based on linguistic analysis:
+- **Common (100+):** ~40% of word catches (everyday vocabulary)
+- **Uncommon (25-99):** ~25% of catches (educated vocabulary)
+- **Rare (5-24):** ~20% of catches (advanced vocabulary)
+- **Epic (1-4):** ~10% of catches (specialized vocabulary)
+- **Legendary (0.1-0.99):** ~4% of catches (rare vocabulary)
+- **Mythic (<0.1):** ~1% of catches (extremely rare)
+
+## Notes
+
+- Words not found in the database or API are treated as **Mythic** (assumed < 0.1)
+- The system uses **Datamuse API** for real-time lookup with local database fallback
 
 ## Privacy
 
 Lingomon values your privacy:
 - All data is stored locally in your browser
 - No personal information is collected or transmitted
-- The only external API call is to fetch word definitions from [Free Dictionary API](https://dictionaryapi.dev/)
+- External API calls:
+  - [Free Dictionary API](https://dictionaryapi.dev/) - Word definitions and etymology
+  - [Datamuse API](https://www.datamuse.com/api/) - Real-time word frequency data
+- Fallback: Local frequency database used when APIs are unavailable
 
 ## Contributing
 

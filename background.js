@@ -1,3 +1,7 @@
+// Import word frequency database for fallback
+importScripts('wordFrequency.js');
+console.log('Lingomon: Frequency-based rarity system LOADED v2.0');
+
 const commonWords = new Set([
   'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'I', 'it', 'for', 'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at',
   'this', 'but', 'his', 'by', 'from', 'they', 'we', 'say', 'her', 'she', 'or', 'an', 'will', 'my', 'one', 'all', 'would', 'there', 'their',
@@ -47,14 +51,24 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   }
 
   try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000);
+    // Launch both API calls in parallel for speed
+    const dictionaryPromise = (async () => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-    const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word.toLowerCase()}`, {
-      signal: controller.signal
-    });
+      const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word.toLowerCase()}`, {
+        signal: controller.signal
+      });
 
-    clearTimeout(timeoutId);
+      clearTimeout(timeoutId);
+      return res;
+    })();
+
+    const frequencyPromise = fetchWordFrequency(word);
+
+    // Wait for both (or fail gracefully)
+    const [res, freqData] = await Promise.all([dictionaryPromise, frequencyPromise]);
+    console.log(`Lingomon: Fetched frequency for "${word}":`, freqData);
 
     if (!res.ok) {
       if (res.status === 404) {
@@ -95,7 +109,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       origin = `${defText}${exampleText}`;
     }
 
-    const rarity = getWordRarity(word);
+    const rarity = getWordRarity(word, freqData.frequency, freqData.source);
 
     // Extract domain from tab URL
     let domain = 'unknown';
@@ -122,6 +136,8 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       wordDex[word] = {
         origin,
         rarity,
+        frequency: freqData.frequency,
+        frequencySource: freqData.source,
         timestamp: Date.now(),
         firstCaught: firstCaughtDate,
         caughtOn: domain
@@ -216,7 +232,15 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   }
 });
 
-function getWordRarity(word) {
+function getWordRarity(word, frequency = null, source = null) {
+  // Use frequency-based rarity if available (NEW WORDS)
+  if (frequency !== null) {
+    const rarity = mapFrequencyToRarity(frequency);
+    console.log(`Rarity for "${word}": ${rarity} (freq=${frequency}, source=${source})`);
+    return rarity;
+  }
+
+  // LEGACY PATH: Keep existing logic for backward compatibility
   const lowerWord = word.toLowerCase();
   const wordLength = word.length;
 
@@ -261,6 +285,75 @@ function getWordRarity(word) {
   if (rand < 0.20) return 'epic';
   if (rand < 0.60) return 'legendary';
   return 'mythic';
+}
+
+// Maps frequency per million to rarity tier
+function mapFrequencyToRarity(frequency) {
+  if (frequency >= 100) return 'common';      // Very frequent
+  if (frequency >= 25) return 'uncommon';     // Moderately frequent
+  if (frequency >= 5) return 'rare';          // Less frequent
+  if (frequency >= 1) return 'epic';          // Infrequent
+  if (frequency >= 0.1) return 'legendary';   // Very rare
+  return 'mythic';                             // Extremely rare or unknown
+}
+
+// Fetches word frequency from Datamuse API
+async function fetchWordFrequency(word) {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    const res = await fetch(
+      `https://api.datamuse.com/words?sp=${encodeURIComponent(word)}&md=f&max=1`,
+      { signal: controller.signal }
+    );
+
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      console.log(`Datamuse API error for "${word}": ${res.status}`);
+      return getFallbackFrequency(word);
+    }
+
+    const data = await res.json();
+
+    // Extract frequency from tags array: ["f:123.45"]
+    if (Array.isArray(data) && data.length > 0 && data[0].tags) {
+      for (const tag of data[0].tags) {
+        if (tag.startsWith('f:')) {
+          const frequency = parseFloat(tag.substring(2));
+          if (!isNaN(frequency) && frequency >= 0) {
+            console.log(`Datamuse: "${word}" frequency = ${frequency}`);
+            return { frequency, source: 'api' };
+          }
+        }
+      }
+    }
+
+    // No frequency data found in API response
+    console.log(`Datamuse: No frequency data for "${word}", using fallback`);
+    return getFallbackFrequency(word);
+
+  } catch (err) {
+    console.log(`Datamuse error for "${word}":`, err.message);
+    return getFallbackFrequency(word);
+  }
+}
+
+// Fallback to local frequency database
+function getFallbackFrequency(word) {
+  const lowerWord = word.toLowerCase();
+
+  // Check local database
+  if (wordFrequencyMap && wordFrequencyMap[lowerWord]) {
+    const frequency = wordFrequencyMap[lowerWord];
+    console.log(`Local DB: "${word}" frequency = ${frequency}`);
+    return { frequency, source: 'local' };
+  }
+
+  // Word not in database - treat as very rare
+  console.log(`Unknown word: "${word}", treating as mythic`);
+  return { frequency: null, source: 'unknown' };
 }
 
 function updateBadges(wordDex, achievements, streakData, sitesExplored, currentRarity, isNew, existingBadges, isMetaCatch) {

@@ -1,7 +1,7 @@
 {
    "manifest_version": 3,
    "name": "Lingomon",
-   "version": "1.4",
+   "version": "1.5",
    "description": "Gotta catch em all!",
    "permissions": ["contextMenus", "notifications", "storage"],
    "action": {
@@ -24,7 +24,8 @@
      }
    ],
    "host_permissions": [
-    "https://api.dictionaryapi.dev/*"
+    "https://api.dictionaryapi.dev/*",
+    "https://api.datamuse.com/*"
    ]
 
 }

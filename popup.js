@@ -122,6 +122,23 @@ function displayWordDex(sortType = 'alpha') {
           originDiv.className = 'word-info';
           originDiv.textContent = origin.length > 150 ? origin.substring(0, 150) + '...' : origin;
 
+          const frequencyDiv = document.createElement('div');
+          frequencyDiv.className = 'frequency-info';
+          frequencyDiv.style.fontSize = '11px';
+          frequencyDiv.style.marginTop = '4px';
+
+          if (info.frequency !== undefined && info.frequency !== null) {
+            const freqDisplay = info.frequency >= 1
+              ? info.frequency.toFixed(2)
+              : info.frequency.toFixed(4);
+            const sourceLabel = info.frequencySource === 'api' ? 'API' : 'Local DB';
+            frequencyDiv.textContent = `Frequency: ${freqDisplay} per million (${sourceLabel})`;
+            frequencyDiv.title = `Source: ${info.frequencySource || 'unknown'}`;
+          } else {
+            frequencyDiv.textContent = 'Frequency: N/A (legacy word)';
+            frequencyDiv.style.fontStyle = 'italic';
+          }
+
           const deleteBtn = document.createElement('button');
           deleteBtn.textContent = 'delete';
           deleteBtn.className = 'delete-btn';
@@ -146,6 +163,7 @@ function displayWordDex(sortType = 'alpha') {
           div.appendChild(wordStrong);
           div.appendChild(rarityDiv);
           div.appendChild(originDiv);
+          div.appendChild(frequencyDiv);
           div.appendChild(deleteBtn);
 
           dexDiv.appendChild(div);
