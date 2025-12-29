@@ -12,8 +12,11 @@
      "service_worker": "background.js"
    },
    "icons": {
-    "64": "f.png"
-    },
+    "16": "lingomon.png",
+    "32": "lingomon.png",
+    "48": "lingomon.png",
+    "128": "lingomon.png"
+   },
    "content_scripts": [
      {
        "matches": ["<all_urls>"],
