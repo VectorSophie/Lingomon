@@ -132,6 +132,8 @@ function displayWordDex(sortType = 'alpha') {
           deleteBtn.style.border = 'none';
           deleteBtn.style.cursor = 'pointer';
           deleteBtn.style.fontSize = '16px';
+          deleteBtn.style.color = '#ff4444';
+          deleteBtn.style.fontWeight = 'bold';
           deleteBtn.style.opacity = '0.5';
           deleteBtn.style.transition = 'opacity 0.2s';
           deleteBtn.onmouseover = () => deleteBtn.style.opacity = '1';
@@ -176,7 +178,8 @@ function displayWordDex(sortType = 'alpha') {
       // Streak display
       const streakSpan = document.createElement('span');
       streakSpan.style.fontWeight = 'bold';
-      streakSpan.style.color = streakData.currentStreak >= 7 ? '#fffa96' : streakData.currentStreak >= 3 ? '#96c7ff' : '#000000';
+      streakSpan.className = 'streak-text';
+      streakSpan.style.color = streakData.currentStreak >= 7 ? '#fffa96' : streakData.currentStreak >= 3 ? '#96c7ff' : '';
       streakSpan.textContent = `Streak: ${streakData.currentStreak} day${streakData.currentStreak !== 1 ? 's' : ''}`;
       statsP.appendChild(streakSpan);
       statsP.appendChild(document.createElement('br'));
