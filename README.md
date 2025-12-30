@@ -50,37 +50,37 @@ Each word's rarity is determined by its **frequency per million words** in real-
 - **Caching:** Frequency stored permanently with each word
 - **Display:** Shows frequency score in word details (e.g., "76.07 per million")
 
-### Tier 1: COMMON ![#ebebeb](https://via.placeholder.com/15/ebebeb/ebebeb.png)
+### **<span style="color:#ebebeb"> Tier 1: COMMON</span>**
 **≥ 100 per million** - Your everyday words, the foundation of language
 - **Examples:** the (5000), and (2000), have (740), time (500), people (160)
 - **Description:** Basic grammar, common verbs, everyday nouns
 - **Usage:** Found in nearly every conversation and text
 
-### Tier 2: UNCOMMON ![#a1ff96](https://via.placeholder.com/15/a1ff96/a1ff96.png)
+### **<span style="color:#a1ff96"> Tier 2: UNCOMMON</span>**
 **25-99 per million** - Educated vocabulary and formal contexts
 - **Examples:** friend (76), education (7.1), technology (3.6), government (1.34)
 - **Description:** Formal nouns, business terms, specialized fields
 - **Usage:** Common in writing but less frequent in casual speech
 
-### Tier 3: RARE ![#96c7ff](https://via.placeholder.com/15/96c7ff/96c7ff.png)
+### **<span style="color:#96c7ff"> Tier 3: RARE</span>**
 **5-24 per million** - Advanced vocabulary and academic writing
 - **Examples:** based (5.0), special (4.4), interesting (3.9), significant (3.3)
 - **Description:** Academic adjectives, sophisticated descriptors
 - **Usage:** Found in professional discourse and literature
 
-### Tier 4: EPIC ![#b996ff](https://via.placeholder.com/15/b996ff/b996ff.png)
+### **<span style="color:#b996ff"> Tier 4: EPIC</span>**
 **1-4 per million** - High-level specialized vocabulary
 - **Examples:** author (0.23), process (0.145), advanced (0.1), medical (0.012)
 - **Description:** Technical jargon, specialized fields
 - **Usage:** Academic papers, professional contexts
 
-### Tier 5: LEGENDARY ![#fffa96](https://via.placeholder.com/15/fffa96/fffa96.png)
+### **<span style="color:#fffa96"> Tier 5: LEGENDARY</span>**
 **0.1-0.99 per million** - Rare, sophisticated vocabulary
 - **Examples:** register (0.06), action (0.05), movie (0.02), story (0.004)
 - **Description:** Highly specialized terms, uncommon contexts
 - **Usage:** Specialized literature, advanced academic writing
 
-### Tier 6: MYTHIC ![#ff6969](https://via.placeholder.com/15/ff6969/ff6969.png)
+### **<span style="color:#ff6969"> Tier 6: MYTHIC</span>**
 **< 0.1 per million** - Extremely rare and archaic words
 - **Examples:** ephemeral (0.003), serendipity (0.0025), juxtaposition (0.001), perspicacious (0.0002)
 - **Description:** Literary devices, archaic terms, highly technical vocabulary
