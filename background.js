@@ -205,9 +205,6 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       const existingBadges = storageData.badges || { main: [], hidden: [] };
       const badges = updateBadges(wordDex, achievements, streakData, sitesExplored, rarity, isNew, existingBadges, isMetaCatch);
 
-      // Award special hidden badges
-      awardSpecialBadges(badges, word, origin, wordDex, isNew);
-
       chrome.storage.local.set({ wordDex, achievements, streakData, sitesExplored, badges }, () => {
         if (chrome.runtime.lastError) {
           console.error('Storage save error:', chrome.runtime.lastError);
