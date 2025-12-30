@@ -1,7 +1,7 @@
 
   # Lingomon Privacy Policy
 
-  Last updated: [Current Date]
+  Last updated: December 30, 2024
 
   ## Data Collection
   Lingomon collects and stores the following data LOCALLY on your device:
