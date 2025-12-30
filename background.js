@@ -205,6 +205,9 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       const existingBadges = storageData.badges || { main: [], hidden: [] };
       const badges = updateBadges(wordDex, achievements, streakData, sitesExplored, rarity, isNew, existingBadges, isMetaCatch);
 
+      // Award special hidden badges
+      awardSpecialBadges(badges, word, origin, wordDex, isNew);
+
       chrome.storage.local.set({ wordDex, achievements, streakData, sitesExplored, badges }, () => {
         if (chrome.runtime.lastError) {
           console.error('Storage save error:', chrome.runtime.lastError);
@@ -475,7 +478,7 @@ function updateBadges(wordDex, achievements, streakData, sitesExplored, currentR
   const rarities = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic'];
   for (const rarity of rarities) {
     const count = achievements[rarity] || 0;
-    if (count >= 10) {
+    if (count >= 100) {
       const existingKiller = badges.hidden.find(b => b.type === 'rarityKiller' && b.rarity === rarity);
       if (existingKiller) {
         existingKiller.count = count;
