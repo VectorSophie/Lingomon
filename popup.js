@@ -1,11 +1,4 @@
-const rarityScale = {
-  common: '#ebebeb',
-  uncommon: '#a1ff96',
-  rare: '#96c7ff',
-  epic: '#b996ff',
-  legendary: '#fffa96',
-  mythic: '#ff6969'
-};
+// rarityScale is now imported from animations.js
 
 const rarityOrder = {
   mythic: 0,
@@ -481,7 +474,8 @@ function displayBadges(badges) {
       hexagon.className = 'badge-hexagon';
       hexagon.title = badge.name + (badge.count ? ` (${badge.count})` : '');
 
-      const color = rarityScale[badge.rarity] || '#cccccc';
+      // Meta badge gets special black color
+      const color = badge.type === 'meta' ? '#000000' : (rarityScale[badge.rarity] || '#cccccc');
       hexagon.style.setProperty('--badge-color', color);
       hexagon.style.background = color;
 
@@ -782,3 +776,30 @@ function initKofi() {
     }
   }
 }
+
+// Initialize animations for popup (enables word catching animations in popup)
+if (typeof initAnimations !== 'undefined') {
+  initAnimations();
+}
+
+// Listen for word caught messages to display animations in popup
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log('Lingomon Popup: Received message:', message);
+
+  if (message.type === 'wordCaught') {
+    console.log('Lingomon Popup: Showing success popup for:', message.word);
+    if (typeof showCatchAnimation !== 'undefined') {
+      showCatchAnimation(message.word, message.origin, message.rarity, message.isNew, message.firstCaught);
+    }
+    // Refresh the display to show the newly caught word
+    displayWordDex(currentSort);
+    sendResponse({ received: true });
+  } else if (message.type === 'wordFailed') {
+    console.log('Lingomon Popup: Showing failure popup for:', message.word);
+    if (typeof showFailureAnimation !== 'undefined') {
+      showFailureAnimation(message.word, message.error);
+    }
+    sendResponse({ received: true });
+  }
+  return true;
+});

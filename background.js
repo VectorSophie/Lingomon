@@ -19,17 +19,34 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
+// Helper function to send messages to either tabs or runtime (for extension pages)
+async function sendMessageToContext(isMetaCatch, tabId, message) {
+  if (isMetaCatch) {
+    // For extension pages (popup), use runtime messaging
+    console.log('Lingomon: Sending message via runtime (catching from popup)');
+    return chrome.runtime.sendMessage(message);
+  } else if (tabId) {
+    // For regular web pages, use tab messaging
+    return chrome.tabs.sendMessage(tabId, message);
+  } else {
+    console.warn('Lingomon: No valid tab ID');
+    return Promise.reject(new Error('No valid message target'));
+  }
+}
+
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId !== "definitionLookup") return;
 
-  // Check if tab is valid
-  if (!tab || !tab.id || tab.id < 0) {
+  // Check if catching from extension pages (Meta badge)
+  // Extension popups might not have a valid tab.id, so check URL first
+  const isMetaCatch = tab && tab.url && (tab.url.startsWith('chrome-extension://') || tab.url.startsWith('moz-extension://'));
+
+  // For extension pages, tab.id might be invalid, but we still want to process
+  // For regular pages, validate the tab
+  if (!isMetaCatch && (!tab || !tab.id || tab.id < 0)) {
     console.log('Lingomon: Invalid tab context, ignoring');
     return;
   }
-
-  // Check if catching from extension pages (Meta badge)
-  const isMetaCatch = tab.url && (tab.url.startsWith('chrome-extension://') || tab.url.startsWith('moz-extension://'));
 
   const word = info.selectionText.trim().toLowerCase().replace(/[-'']/g, '');
   if (!word.match(/^[a-zA-Z]{3,}$/)) {
@@ -40,12 +57,12 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       errorMessage = "Word must contain only letters (no numbers or special characters).";
     }
 
-    chrome.tabs.sendMessage(tab.id, {
+    sendMessageToContext(isMetaCatch, tab.id, {
       type: 'wordFailed',
       word: word,
       error: errorMessage
     }).catch(err => {
-      console.log('Lingomon: Could not send validation error message to tab:', err);
+      console.log('Lingomon: Could not send validation error message:', err);
     });
     return;
   }
@@ -195,7 +212,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         }
 
         console.log('Lingomon: Sending wordCaught message for:', word);
-        chrome.tabs.sendMessage(tab.id, {
+        sendMessageToContext(isMetaCatch, tab.id, {
           type: 'wordCaught',
           word: word,
           origin: origin,
@@ -205,7 +222,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         }).then(response => {
           console.log('Lingomon: Message sent successfully, response:', response);
         }).catch(err => {
-          console.log('Lingomon: Could not send message to tab:', err);
+          console.log('Lingomon: Could not send message:', err);
         });
       });
     });
@@ -220,14 +237,14 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     }
 
     console.log('Lingomon: Sending wordFailed message for:', word);
-    chrome.tabs.sendMessage(tab.id, {
+    sendMessageToContext(isMetaCatch, tab.id, {
       type: 'wordFailed',
       word: word,
       error: errorMessage
     }).then(response => {
       console.log('Lingomon: Error message sent successfully, response:', response);
     }).catch(err => {
-      console.log('Lingomon: Could not send error message to tab:', err);
+      console.log('Lingomon: Could not send error message:', err);
     });
   }
 });
