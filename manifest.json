@@ -3,7 +3,7 @@
    "name": "Lingomon",
    "version": "1.6",
    "description": "Gotta catch em all!",
-   "permissions": ["contextMenus", "notifications", "storage"],
+   "permissions": ["contextMenus", "storage"],
    "action": {
      "default_popup": "popup.html",
      "default_title": "View your WordDex"
@@ -12,9 +12,6 @@
      "service_worker": "background.js"
    },
    "icons": {
-    "16": "lingomon.png",
-    "32": "lingomon.png",
-    "48": "lingomon.png",
     "128": "lingomon.png"
    },
    "content_scripts": [
