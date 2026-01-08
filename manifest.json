@@ -17,12 +17,13 @@
    "content_scripts": [
      {
        "matches": ["<all_urls>"],
-       "js": ["animations.js", "content.js"]
+       "js": ["i18n.js", "animations.js", "content.js"]
      }
    ],
    "host_permissions": [
     "https://api.dictionaryapi.dev/*",
-    "https://api.datamuse.com/*"
+    "https://api.datamuse.com/*",
+    "https://kli.korean.go.kr/*"
    ]
 
 }

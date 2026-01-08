@@ -43,7 +43,7 @@ function showCatchAnimation(word, origin, rarity, isNew, firstCaught) {
   catchPopup.style.boxShadow = `0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px ${rarityScale[rarity]}40 inset`;
   catchPopup.style.zIndex = '9999999';
   catchPopup.style.color = '#000000';
-  catchPopup.style.fontFamily = 'Georgia, serif';
+  catchPopup.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif';
   catchPopup.style.opacity = '0';
   catchPopup.style.transition = 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
 
@@ -61,6 +61,19 @@ function showCatchAnimation(word, origin, rarity, isNew, firstCaught) {
     catchPopup.style.animation = 'pulseGlow 1.5s ease-in-out infinite';
   }
 
+  // Get translation function - use translations directly with currentLanguage
+  const translate = (key, replacements = {}) => {
+    if (typeof translations !== 'undefined' && typeof currentLanguage !== 'undefined') {
+      const translation = translations[currentLanguage][key] || translations['en'][key] || key;
+      let result = translation;
+      for (const [placeholder, value] of Object.entries(replacements)) {
+        result = result.replace(`{${placeholder}}`, value);
+      }
+      return result;
+    }
+    return key;
+  };
+
   const title = document.createElement('div');
   title.style.fontSize = '16px';
   title.style.fontWeight = '500';
@@ -68,7 +81,7 @@ function showCatchAnimation(word, origin, rarity, isNew, firstCaught) {
   title.style.textAlign = 'center';
   title.style.color = '#666666';
   title.style.letterSpacing = '0.5px';
-  title.textContent = isNew ? 'New Word Caught!' : 'Already Caught! Definition Updated';
+  title.textContent = isNew ? translate('newWordCaught') : translate('alreadyCaught');
 
   const firstCaughtDiv = document.createElement('div');
   if (!isNew && firstCaught) {
@@ -78,7 +91,7 @@ function showCatchAnimation(word, origin, rarity, isNew, firstCaught) {
     firstCaughtDiv.style.textAlign = 'center';
     firstCaughtDiv.style.color = '#999999';
     firstCaughtDiv.style.marginBottom = '12px';
-    firstCaughtDiv.textContent = `First caught: ${dateStr}`;
+    firstCaughtDiv.textContent = `${translate('firstCaughtOn')} ${dateStr}`;
   }
 
   const wordTitle = document.createElement('div');
@@ -106,7 +119,7 @@ function showCatchAnimation(word, origin, rarity, isNew, firstCaught) {
   rarityBadge.style.letterSpacing = '1px';
   rarityBadge.style.marginBottom = '20px';
   rarityBadge.style.boxShadow = `0 4px 12px ${rarityScale[rarity]}80`;
-  rarityBadge.textContent = rarity.toUpperCase();
+  rarityBadge.textContent = translate(rarity.toUpperCase());
 
   const rarityContainer = document.createElement('div');
   rarityContainer.style.textAlign = 'center';
@@ -125,7 +138,7 @@ function showCatchAnimation(word, origin, rarity, isNew, firstCaught) {
   originText.textContent = origin;
 
   const closeBtn = document.createElement('button');
-  closeBtn.textContent = 'Got it';
+  closeBtn.textContent = translate('gotIt');
   closeBtn.style.marginTop = '20px';
   closeBtn.style.padding = '14px 28px';
   closeBtn.style.background = '#000000';
@@ -267,6 +280,19 @@ function createScreenShake() {
 }
 
 function showFailureAnimation(word, error) {
+  // Get translation function - use translations directly with currentLanguage
+  const translate = (key, replacements = {}) => {
+    if (typeof translations !== 'undefined' && typeof currentLanguage !== 'undefined') {
+      const translation = translations[currentLanguage][key] || translations['en'][key] || key;
+      let result = translation;
+      for (const [placeholder, value] of Object.entries(replacements)) {
+        result = result.replace(`{${placeholder}}`, value);
+      }
+      return result;
+    }
+    return key;
+  };
+
   const failPopup = document.createElement('div');
   failPopup.style.position = 'fixed';
   failPopup.style.top = '50%';
@@ -282,7 +308,7 @@ function showFailureAnimation(word, error) {
   failPopup.style.boxShadow = '0 20px 60px rgba(255,68,68,0.3)';
   failPopup.style.zIndex = '9999999';
   failPopup.style.color = '#000000';
-  failPopup.style.fontFamily = 'Georgia, serif';
+  failPopup.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif';
   failPopup.style.opacity = '0';
   failPopup.style.transition = 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
 
@@ -292,7 +318,7 @@ function showFailureAnimation(word, error) {
   title.style.marginBottom = '12px';
   title.style.textAlign = 'center';
   title.style.color = '#ff4444';
-  title.textContent = 'Failed to Catch';
+  title.textContent = translate('failedToCatch');
 
   const wordTitle = document.createElement('div');
   wordTitle.style.fontSize = '32px';
@@ -317,7 +343,7 @@ function showFailureAnimation(word, error) {
   errorText.textContent = error;
 
   const closeBtn = document.createElement('button');
-  closeBtn.textContent = 'Try Again';
+  closeBtn.textContent = translate('tryAgain');
   closeBtn.style.marginTop = '20px';
   closeBtn.style.padding = '14px 28px';
   closeBtn.style.background = '#ff4444';

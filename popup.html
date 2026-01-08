@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
   <style>
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
       padding: 16px;
       width: 350px;
       background: #ffffff;
@@ -104,7 +105,7 @@
       border: 2px solid #e0e0e0;
       border-radius: 8px;
       font-size: 14px;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Malgun Gothic', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
       box-sizing: border-box;
       transition: border-color 0.2s, background-color 0.3s, color 0.3s;
     }
@@ -403,7 +404,10 @@
 <body>
   <div class="header-container">
     <h3>WordDex</h3>
-    <button class="dark-mode-toggle" id="darkModeToggle" title="Toggle dark mode">Dark</button>
+    <div style="display: flex; gap: 8px;">
+      <button class="dark-mode-toggle" id="langToggle" title="Change language">EN</button>
+      <button class="dark-mode-toggle" id="darkModeToggle" title="Toggle dark mode">Dark</button>
+    </div>
   </div>
   <div class="controls">
     <button class="sort-btn active" data-sort="alpha">A-Z</button>
@@ -423,6 +427,7 @@
   </div>
   <div id="kofi-container"></div>
   <script src="kofi-widget.js"></script>
+  <script src="i18n.js"></script>
   <script src="animations.js"></script>
   <script src="popup.js"></script>
 </body>

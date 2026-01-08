@@ -1,6 +1,10 @@
 // Import word frequency database for fallback
 importScripts('wordFrequency.js');
+importScripts('i18n.js');
 console.log('Lingomon: Frequency-based rarity system LOADED v2.0');
+
+// Korean API Key (from .env)
+const KOREAN_API_KEY = '***REMOVED***';
 
 const commonWords = new Set([
   'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'I', 'it', 'for', 'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at',
@@ -11,12 +15,29 @@ const commonWords = new Set([
   'because', 'any', 'these', 'give', 'day', 'most', 'us', 'is', 'was', 'are', 'been', 'has', 'had', 'were', 'said', 'did', 'having', 'may'
 ]);
 
-chrome.runtime.onInstalled.addListener(() => {
-  chrome.contextMenus.create({
-    id: "definitionLookup",
-    title: "Catch '%s'",
-    contexts: ["selection"]
+chrome.runtime.onInstalled.addListener(async () => {
+  await updateContextMenu();
+});
+
+// Update context menu based on language
+async function updateContextMenu() {
+  const lang = await getCurrentLanguage();
+  const title = lang === 'ko' ? "'%s' 잡기" : "Catch '%s'";
+
+  chrome.contextMenus.removeAll(() => {
+    chrome.contextMenus.create({
+      id: "definitionLookup",
+      title: title,
+      contexts: ["selection"]
+    });
   });
+}
+
+// Listen for language changes to update context menu
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName === 'local' && changes.language) {
+    updateContextMenu();
+  }
 });
 
 // Helper function to send messages to either tabs or runtime (for extension pages)
@@ -68,65 +89,89 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   }
 
   try {
-    // Launch both API calls in parallel for speed
-    const dictionaryPromise = (async () => {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000);
-
-      const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word.toLowerCase()}`, {
-        signal: controller.signal
+    // Get current language preference
+    const currentLanguage = await new Promise((resolve) => {
+      chrome.storage.local.get(['language'], (data) => {
+        resolve(data.language || 'en');
       });
+    });
 
-      clearTimeout(timeoutId);
-      return res;
-    })();
+    let origin, rarity, freqData;
 
-    const frequencyPromise = fetchWordFrequency(word);
-
-    // Wait for both (or fail gracefully)
-    const [res, freqData] = await Promise.all([dictionaryPromise, frequencyPromise]);
-    console.log(`Lingomon: Fetched frequency for "${word}":`, freqData);
-
-    if (!res.ok) {
-      if (res.status === 404) {
-        throw new Error('Word not found in dictionary');
-      }
-      throw new Error(`API error: ${res.status}`);
-    }
-
-    const data = await res.json();
-
-    if (!Array.isArray(data) || data.length === 0) {
-      throw new Error('No definition found');
-    }
-
-    if (!data[0] || !data[0].meanings || !Array.isArray(data[0].meanings) || data[0].meanings.length === 0) {
-      throw new Error('No meanings available');
-    }
-
-    const firstMeaning = data[0].meanings[0];
-    if (!firstMeaning.definitions || !Array.isArray(firstMeaning.definitions) || firstMeaning.definitions.length === 0) {
-      throw new Error('No definitions available');
-    }
-
-    const defObj = firstMeaning.definitions[0];
-    const definition = defObj.definition || 'No definition found.';
-    const example = defObj.example || '';
-    const partOfSpeech = firstMeaning.partOfSpeech || '';
-
-    let etymology = data[0].origin || '';
-
-    let origin;
-    const defText = `${partOfSpeech ? `(${partOfSpeech}) ` : ''}${definition}`;
-    const exampleText = example ? `\n\nExample: "${example}"` : '';
-
-    if (etymology) {
-      origin = `${etymology}\n\n${defText}${exampleText}`;
+    if (currentLanguage === 'ko') {
+      // Korean mode: Use Korean API
+      console.log(`Lingomon: Using Korean API for "${word}"`);
+      const koreanData = await fetchKoreanDefinition(word);
+      origin = koreanData.origin;
+      rarity = koreanData.rarity;
+      freqData = {
+        frequency: koreanData.frequency,
+        source: koreanData.frequencySource
+      };
     } else {
-      origin = `${defText}${exampleText}`;
-    }
+      // English mode: Use existing English APIs
+      console.log(`Lingomon: Using English APIs for "${word}"`);
 
-    const rarity = getWordRarity(word, freqData.frequency, freqData.source);
+      // Launch both API calls in parallel for speed
+      const dictionaryPromise = (async () => {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word.toLowerCase()}`, {
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+        return res;
+      })();
+
+      const frequencyPromise = fetchWordFrequency(word);
+
+      // Wait for both (or fail gracefully)
+      const [res, freqDataResult] = await Promise.all([dictionaryPromise, frequencyPromise]);
+      freqData = freqDataResult;
+      console.log(`Lingomon: Fetched frequency for "${word}":`, freqData);
+
+      if (!res.ok) {
+        if (res.status === 404) {
+          throw new Error('Word not found in dictionary');
+        }
+        throw new Error(`API error: ${res.status}`);
+      }
+
+      const data = await res.json();
+
+      if (!Array.isArray(data) || data.length === 0) {
+        throw new Error('No definition found');
+      }
+
+      if (!data[0] || !data[0].meanings || !Array.isArray(data[0].meanings) || data[0].meanings.length === 0) {
+        throw new Error('No meanings available');
+      }
+
+      const firstMeaning = data[0].meanings[0];
+      if (!firstMeaning.definitions || !Array.isArray(firstMeaning.definitions) || firstMeaning.definitions.length === 0) {
+        throw new Error('No definitions available');
+      }
+
+      const defObj = firstMeaning.definitions[0];
+      const definition = defObj.definition || 'No definition found.';
+      const example = defObj.example || '';
+      const partOfSpeech = firstMeaning.partOfSpeech || '';
+
+      let etymology = data[0].origin || '';
+
+      const defText = `${partOfSpeech ? `(${partOfSpeech}) ` : ''}${definition}`;
+      const exampleText = example ? `\n\nExample: "${example}"` : '';
+
+      if (etymology) {
+        origin = `${etymology}\n\n${defText}${exampleText}`;
+      } else {
+        origin = `${defText}${exampleText}`;
+      }
+
+      rarity = getWordRarity(word, freqData.frequency, freqData.source);
+    }
 
     // Extract domain from tab URL
     let domain = 'unknown';
@@ -157,7 +202,8 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         frequencySource: freqData.source,
         timestamp: Date.now(),
         firstCaught: firstCaughtDate,
-        caughtOn: domain
+        caughtOn: domain,
+        language: currentLanguage
       };
 
       // Track unique sites
@@ -222,7 +268,8 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         }).then(response => {
           console.log('Lingomon: Message sent successfully, response:', response);
         }).catch(err => {
-          console.log('Lingomon: Could not send message:', err);
+          // Silently ignore if content script isn't loaded - this is expected for some pages
+          console.log('Lingomon: Could not send message (content script may not be loaded):', err.message);
         });
       });
     });
@@ -244,7 +291,8 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     }).then(response => {
       console.log('Lingomon: Error message sent successfully, response:', response);
     }).catch(err => {
-      console.log('Lingomon: Could not send error message:', err);
+      // Silently ignore if content script isn't loaded - this is expected for some pages
+      console.log('Lingomon: Could not send error message (content script may not be loaded):', err.message);
     });
   }
 });
@@ -371,6 +419,136 @@ function getFallbackFrequency(word) {
   // Word not in database - treat as very rare
   console.log(`Unknown word: "${word}", treating as mythic`);
   return { frequency: null, source: 'unknown' };
+}
+
+// Fetch Korean definition from Korean National Institute API
+async function fetchKoreanDefinition(word) {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+    const params = new URLSearchParams({
+      key: KOREAN_API_KEY,
+      apiSearchWord: word,
+      start: '1',
+      num: '10',
+      sort: 'wt' // accuracy sort
+    });
+
+    const url = `https://kli.korean.go.kr/term/api/search.do?${params.toString()}`;
+
+    const res = await fetch(url, {
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      console.log(`Korean API HTTP error for "${word}": ${res.status}`);
+      throw new Error(`Korean API HTTP error: ${res.status}`);
+    }
+
+    const data = await res.json();
+    console.log(`Korean API response for "${word}":`, JSON.stringify(data, null, 2));
+
+    // Check response structure
+    if (!data.channel) {
+      throw new Error('Korean API: No channel in response');
+    }
+
+    // Check if return_object is a string (no results found)
+    if (typeof data.channel.return_object === 'string') {
+      console.log(`Korean API: No results for "${word}":`, data.channel.return_object);
+      throw new Error('Word not found in Korean terminology database');
+    }
+
+    // Handle both array and object formats for return_object
+    let returnObj;
+    if (Array.isArray(data.channel.return_object)) {
+      returnObj = data.channel.return_object[0];
+    } else if (typeof data.channel.return_object === 'object') {
+      returnObj = data.channel.return_object;
+    } else {
+      throw new Error('Korean API: Invalid return_object type');
+    }
+
+    if (!returnObj) {
+      throw new Error('Korean API: Empty return_object');
+    }
+
+    // Check return code
+    if (returnObj.returnCode !== 1 && returnObj.returnCode !== '1') {
+      const errorMessages = {
+        '000': 'System Error',
+        '020': 'Unregistered Authentication Key',
+        '021': 'Unavailable Authentication Key',
+        '022': 'Daily Limit Excess',
+        '100': 'Incorrect Request'
+      };
+      const errorMsg = errorMessages[returnObj.returnCode] || returnObj.message || 'Unknown error';
+      console.log(`Korean API error for "${word}": ${returnObj.returnCode} - ${errorMsg}`);
+      throw new Error(errorMsg);
+    }
+
+    // Extract results
+    if (!returnObj.resultlist || !Array.isArray(returnObj.resultlist) || returnObj.resultlist.length === 0) {
+      console.log(`Korean API: No results found for "${word}"`);
+      throw new Error('Word not found in Korean terminology database');
+    }
+
+    const result = returnObj.resultlist[0];
+
+    // Build formatted origin text
+    let originParts = [];
+
+    if (result.category_main || result.category_sub) {
+      const category = [result.category_main, result.category_sub].filter(Boolean).join(' > ');
+      originParts.push(`분류: ${category}`);
+    }
+
+    if (result.definition) {
+      originParts.push(`정의: ${result.definition}`);
+    }
+
+    if (result.origin && result.origin_cc) {
+      originParts.push(`원어: ${result.origin} (${result.origin_cc})`);
+    } else if (result.origin) {
+      originParts.push(`원어: ${result.origin}`);
+    }
+
+    if (result.translation && result.translation_cc) {
+      originParts.push(`대역어: ${result.translation} (${result.translation_cc})`);
+    } else if (result.translation) {
+      originParts.push(`대역어: ${result.translation}`);
+    }
+
+    if (result.use_ex) {
+      // Strip HTML tags from example
+      const cleanExample = result.use_ex.replace(/<[^>]*>/g, '');
+      originParts.push(`예시: ${cleanExample}`);
+    }
+
+    if (result.source) {
+      originParts.push(`출처: ${result.source} - ${result.glossary || ''}`);
+    }
+
+    const origin = originParts.join('\n\n');
+
+    // For now, use placeholder rarity (will be improved later per user request)
+    // Using 'uncommon' as default for Korean words
+    const rarity = 'uncommon';
+
+    return {
+      origin,
+      rarity,
+      frequency: null,
+      frequencySource: 'korean-api'
+    };
+
+  } catch (err) {
+    console.log(`Korean API error for "${word}":`, err.message);
+    throw err;
+  }
 }
 
 function updateBadges(wordDex, achievements, streakData, sitesExplored, currentRarity, isNew, existingBadges, isMetaCatch) {

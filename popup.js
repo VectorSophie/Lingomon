@@ -82,9 +82,9 @@ function displayWordDex(sortType = 'alpha') {
       entries = sortEntries(entries, sortType);
 
       if (entries.length === 0 && searchQuery) {
-        dexDiv.innerHTML = '<p style="color: gray; text-align: center; padding: 20px;">No words found matching your search.</p>';
+        dexDiv.innerHTML = `<p style="color: gray; text-align: center; padding: 20px;">${t('noSearchResults')}</p>`;
       } else if (entries.length === 0) {
-        dexDiv.innerHTML = '<p style="color: gray; text-align: center; padding: 20px;">No words collected yet. Right-click words on web pages to start collecting!</p>';
+        dexDiv.innerHTML = `<p style="color: gray; text-align: center; padding: 20px;">${t('noWordsMessage')}</p>`;
       } else {
         entries.forEach(([word, info]) => {
           if (!info || typeof info !== 'object') {
@@ -108,7 +108,7 @@ function displayWordDex(sortType = 'alpha') {
 
           const rarityDiv = document.createElement('div');
           rarityDiv.className = 'rarity';
-          rarityDiv.textContent = rarity.toUpperCase();
+          rarityDiv.textContent = t(rarity.toUpperCase());
           rarityDiv.style.color = rarityScale[rarity] || '#9b8bb5';
 
           const originDiv = document.createElement('div');
@@ -124,16 +124,21 @@ function displayWordDex(sortType = 'alpha') {
             const freqDisplay = info.frequency >= 1
               ? info.frequency.toFixed(2)
               : info.frequency.toFixed(4);
-            const sourceLabel = info.frequencySource === 'api' ? 'API' : 'Local DB';
-            frequencyDiv.textContent = `Frequency: ${freqDisplay} per million (${sourceLabel})`;
+            const sourceMap = {
+              'api': t('sourceAPI'),
+              'local': t('sourceLocalDB'),
+              'korean-api': t('sourceKoreanAPI')
+            };
+            const sourceLabel = sourceMap[info.frequencySource] || t('sourceAPI');
+            frequencyDiv.textContent = `${t('frequency')}: ${freqDisplay} ${t('perMillion')} (${sourceLabel})`;
             frequencyDiv.title = `Source: ${info.frequencySource || 'unknown'}`;
           } else {
-            frequencyDiv.textContent = 'Frequency: N/A (legacy word)';
+            frequencyDiv.textContent = `${t('frequency')}: ${t('frequencyNA')}`;
             frequencyDiv.style.fontStyle = 'italic';
           }
 
           const deleteBtn = document.createElement('button');
-          deleteBtn.textContent = 'delete';
+          deleteBtn.textContent = t('deleteButton');
           deleteBtn.className = 'delete-btn';
           deleteBtn.style.position = 'absolute';
           deleteBtn.style.top = '10px';
@@ -176,13 +181,13 @@ function displayWordDex(sortType = 'alpha') {
       statsDiv.innerHTML = '';
 
       const statsStrong = document.createElement('strong');
-      statsStrong.textContent = 'Collection Stats';
+      statsStrong.textContent = t('collectionStats');
 
       const statsP = document.createElement('p');
       statsP.style.margin = '8px 0 0 0';
       statsP.appendChild(statsStrong);
       statsP.appendChild(document.createElement('br'));
-      statsP.appendChild(document.createTextNode(`Total Words: ${total}`));
+      statsP.appendChild(document.createTextNode(`${t('totalWords')}: ${total}`));
       statsP.appendChild(document.createElement('br'));
       statsP.appendChild(document.createElement('br'));
 
@@ -191,27 +196,29 @@ function displayWordDex(sortType = 'alpha') {
       streakSpan.style.fontWeight = 'bold';
       streakSpan.className = 'streak-text';
       streakSpan.style.color = streakData.currentStreak >= 7 ? '#fffa96' : streakData.currentStreak >= 3 ? '#96c7ff' : '';
-      streakSpan.textContent = `Streak: ${streakData.currentStreak} day${streakData.currentStreak !== 1 ? 's' : ''}`;
+      const dayText = streakData.currentStreak !== 1 ? t('days') : t('day');
+      streakSpan.textContent = `${t('streak')}: ${streakData.currentStreak} ${dayText}`;
       statsP.appendChild(streakSpan);
       statsP.appendChild(document.createElement('br'));
 
       if (streakData.longestStreak > 0) {
-        statsP.appendChild(document.createTextNode(`Longest: ${streakData.longestStreak} day${streakData.longestStreak !== 1 ? 's' : ''}`));
+        const longestDayText = streakData.longestStreak !== 1 ? t('days') : t('day');
+        statsP.appendChild(document.createTextNode(`${t('longest')}: ${streakData.longestStreak} ${longestDayText}`));
         statsP.appendChild(document.createElement('br'));
       }
 
       statsP.appendChild(document.createElement('br'));
-      statsP.appendChild(document.createTextNode(`Common: ${commonCount}`));
+      statsP.appendChild(document.createTextNode(`${t('COMMON')}: ${commonCount}`));
       statsP.appendChild(document.createElement('br'));
-      statsP.appendChild(document.createTextNode(`Uncommon: ${uncommonCount}`));
+      statsP.appendChild(document.createTextNode(`${t('UNCOMMON')}: ${uncommonCount}`));
       statsP.appendChild(document.createElement('br'));
-      statsP.appendChild(document.createTextNode(`Rare: ${rareCount}`));
+      statsP.appendChild(document.createTextNode(`${t('RARE')}: ${rareCount}`));
       statsP.appendChild(document.createElement('br'));
-      statsP.appendChild(document.createTextNode(`Epic: ${epicCount}`));
+      statsP.appendChild(document.createTextNode(`${t('EPIC')}: ${epicCount}`));
       statsP.appendChild(document.createElement('br'));
-      statsP.appendChild(document.createTextNode(`Legendary: ${legendaryCount}`));
+      statsP.appendChild(document.createTextNode(`${t('LEGENDARY')}: ${legendaryCount}`));
       statsP.appendChild(document.createElement('br'));
-      statsP.appendChild(document.createTextNode(`Mythic: ${mythicCount}`));
+      statsP.appendChild(document.createTextNode(`${t('MYTHIC')}: ${mythicCount}`));
 
       statsDiv.appendChild(statsP);
 
@@ -264,7 +271,7 @@ function displayCharts(wordDex, achievements) {
   graphDiv.style.borderTop = '1px solid #e0e0e0';
 
   const graphTitle = document.createElement('strong');
-  graphTitle.textContent = 'Words Caught (Last 7 Days)';
+  graphTitle.textContent = t('wordsCaughtLast7Days');
   graphTitle.style.display = 'block';
   graphTitle.style.marginBottom = '8px';
   graphDiv.appendChild(graphTitle);
@@ -320,7 +327,7 @@ function displayCharts(wordDex, achievements) {
   pieDiv.style.borderTop = '1px solid #e0e0e0';
 
   const pieTitle = document.createElement('strong');
-  pieTitle.textContent = 'Rarity Distribution';
+  pieTitle.textContent = t('rarityDistribution');
   pieTitle.style.display = 'block';
   pieTitle.style.marginBottom = '8px';
   pieDiv.appendChild(pieTitle);
@@ -405,7 +412,7 @@ function displayBadges(badges) {
     mainSection.className = 'badge-section';
 
     const mainTitle = document.createElement('strong');
-    mainTitle.textContent = 'Achievements';
+    mainTitle.textContent = t('achievements');
     mainSection.appendChild(mainTitle);
 
     const container = document.createElement('div');
@@ -460,7 +467,7 @@ function displayBadges(badges) {
     hiddenSection.className = 'badge-section';
 
     const hiddenTitle = document.createElement('strong');
-    hiddenTitle.textContent = 'Hidden Badges';
+    hiddenTitle.textContent = t('hiddenBadges');
     hiddenSection.appendChild(hiddenTitle);
 
     const container = document.createElement('div');
@@ -527,7 +534,7 @@ function setupSearchBar() {
 }
 
 function deleteWord(word, rarity) {
-  if (!confirm(`Delete "${word}" from your collection?`)) {
+  if (!confirm(t('deleteConfirm', { word }))) {
     return;
   }
 
@@ -558,21 +565,88 @@ function deleteWord(word, rarity) {
   });
 }
 
-function setupDarkMode() {
+async function setupDarkMode() {
   const toggle = document.getElementById('darkModeToggle');
   if (!toggle) return;
 
-  chrome.storage.local.get(['darkMode'], (data) => {
-    if (data.darkMode) {
-      document.body.classList.add('dark-mode');
-      toggle.textContent = 'Light';
-    }
-  });
+  // Wait for language to be loaded
+  await getCurrentLanguage();
 
-  toggle.addEventListener('click', () => {
-    const isDark = document.body.classList.toggle('dark-mode');
-    toggle.textContent = isDark ? 'Light' : 'Dark';
-    chrome.storage.local.set({ darkMode: isDark });
+  return new Promise((resolve) => {
+    chrome.storage.local.get(['darkMode'], (data) => {
+      if (data.darkMode) {
+        document.body.classList.add('dark-mode');
+        toggle.textContent = t('lightMode');
+      } else {
+        toggle.textContent = t('darkMode');
+      }
+
+      toggle.addEventListener('click', () => {
+        const isDark = document.body.classList.toggle('dark-mode');
+        toggle.textContent = isDark ? t('lightMode') : t('darkMode');
+        chrome.storage.local.set({ darkMode: isDark });
+      });
+
+      resolve();
+    });
+  });
+}
+
+function updateUILanguage() {
+  // Update header title
+  const headerTitle = document.querySelector('h3');
+  if (headerTitle) {
+    headerTitle.textContent = t('wordDex');
+  }
+
+  // Update search placeholder
+  const searchBar = document.getElementById('searchBar');
+  if (searchBar) {
+    searchBar.placeholder = t('searchPlaceholder');
+  }
+
+  // Update sort buttons
+  const sortButtons = document.querySelectorAll('.sort-btn');
+  if (sortButtons.length >= 3) {
+    sortButtons[0].textContent = t('sortAlpha');
+    sortButtons[1].textContent = t('sortRecent');
+    sortButtons[2].textContent = t('sortRarity');
+  }
+
+  // Update quiz button
+  const quizBtn = document.getElementById('quizBtn');
+  if (quizBtn) {
+    quizBtn.textContent = t('quiz');
+  }
+
+  // Update dark mode button
+  const darkModeToggle = document.getElementById('darkModeToggle');
+  if (darkModeToggle) {
+    const isDark = document.body.classList.contains('dark-mode');
+    darkModeToggle.textContent = isDark ? t('lightMode') : t('darkMode');
+  }
+}
+
+async function setupLanguageToggle() {
+  const toggle = document.getElementById('langToggle');
+  if (!toggle) return;
+
+  // Load current language and update UI
+  const lang = await getCurrentLanguage();
+  toggle.textContent = lang === 'ko' ? 'KO' : 'EN';
+  updateUILanguage();
+
+  toggle.addEventListener('click', async () => {
+    const currentLang = await getCurrentLanguage();
+    const newLang = currentLang === 'en' ? 'ko' : 'en';
+    await setLanguage(newLang);
+    toggle.textContent = newLang === 'ko' ? 'KO' : 'EN';
+
+    // Update all UI text
+    updateUILanguage();
+
+    // Refresh the display with new language
+    displayWordDex(currentSort);
   });
 }
 
@@ -624,11 +698,11 @@ function startQuiz() {
 
     if (words.length < 3) {
       const quizContainer = document.getElementById('quizContainer');
-      quizContainer.innerHTML = '<p>You need at least 3 words in your collection to start a quiz. Catch more words!</p>';
+      quizContainer.innerHTML = `<p>${t('quizMinWords')}</p>`;
 
       const backBtn = document.createElement('button');
       backBtn.className = 'quiz-btn';
-      backBtn.textContent = 'Back';
+      backBtn.textContent = t('quizBack');
       backBtn.addEventListener('click', toggleQuizMode);
       quizContainer.appendChild(backBtn);
       return;
@@ -656,17 +730,17 @@ function showQuestion() {
   const definition = info.origin || 'No definition available';
 
   quizContainer.innerHTML = `
-    <div class="quiz-score">Question ${quizData.currentIndex + 1} of ${quizData.total}</div>
+    <div class="quiz-score">${t('quizQuestion')} ${quizData.currentIndex + 1} ${t('quizOf')} ${quizData.total}</div>
     <div class="quiz-question">
-      <strong>Definition:</strong><br>
+      <strong>${t('quizDefinition')}</strong><br>
       ${escapeHtml(definition)}
     </div>
     <div class="quiz-question">
-      <strong>Fill in the blank:</strong><br>
-      The word is: <input type="text" class="quiz-input" id="quizAnswer" placeholder="Type your answer...">
+      <strong>${t('quizFillBlank')}</strong><br>
+      ${t('quizTheWordIs')} <input type="text" class="quiz-input" id="quizAnswer" placeholder="${t('quizAnswerPlaceholder')}">
     </div>
-    <button class="quiz-btn" id="submitAnswer">Submit</button>
-    <button class="quiz-btn" id="skipQuestion">Skip</button>
+    <button class="quiz-btn" id="submitAnswer">${t('quizSubmit')}</button>
+    <button class="quiz-btn" id="skipQuestion">${t('quizSkip')}</button>
   `;
 
   const input = document.getElementById('quizAnswer');
@@ -701,8 +775,8 @@ function checkAnswer(correctWord) {
   const resultDiv = document.createElement('div');
   resultDiv.className = `quiz-result ${isCorrect ? 'correct' : 'incorrect'}`;
   resultDiv.innerHTML = isCorrect
-    ? `Correct! The word is "${correctWord}".`
-    : `Incorrect. The correct answer is "${correctWord}".`;
+    ? t('quizCorrect', { word: correctWord })
+    : t('quizIncorrect', { word: correctWord });
 
   quizContainer.insertBefore(resultDiv, quizContainer.firstChild);
 
@@ -718,53 +792,51 @@ function showResults() {
 
   let message = '';
   if (percentage === 100) {
-    message = 'Perfect! You know your words!';
+    message = t('quizPerfect');
   } else if (percentage >= 80) {
-    message = 'Great job! You know most of your words!';
+    message = t('quizGreat');
   } else if (percentage >= 60) {
-    message = 'Good effort! Keep learning!';
+    message = t('quizGood');
   } else {
-    message = 'Keep practicing! Review your words more often.';
+    message = t('quizPractice');
   }
 
   quizContainer.innerHTML = `
-    <div class="quiz-score">Quiz Complete!</div>
+    <div class="quiz-score">${t('quizComplete')}</div>
     <div class="quiz-result ${percentage >= 60 ? 'correct' : 'incorrect'}">
-      <strong>Your Score: ${quizData.score} / ${quizData.total} (${percentage}%)</strong><br><br>
+      <strong>${t('quizScore')} ${quizData.score} / ${quizData.total} (${percentage}%)</strong><br><br>
       ${message}
     </div>
   `;
 
   const tryAgainBtn = document.createElement('button');
   tryAgainBtn.className = 'quiz-btn';
-  tryAgainBtn.textContent = 'Try Again';
+  tryAgainBtn.textContent = t('quizTryAgain');
   tryAgainBtn.addEventListener('click', startQuiz);
 
   const backBtn = document.createElement('button');
   backBtn.className = 'quiz-btn';
-  backBtn.textContent = 'Back to WordDex';
+  backBtn.textContent = t('quizBack');
   backBtn.addEventListener('click', toggleQuizMode);
 
   quizContainer.appendChild(tryAgainBtn);
   quizContainer.appendChild(backBtn);
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    setupDarkMode();
-    setupSortButtons();
-    setupSearchBar();
-    setupQuizButton();
-    displayWordDex(currentSort);
-    initKofi();
-  });
-} else {
-  setupDarkMode();
+async function initializePopup() {
+  await setupLanguageToggle(); // Wait for language to load first
+  await setupDarkMode(); // Then setup dark mode with correct language
   setupSortButtons();
   setupSearchBar();
   setupQuizButton();
   displayWordDex(currentSort);
   initKofi();
+}
+
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initializePopup);
+} else {
+  initializePopup();
 }
 
 function initKofi() {
