@@ -1,10 +1,11 @@
 // Import word frequency database for fallback
 importScripts('wordFrequency.js');
 importScripts('i18n.js');
+importScripts('config.js');
 console.log('Lingomon: Frequency-based rarity system LOADED v2.0');
 
-// Korean API Key (from .env)
-const KOREAN_API_KEY = '***REMOVED***';
+// Korean API Key (from config.js)
+const KOREAN_API_KEY = CONFIG.KOREAN_API_KEY;
 
 const commonWords = new Set([
   'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'I', 'it', 'for', 'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at',
