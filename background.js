@@ -422,7 +422,7 @@ function getFallbackFrequency(word) {
   return { frequency: null, source: 'unknown' };
 }
 
-// Fetch Korean definition from Korean National Institute API
+// Fetch Korean definition from Korean Learners' Dictionary API
 async function fetchKoreanDefinition(word) {
   try {
     const controller = new AbortController();
@@ -430,13 +430,16 @@ async function fetchKoreanDefinition(word) {
 
     const params = new URLSearchParams({
       key: KOREAN_API_KEY,
-      apiSearchWord: word,
+      q: word,
+      part: 'word',
+      sort: 'dict',
       start: '1',
       num: '10',
-      sort: 'wt' // accuracy sort
+      translated: 'y',
+      trans_lang: '1' // English
     });
 
-    const url = `https://kli.korean.go.kr/term/api/search.do?${params.toString()}`;
+    const url = `https://krdict.korean.go.kr/api/search?${params.toString()}`;
 
     const res = await fetch(url, {
       signal: controller.signal
@@ -449,101 +452,97 @@ async function fetchKoreanDefinition(word) {
       throw new Error(`Korean API HTTP error: ${res.status}`);
     }
 
-    const data = await res.json();
-    console.log(`Korean API response for "${word}":`, JSON.stringify(data, null, 2));
+    const text = await res.text();
+    console.log(`Korean API response for "${word}":`, text);
 
-    // Check response structure
-    if (!data.channel) {
-      throw new Error('Korean API: No channel in response');
-    }
+    // Parse XML response
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(text, 'text/xml');
 
-    // Check if return_object is a string (no results found)
-    if (typeof data.channel.return_object === 'string') {
-      console.log(`Korean API: No results for "${word}":`, data.channel.return_object);
-      throw new Error('Word not found in Korean terminology database');
-    }
+    // Check for errors
+    const errorNode = xmlDoc.querySelector('error');
+    if (errorNode) {
+      const errorCode = errorNode.getAttribute('error_code');
+      const errorMsg = errorNode.textContent;
+      console.log(`Korean API error for "${word}": ${errorCode} - ${errorMsg}`);
 
-    // Handle both array and object formats for return_object
-    let returnObj;
-    if (Array.isArray(data.channel.return_object)) {
-      returnObj = data.channel.return_object[0];
-    } else if (typeof data.channel.return_object === 'object') {
-      returnObj = data.channel.return_object;
-    } else {
-      throw new Error('Korean API: Invalid return_object type');
-    }
-
-    if (!returnObj) {
-      throw new Error('Korean API: Empty return_object');
-    }
-
-    // Check return code
-    if (returnObj.returnCode !== 1 && returnObj.returnCode !== '1') {
       const errorMessages = {
-        '000': 'System Error',
-        '020': 'Unregistered Authentication Key',
-        '021': 'Unavailable Authentication Key',
-        '022': 'Daily Limit Excess',
-        '100': 'Incorrect Request'
+        '000': '시스템 오류',
+        '010': '필수 요청 변수가 없음',
+        '011': '필수 요청 변수 오류',
+        '020': '등록되지 않은 인증 키',
+        '021': '사용할 수 없는 인증 키',
+        '022': '일일 한도 초과',
+        '100': '잘못된 요청 변수'
       };
-      const errorMsg = errorMessages[returnObj.returnCode] || returnObj.message || 'Unknown error';
-      console.log(`Korean API error for "${word}": ${returnObj.returnCode} - ${errorMsg}`);
-      throw new Error(errorMsg);
+      throw new Error(errorMessages[errorCode] || errorMsg || 'API 오류');
     }
 
-    // Extract results
-    if (!returnObj.resultlist || !Array.isArray(returnObj.resultlist) || returnObj.resultlist.length === 0) {
+    // Get items
+    const items = xmlDoc.querySelectorAll('item');
+
+    if (items.length === 0) {
       console.log(`Korean API: No results found for "${word}"`);
-      throw new Error('Word not found in Korean terminology database');
+      throw new Error('사전에서 단어를 찾을 수 없습니다');
     }
 
-    const result = returnObj.resultlist[0];
+    const item = items[0];
+
+    // Extract data
+    const wordElement = item.querySelector('word');
+    const koreanWord = wordElement?.textContent || word;
+
+    const senseElements = item.querySelectorAll('sense');
+    const definitions = [];
+
+    for (const sense of senseElements) {
+      const translation = sense.querySelector('translation trans_word')?.textContent;
+      const definition = sense.querySelector('translation trans_dfn')?.textContent;
+
+      if (translation || definition) {
+        definitions.push({
+          translation: translation || '',
+          definition: definition || ''
+        });
+      }
+    }
+
+    if (definitions.length === 0) {
+      throw new Error('정의를 찾을 수 없습니다');
+    }
 
     // Build formatted origin text
     let originParts = [];
 
-    if (result.category_main || result.category_sub) {
-      const category = [result.category_main, result.category_sub].filter(Boolean).join(' > ');
-      originParts.push(`분류: ${category}`);
-    }
+    originParts.push(`한국어: ${koreanWord}`);
 
-    if (result.definition) {
-      originParts.push(`정의: ${result.definition}`);
-    }
+    definitions.slice(0, 3).forEach((def, idx) => {
+      if (definitions.length > 1) {
+        originParts.push(`\n${idx + 1}. ${def.translation || def.definition}`);
+        if (def.translation && def.definition) {
+          originParts.push(`   ${def.definition}`);
+        }
+      } else {
+        if (def.translation) {
+          originParts.push(`\n뜻: ${def.translation}`);
+        }
+        if (def.definition) {
+          originParts.push(`설명: ${def.definition}`);
+        }
+      }
+    });
 
-    if (result.origin && result.origin_cc) {
-      originParts.push(`원어: ${result.origin} (${result.origin_cc})`);
-    } else if (result.origin) {
-      originParts.push(`원어: ${result.origin}`);
-    }
+    const origin = originParts.join('\n');
 
-    if (result.translation && result.translation_cc) {
-      originParts.push(`대역어: ${result.translation} (${result.translation_cc})`);
-    } else if (result.translation) {
-      originParts.push(`대역어: ${result.translation}`);
-    }
-
-    if (result.use_ex) {
-      // Strip HTML tags from example
-      const cleanExample = result.use_ex.replace(/<[^>]*>/g, '');
-      originParts.push(`예시: ${cleanExample}`);
-    }
-
-    if (result.source) {
-      originParts.push(`출처: ${result.source} - ${result.glossary || ''}`);
-    }
-
-    const origin = originParts.join('\n\n');
-
-    // For now, use placeholder rarity (will be improved later per user request)
-    // Using 'uncommon' as default for Korean words
-    const rarity = 'uncommon';
+    // Use word frequency for rarity calculation
+    const freqData = await fetchWordFrequency(word);
+    const rarity = getWordRarity(word, freqData.frequency, freqData.source);
 
     return {
       origin,
       rarity,
-      frequency: null,
-      frequencySource: 'korean-api'
+      frequency: freqData.frequency,
+      frequencySource: freqData.source
     };
 
   } catch (err) {
