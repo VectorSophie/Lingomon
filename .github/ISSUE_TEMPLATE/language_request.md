@@ -22,7 +22,7 @@ See LANGUAGE_REQUEST_TEMPLATE.md for detailed instructions.
 
 ---
 
-## 🔍 Dictionary API Research
+## Dictionary API Research
 
 **API Name:**
 **API Documentation URL:**
@@ -40,7 +40,7 @@ See LANGUAGE_REQUEST_TEMPLATE.md for detailed instructions.
 
 ---
 
-## 🌐 Translation API Research (Optional)
+## Translation API Research (Optional)
 
 **API Name:**
 **API Documentation URL:**
@@ -54,7 +54,7 @@ See LANGUAGE_REQUEST_TEMPLATE.md for detailed instructions.
 
 ---
 
-## 📊 Frequency Data API (Optional)
+## Frequency Data API (Optional)
 
 **API Name:** <!-- Most languages don't have this - it's OK to leave blank! -->
 **API URL:**
@@ -63,7 +63,7 @@ See LANGUAGE_REQUEST_TEMPLATE.md for detailed instructions.
 
 ---
 
-## ✅ Additional Information
+## Additional Information
 
 **I tested these APIs:** <!-- Yes/No - Did you actually run test requests? -->
 **Potential Issues:** <!-- Any challenges you noticed during testing -->
@@ -74,7 +74,7 @@ See LANGUAGE_REQUEST_TEMPLATE.md for detailed instructions.
 
 ---
 
-## 📎 Resources I Used
+## Resources I Used
 
 <!-- List any helpful links, GitHub repos, or tools you used to research -->
 -
@@ -86,5 +86,5 @@ See LANGUAGE_REQUEST_TEMPLATE.md for detailed instructions.
 Don't know how to fill this out? Check the full guide:
 https://github.com/[your-username]/lingomon/blob/master/LANGUAGE_REQUEST_TEMPLATE.md
 
-Thank you for contributing to Lingomon! 🙏
+Thank you for contributing to Lingomon!
 -->

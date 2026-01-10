@@ -1,11 +1,5 @@
 blank_issues_enabled: true
 contact_links:
-  - name: Discussion & Questions
-    url: https://github.com/[your-username]/lingomon/discussions
-    about: Ask questions, share ideas, or discuss Lingomon
-  - name: Language Request Template
-    url: https://github.com/[your-username]/lingomon/blob/master/LANGUAGE_REQUEST_TEMPLATE.md
-    about: Detailed guide for requesting language support
   - name: Chrome Web Store
     url: https://chrome.google.com/webstore/detail/[your-extension-id]
     about: Install or review Lingomon on Chrome Web Store
