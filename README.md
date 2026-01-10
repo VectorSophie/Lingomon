@@ -12,6 +12,11 @@ Lingomon is an educational browser extension that makes learning new words fun a
 
 - **Catch Words**: Right-click any word on any website to add it to your WordDex
 - **Real Frequency-Based Rarity**: Words assigned tiers based on actual linguistic data from Datamuse API (NEW v2.0!)
+- **Korean Language Support**: Full UI translation with Korean dictionary integration (NEW v1.7!)
+  - Toggle between English and Korean UI
+  - Korean-English dictionary lookup for Korean words
+  - Automatic translation of English definitions to Korean
+  - Translated badges and interface elements
 - **Beautiful Popups**: Enjoy vibrant, color-coded notifications when you catch a new word
 - **WordDex**: View your entire collection with frequency scores and rarity tiers
 - **Dictionary Integration**: Get definitions and etymology for words you catch
@@ -121,14 +126,35 @@ Based on linguistic analysis:
 - Words not found in the database or API are treated as **Mythic** (assumed < 0.1)
 - The system uses **Datamuse API** for real-time lookup with local database fallback
 
+## Korean Language Support (v1.7+)
+
+Lingomon now supports full Korean language interface with intelligent dictionary lookup:
+
+### How Korean Mode Works
+
+1. **Toggle Language**: Click the "KO" button in the popup to switch to Korean mode
+2. **Smart Dictionary Lookup**:
+   - **Korean words**: Direct lookup in Korean Learners' Dictionary
+   - **English words**: Automatically translated to Korean, then looked up
+   - **Fallback**: If Korean lookup fails, English definition is translated to Korean
+3. **Fully Translated UI**: All interface elements, badges, and labels appear in Korean
+4. **Part of Speech Translation**: Grammar terms (noun → 명사, verb → 동사, etc.)
+
+### Korean APIs Used
+
+- **Korean Learners' Dictionary** (krdict.korean.go.kr): Korean-English dictionary
+- **MyMemory Translation API**: English-to-Korean translation for definitions
+
 ## Privacy
 
 Lingomon values your privacy:
 - All data is stored locally in your browser
 - No personal information is collected or transmitted
 - External API calls:
-  - [Free Dictionary API](https://dictionaryapi.dev/) - Word definitions and etymology
-  - [Datamuse API](https://www.datamuse.com/api/) - Real-time word frequency data
+  - [Free Dictionary API](https://dictionaryapi.dev/) - Word definitions and etymology (English)
+  - [Datamuse API](https://www.datamuse.com/api/) - Real-time word frequency data (English)
+  - [Korean Learners' Dictionary](https://krdict.korean.go.kr/) - Korean-English dictionary (Korean mode only)
+  - [MyMemory Translation API](https://mymemory.translated.net/) - English-to-Korean translation (Korean mode only)
 - Fallback: Local frequency database used when APIs are unavailable
 
 ## Contributing

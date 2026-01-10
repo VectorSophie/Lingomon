@@ -23,7 +23,8 @@
    "host_permissions": [
     "https://api.dictionaryapi.dev/*",
     "https://api.datamuse.com/*",
-    "https://krdict.korean.go.kr/*"
+    "https://krdict.korean.go.kr/*",
+    "https://api.mymemory.translated.net/*"
    ]
 
 }
