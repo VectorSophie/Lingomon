@@ -156,16 +156,16 @@ const translations = {
 
     // Search & Controls
     searchPlaceholder: "단어 검색...",
-    sortAlpha: "가나다순",
+    sortAlpha: "ABC순",
     sortRecent: "최근순",
     sortRarity: "희귀도순",
     quiz: "퀴즈",
 
     // Stats
-    collectionStats: "수집 통계",
+    collectionStats: "통계",
     totalWords: "총 단어 수",
-    streak: "연속 기록",
-    longest: "최고 기록",
+    streak: "연속 출석일수",
+    longest: "최고 연속 출석일수",
     day: "일",
     days: "일",
 
@@ -186,28 +186,28 @@ const translations = {
     MYTHIC: "신화",
 
     // Messages
-    noWordsMessage: "아직 수집한 단어가 없습니다. 웹 페이지에서 단어를 우클릭하여 수집을 시작하세요!",
+    noWordsMessage: "아직 수집한 단어가 없습니다. 웹에서 단어를 우클릭하여 수집을 시작하세요!",
     noSearchResults: "검색 결과가 없습니다.",
     deleteConfirm: "\"{word}\"을(를) 삭제하시겠습니까?",
     deleteButton: "삭제",
 
     // Charts
-    wordsCaughtLast7Days: "최근 7일 수집 단어",
+    wordsCaughtLast7Days: "최근 1주 수집 단어",
     rarityDistribution: "희귀도 분포",
 
     // Badges
     achievements: "업적",
-    hiddenBadges: "숨겨진 배지",
+    hiddenBadges: "히든 업적",
     maxLevel: "최고 레벨!",
     nextBadge: "다음:",
 
     // Badge Names
     firstDay: "첫 날",
-    "7DayStreak": "7일 연속",
+    "7DayStreak": "1주 연속",
     "10DayStreak": "10일 연속",
-    "30DayStreak": "30일 연속",
+    "30DayStreak": "1달 연속",
     "100DayStreak": "100일 연속",
-    "365DayStreak": "365일 연속",
+    "365DayStreak": "1년 연속",
 
     firstWord: "첫 단어",
     "5Words": "5개 단어",
@@ -238,7 +238,7 @@ const translations = {
     quizOf: "/",
     quizDefinition: "정의:",
     quizFillBlank: "빈칸 채우기:",
-    quizTheWordIs: "단어는:",
+    quizTheWordIs: "단어:",
     quizSubmit: "제출",
     quizSkip: "건너뛰기",
     quizBack: "단어장으로",
