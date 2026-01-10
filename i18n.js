@@ -57,6 +57,8 @@ const translations = {
     // Badges
     achievements: "Achievements",
     hiddenBadges: "Hidden Badges",
+    maxLevel: "Max level!",
+    nextBadge: "Next:",
 
     // Badge Names
     firstDay: "First Day",
@@ -196,6 +198,8 @@ const translations = {
     // Badges
     achievements: "업적",
     hiddenBadges: "숨겨진 배지",
+    maxLevel: "최고 레벨!",
+    nextBadge: "다음:",
 
     // Badge Names
     firstDay: "첫 날",

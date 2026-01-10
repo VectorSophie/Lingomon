@@ -389,7 +389,7 @@ function displayCharts(wordDex, achievements) {
 
       const text = document.createElement('span');
       const percent = ((count / total) * 100).toFixed(1);
-      text.textContent = `${rarity.charAt(0).toUpperCase() + rarity.slice(1)}: ${percent}%`;
+      text.textContent = `${t(rarity.toUpperCase())}: ${percent}%`;
       item.appendChild(text);
 
       legend.appendChild(item);
@@ -424,7 +424,9 @@ function displayBadges(badges) {
 
       const hexagon = document.createElement('div');
       hexagon.className = 'badge-hexagon';
-      hexagon.title = badge.name + (badge.next ? ` - Next: ${badge.next.name}` : ' - Max level!');
+      const badgeName = badge.nameKey ? t(badge.nameKey) : badge.name;
+      const nextName = badge.next ? (badge.next.nameKey ? t(badge.next.nameKey) : badge.next.name) : null;
+      hexagon.title = badgeName + (nextName ? ` - ${t('nextBadge')} ${nextName}` : ` - ${t('maxLevel')}`);
 
       const color = rarityScale[badge.rarity] || '#cccccc';
       hexagon.style.setProperty('--badge-color', color);
@@ -432,7 +434,7 @@ function displayBadges(badges) {
 
       const content = document.createElement('div');
       content.className = 'badge-content';
-      content.textContent = badge.name;
+      content.textContent = badgeName;
       hexagon.appendChild(content);
 
       badgeWrapper.appendChild(hexagon);
@@ -479,7 +481,19 @@ function displayBadges(badges) {
 
       const hexagon = document.createElement('div');
       hexagon.className = 'badge-hexagon';
-      hexagon.title = badge.name + (badge.count ? ` (${badge.count})` : '');
+
+      // Translate hidden badge names
+      let badgeName = badge.name;
+      if (badge.type === 'firstMythic') {
+        badgeName = t('firstMythic');
+      } else if (badge.type === 'meta') {
+        badgeName = t('meta');
+      } else if (badge.type === 'rarityKiller') {
+        const killerKey = `${badge.rarity}Killer`;
+        badgeName = t(killerKey);
+      }
+
+      hexagon.title = badgeName + (badge.count ? ` (${badge.count})` : '');
 
       // Meta badge gets special black color
       const color = badge.type === 'meta' ? '#000000' : (rarityScale[badge.rarity] || '#cccccc');
@@ -488,7 +502,7 @@ function displayBadges(badges) {
 
       const content = document.createElement('div');
       content.className = 'badge-content';
-      content.textContent = badge.name;
+      content.textContent = badgeName;
       hexagon.appendChild(content);
 
       badgeWrapper.appendChild(hexagon);

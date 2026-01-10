@@ -100,15 +100,122 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     let origin, rarity, freqData;
 
     if (currentLanguage === 'ko') {
-      // Korean mode: Use Korean API
+      // Korean mode: Try Korean API first, translate to Korean if needed
       console.log(`Lingomon: Using Korean API for "${word}"`);
-      const koreanData = await fetchKoreanDefinition(word);
-      origin = koreanData.origin;
-      rarity = koreanData.rarity;
-      freqData = {
-        frequency: koreanData.frequency,
-        source: koreanData.frequencySource
-      };
+      try {
+        const koreanData = await fetchKoreanDefinition(word);
+        origin = koreanData.origin;
+        rarity = koreanData.rarity;
+        freqData = {
+          frequency: koreanData.frequency,
+          source: koreanData.frequencySource
+        };
+      } catch (koreanErr) {
+        console.log(`Lingomon: Korean API failed for "${word}", trying translation:`, koreanErr.message);
+
+        // Try to translate English word to Korean
+        try {
+          const translatedWord = await translateToKorean(word);
+          console.log(`Lingomon: Translated "${word}" to "${translatedWord}"`);
+
+          // Try Korean API again with translated word
+          const koreanData = await fetchKoreanDefinition(translatedWord);
+          origin = `[${word} → ${translatedWord}]\n\n${koreanData.origin}`;
+          rarity = koreanData.rarity;
+          freqData = {
+            frequency: koreanData.frequency,
+            source: koreanData.frequencySource
+          };
+        } catch (translationErr) {
+          console.log(`Lingomon: Translation/Korean API failed, falling back to English API with translation:`, translationErr.message);
+          // Fallback to English API and translate the definition
+          const dictionaryPromise = (async () => {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+            const res = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word.toLowerCase()}`, {
+              signal: controller.signal
+            });
+
+            clearTimeout(timeoutId);
+            return res;
+          })();
+
+          const frequencyPromise = fetchWordFrequency(word);
+          const [res, freqDataResult] = await Promise.all([dictionaryPromise, frequencyPromise]);
+          freqData = freqDataResult;
+
+          if (!res.ok) {
+            if (res.status === 404) {
+              throw new Error('Word not found in dictionary');
+            }
+            throw new Error(`API error: ${res.status}`);
+          }
+
+          const data = await res.json();
+
+          if (!Array.isArray(data) || data.length === 0) {
+            throw new Error('No definition found');
+          }
+
+          if (!data[0] || !data[0].meanings || !Array.isArray(data[0].meanings) || data[0].meanings.length === 0) {
+            throw new Error('No meanings available');
+          }
+
+          const firstMeaning = data[0].meanings[0];
+          if (!firstMeaning.definitions || !Array.isArray(firstMeaning.definitions) || firstMeaning.definitions.length === 0) {
+            throw new Error('No definitions available');
+          }
+
+          const defObj = firstMeaning.definitions[0];
+          const definition = defObj.definition || 'No definition found.';
+          const example = defObj.example || '';
+          const partOfSpeech = firstMeaning.partOfSpeech || '';
+          let etymology = data[0].origin || '';
+
+          // Translate part of speech
+          const posTranslations = {
+            'noun': '명사',
+            'verb': '동사',
+            'adjective': '형용사',
+            'adverb': '부사',
+            'pronoun': '대명사',
+            'preposition': '전치사',
+            'conjunction': '접속사',
+            'interjection': '감탄사'
+          };
+          const koreanPOS = posTranslations[partOfSpeech.toLowerCase()] || partOfSpeech;
+
+          // Translate definition and example
+          try {
+            const translatedDef = await translateToKorean(definition);
+            const translatedExample = example ? await translateToKorean(example) : '';
+
+            const defText = `(${koreanPOS}) ${translatedDef}`;
+            const exampleText = translatedExample ? `\n\n예시: "${translatedExample}"` : '';
+
+            if (etymology) {
+              const translatedEtym = await translateToKorean(etymology);
+              origin = `어원: ${translatedEtym}\n\n${defText}${exampleText}`;
+            } else {
+              origin = `${defText}${exampleText}`;
+            }
+          } catch (translationError) {
+            console.log(`Lingomon: Failed to translate definition, using English:`, translationError.message);
+            // If translation fails, use English with Korean labels
+            const defText = `(${koreanPOS || partOfSpeech}) ${definition}`;
+            const exampleText = example ? `\n\n예시: "${example}"` : '';
+
+            if (etymology) {
+              origin = `어원: ${etymology}\n\n${defText}${exampleText}`;
+            } else {
+              origin = `${defText}${exampleText}`;
+            }
+          }
+
+          rarity = getWordRarity(word, freqData.frequency, freqData.source);
+        }
+      }
     } else {
       // English mode: Use existing English APIs
       console.log(`Lingomon: Using English APIs for "${word}"`);
@@ -422,7 +529,48 @@ function getFallbackFrequency(word) {
   return { frequency: null, source: 'unknown' };
 }
 
-// Fetch Korean definition from Korean Learners' Dictionary API
+// Translate English word to Korean using MyMemory Translation API
+async function translateToKorean(englishWord) {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    const url = `https://api.mymemory.translated.net/get?q=${encodeURIComponent(englishWord)}&langpair=en|ko`;
+
+    const res = await fetch(url, {
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!res.ok) {
+      console.log(`Translation API HTTP error for "${englishWord}": ${res.status}`);
+      throw new Error(`Translation API HTTP error: ${res.status}`);
+    }
+
+    const data = await res.json();
+    console.log(`Translation API response for "${englishWord}":`, JSON.stringify(data, null, 2));
+
+    if (!data.responseData || !data.responseData.translatedText) {
+      throw new Error('No translation found');
+    }
+
+    const translation = data.responseData.translatedText;
+
+    // Check if translation is valid (not just the same word back)
+    if (translation.toLowerCase() === englishWord.toLowerCase()) {
+      throw new Error('Translation returned same word');
+    }
+
+    return translation;
+
+  } catch (err) {
+    console.log(`Translation error for "${englishWord}":`, err.message);
+    throw err;
+  }
+}
+
+// Fetch Korean definition from Korean National Institute API
 async function fetchKoreanDefinition(word) {
   try {
     const controller = new AbortController();
@@ -563,30 +711,30 @@ function updateBadges(wordDex, achievements, streakData, sitesExplored, currentR
 
   // Badge tier thresholds and their rarities
   const streakTiers = [
-    { threshold: 365, rarity: 'mythic', name: '365 Day Streak' },
-    { threshold: 100, rarity: 'legendary', name: '100 Day Streak' },
-    { threshold: 30, rarity: 'epic', name: '30 Day Streak' },
-    { threshold: 10, rarity: 'rare', name: '10 Day Streak' },
-    { threshold: 7, rarity: 'uncommon', name: '7 Day Streak' },
-    { threshold: 1, rarity: 'common', name: 'First Day' }
+    { threshold: 365, rarity: 'mythic', nameKey: '365DayStreak' },
+    { threshold: 100, rarity: 'legendary', nameKey: '100DayStreak' },
+    { threshold: 30, rarity: 'epic', nameKey: '30DayStreak' },
+    { threshold: 10, rarity: 'rare', nameKey: '10DayStreak' },
+    { threshold: 7, rarity: 'uncommon', nameKey: '7DayStreak' },
+    { threshold: 1, rarity: 'common', nameKey: 'firstDay' }
   ];
 
   const wordTiers = [
-    { threshold: 500, rarity: 'mythic', name: '500 Words' },
-    { threshold: 100, rarity: 'legendary', name: '100 Words' },
-    { threshold: 50, rarity: 'epic', name: '50 Words' },
-    { threshold: 10, rarity: 'rare', name: '10 Words' },
-    { threshold: 5, rarity: 'uncommon', name: '5 Words' },
-    { threshold: 1, rarity: 'common', name: 'First Word' }
+    { threshold: 500, rarity: 'mythic', nameKey: '500Words' },
+    { threshold: 100, rarity: 'legendary', nameKey: '100Words' },
+    { threshold: 50, rarity: 'epic', nameKey: '50Words' },
+    { threshold: 10, rarity: 'rare', nameKey: '10Words' },
+    { threshold: 5, rarity: 'uncommon', nameKey: '5Words' },
+    { threshold: 1, rarity: 'common', nameKey: 'firstWord' }
   ];
 
   const siteTiers = [
-    { threshold: 500, rarity: 'mythic', name: '500 Sites' },
-    { threshold: 100, rarity: 'legendary', name: '100 Sites' },
-    { threshold: 50, rarity: 'epic', name: '50 Sites' },
-    { threshold: 10, rarity: 'rare', name: '10 Sites' },
-    { threshold: 5, rarity: 'uncommon', name: '5 Sites' },
-    { threshold: 1, rarity: 'common', name: 'First Site' }
+    { threshold: 500, rarity: 'mythic', nameKey: '500Sites' },
+    { threshold: 100, rarity: 'legendary', nameKey: '100Sites' },
+    { threshold: 50, rarity: 'epic', nameKey: '50Sites' },
+    { threshold: 10, rarity: 'rare', nameKey: '10Sites' },
+    { threshold: 5, rarity: 'uncommon', nameKey: '5Sites' },
+    { threshold: 1, rarity: 'common', nameKey: 'firstSite' }
   ];
 
   // Find current tier and next tier for streak
@@ -623,19 +771,31 @@ function updateBadges(wordDex, achievements, streakData, sitesExplored, currentR
   }
 
   if (streakBadge) {
+    streakBadge.name = t(streakBadge.nameKey);
     streakBadge.next = nextStreakTier;
+    if (nextStreakTier) {
+      streakBadge.next.name = t(nextStreakTier.nameKey);
+    }
     streakBadge.progress = nextStreakTier ? (currentStreak / nextStreakTier.threshold) * 100 : 100;
     badges.main.push(streakBadge);
   }
 
   if (wordBadge) {
+    wordBadge.name = t(wordBadge.nameKey);
     wordBadge.next = nextWordTier;
+    if (nextWordTier) {
+      wordBadge.next.name = t(nextWordTier.nameKey);
+    }
     wordBadge.progress = nextWordTier ? (totalWords / nextWordTier.threshold) * 100 : 100;
     badges.main.push(wordBadge);
   }
 
   if (siteBadge) {
+    siteBadge.name = t(siteBadge.nameKey);
     siteBadge.next = nextSiteTier;
+    if (nextSiteTier) {
+      siteBadge.next.name = t(nextSiteTier.nameKey);
+    }
     siteBadge.progress = nextSiteTier ? (totalSites / nextSiteTier.threshold) * 100 : 100;
     badges.main.push(siteBadge);
   }
@@ -645,7 +805,7 @@ function updateBadges(wordDex, achievements, streakData, sitesExplored, currentR
   if (isNew && currentRarity === 'mythic') {
     const hasFirstMythic = badges.hidden.some(b => b.type === 'firstMythic');
     if (!hasFirstMythic) {
-      badges.hidden.push({ type: 'firstMythic', name: 'First Mythic!', rarity: 'mythic', unlocked: true });
+      badges.hidden.push({ type: 'firstMythic', name: t('firstMythic'), rarity: 'mythic', unlocked: true });
     }
   }
 
@@ -655,12 +815,14 @@ function updateBadges(wordDex, achievements, streakData, sitesExplored, currentR
     const count = achievements[rarity] || 0;
     if (count >= 100) {
       const existingKiller = badges.hidden.find(b => b.type === 'rarityKiller' && b.rarity === rarity);
+      const killerNameKey = `${rarity}Killer`;
       if (existingKiller) {
         existingKiller.count = count;
+        existingKiller.name = t(killerNameKey);
       } else {
         badges.hidden.push({
           type: 'rarityKiller',
-          name: `${rarity.charAt(0).toUpperCase() + rarity.slice(1)} Killer`,
+          name: t(killerNameKey),
           rarity: rarity,
           count: count,
           unlocked: true
@@ -675,7 +837,7 @@ function updateBadges(wordDex, achievements, streakData, sitesExplored, currentR
     if (!hasMeta) {
       badges.hidden.push({
         type: 'meta',
-        name: 'Meta',
+        name: t('meta'),
         rarity: 'epic',
         unlocked: true
       });
