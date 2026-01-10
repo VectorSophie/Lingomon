@@ -1,5 +1,10 @@
 # Lingomon - Gotta Catch 'Em All!
 
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
+[![GitHub issues](https://img.shields.io/github/issues/lalalune/lingomon.svg)](https://github.com/lalalune/lingomon/issues)
+[![GitHub stars](https://img.shields.io/github/stars/lalalune/lingomon.svg)](https://github.com/lalalune/lingomon/stargazers)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
+
 ![Lingomon Icon](lingomon.png)
 
 Welcome to Lingomon, the browser extension that turns vocabulary building into an adventure! Every new word you encounter becomes a collectible creature in your personal WordDex.
@@ -12,7 +17,7 @@ Lingomon is an educational browser extension that makes learning new words fun a
 
 - **Catch Words**: Right-click any word on any website to add it to your WordDex
 - **Real Frequency-Based Rarity**: Words assigned tiers based on actual linguistic data from Datamuse API (NEW v2.0!)
-- **Korean Language Support**: Full UI translation with Korean dictionary integration (NEW v1.7!)
+- **Multi-language Support**: English + Korean (**[Add your language!](LANGUAGE_REQUEST_TEMPLATE.md)**)
   - Toggle between English and Korean UI
   - Korean-English dictionary lookup for Korean words
   - Automatic translation of English definitions to Korean
@@ -27,15 +32,40 @@ Lingomon is an educational browser extension that makes learning new words fun a
 - **Daily Streaks**: Build vocabulary learning habits
 - **Quiz Mode**: Test your knowledge of caught words
 
+## Want Your Language in Lingomon?
+
+**No coding required!** Help me add support for your language:
+
+1. Fill out the [Language Request Template](LANGUAGE_REQUEST_TEMPLATE.md)
+2. Research free dictionary APIs (I'll guide you!)
+3. Submit as a [GitHub issue](https://github.com/lalalune/lingomon/issues/new?template=language_request.md)
+4. I implement it and credit you!
+
+**Priority Languages:** Spanish, French, German, Japanese, Portuguese, Arabic, Chinese, Hindi, Russian
+
+See [How to Request a Language](LANGUAGE_REQUEST_TEMPLATE.md) for detailed instructions.
+
 ## Installation
 
+### From Web Store (Recommended)
+- **Chrome/Edge/Brave:** Coming soon to Chrome Web Store
+- **Firefox:** Coming soon to Firefox Add-ons
+
+### From Source (Developers)
 1. Download or clone this repository
-2. Open your browser's extension page:
+   ```bash
+   git clone https://github.com/lalalune/lingomon.git
+   cd lingomon
+   ```
+2. Copy `config.example.js` to `config.js` (for Korean API support)
+3. Open your browser's extension page:
    - Chrome: Navigate to `chrome://extensions/`
+   - Firefox: Navigate to `about:debugging#/runtime/this-firefox`
    - Edge: Navigate to `edge://extensions/`
-3. Enable "Developer mode" (toggle in the top right)
-4. Click "Load unpacked" and select the Lingomon folder
-5. The Lingomon icon should appear in your browser toolbar!
+4. Enable "Developer mode" (toggle in the top right)
+5. Click "Load unpacked" (Chrome/Edge) or "Load Temporary Add-on" (Firefox)
+6. Select the Lingomon folder
+7. The Lingomon icon should appear in your browser toolbar!
 
 ## How to Use
 
@@ -159,7 +189,49 @@ Lingomon values your privacy:
 
 ## Contributing
 
-Found a bug or have a feature idea? Feel free to open an issue or submit a pull request!
+I welcome contributions of all kinds! Here are ways you can help:
+
+### Add Language Support (Easiest!)
+No coding required! Research dictionary APIs for your language and I'll implement it.
+- **Guide:** [Language Request Template](LANGUAGE_REQUEST_TEMPLATE.md)
+- **Submit:** [Create Language Request](https://github.com/lalalune/lingomon/issues/new?template=language_request.md)
+
+### Report Bugs
+Found a bug? Let me know!
+- [Report a Bug](https://github.com/lalalune/lingomon/issues/new?template=bug_report.md)
+
+### Suggest Features
+Have an idea? I'd love to hear it!
+- [Request a Feature](https://github.com/lalalune/lingomon/issues/new?template=feature_request.md)
+
+### Code Contributions
+Want to contribute code? Check out the guide:
+- [Contributing Guide](.github/CONTRIBUTING.md)
+- [Pull Request Template](.github/PULL_REQUEST_TEMPLATE.md)
+
+### Other Ways to Help
+- Star this repo
+- Share with friends
+- Write a review on the Chrome Web Store (coming soon)
+- Join discussions in [GitHub Discussions](https://github.com/lalalune/lingomon/discussions)
+
+Read the full [Contributing Guide](.github/CONTRIBUTING.md) for more details.
+
+## Contributors
+
+Thank you to all contributors!
+
+### Language Support Contributors
+<!-- Add contributors who submit language APIs -->
+- **Korean** - lalalune (solo developer, original implementation)
+- _More coming soon! [Add your language](LANGUAGE_REQUEST_TEMPLATE.md)_
+
+### Code Contributors
+<!-- GitHub will auto-populate this -->
+<!-- ALL-CONTRIBUTORS-LIST:START -->
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
+Want to be listed here? Check out the [Contributing Guide](.github/CONTRIBUTING.md)!
 
 ## License
 

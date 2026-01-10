@@ -22,7 +22,7 @@ This document provides guidelines for contributing to the project.
 
 ## Code of Conduct
 
-Be respectful, inclusive, and constructive. We're all here to make language learning better for everyone.
+Be respectful, inclusive, and constructive. This is a solo developer project, and I appreciate all help to make language learning better for everyone.
 
 **Expected behavior:**
 - Use welcoming and inclusive language
@@ -46,7 +46,7 @@ The easiest way to contribute is by researching dictionary APIs for your languag
 2. Test them with a few words
 3. Fill out the language request template
 4. Submit as a GitHub issue
-5. We'll implement it and credit you!
+5. I'll implement it and credit you!
 
 ### 2. Report Bugs
 Found a bug? Please report it!
@@ -62,7 +62,7 @@ Found a bug? Please report it!
 - Error messages from console (F12 → Console)
 
 ### 3. Suggest Features
-Have an idea? We'd love to hear it!
+Have an idea? I'd love to hear it!
 
 **See:** [Feature Request Template](.github/ISSUE_TEMPLATE/feature_request.md)
 
@@ -123,7 +123,7 @@ Help test new features and report issues:
 
 4. **Submit request:** Create a [new language request issue](https://github.com/[your-username]/lingomon/issues/new?template=language_request.md)
 
-5. **We implement:** Usually takes 1-2 weeks depending on complexity
+5. **I implement:** Usually takes 1-2 weeks depending on complexity
 
 6. **Get credited:** You'll be credited in the changelog and README!
 
@@ -166,7 +166,7 @@ Use the [Bug Report Template](https://github.com/[your-username]/lingomon/issues
 
 ## Suggesting Features
 
-We love feature ideas!
+I love feature ideas!
 
 ### Before Submitting:
 
