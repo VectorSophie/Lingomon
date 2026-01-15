@@ -130,7 +130,14 @@ function displayWordDex(sortType = 'alpha') {
           const rarityDiv = document.createElement('div');
           rarityDiv.className = 'rarity';
           rarityDiv.textContent = t(rarity.toUpperCase());
-          rarityDiv.style.color = rarityScale[rarity] || '#9b8bb5';
+          
+          if (rarity === 'god') {
+             rarityDiv.classList.add('rainbow-text');
+             // Override specific color if needed, but the class handles text fill
+             rarityDiv.style.textShadow = '0 1px 2px rgba(0,0,0,0.2)';
+          } else {
+             rarityDiv.style.color = rarityScale[rarity] || '#9b8bb5';
+          }
 
           const originDiv = document.createElement('div');
           originDiv.className = 'word-info';
@@ -353,40 +360,40 @@ function displayCharts(wordDex, achievements) {
   pieTitle.style.marginBottom = '8px';
   pieDiv.appendChild(pieTitle);
 
-  const total = Object.values(achievements).reduce((sum, count) => sum + count, 0);
-  if (total > 0) {
-    const rarityColors = {
-      common: '#ebebeb',
-      uncommon: '#a1ff96',
-      rare: '#96c7ff',
-      epic: '#b996ff',
-      legendary: '#fffa96',
-      mythic: '#ff6969'
-    };
-
-    let currentPercent = 0;
-    const pieSegments = document.createElement('div');
-    pieSegments.style.display = 'flex';
-    pieSegments.style.height = '20px';
-    pieSegments.style.borderRadius = '10px';
-    pieSegments.style.overflow = 'hidden';
-    pieSegments.style.marginBottom = '8px';
-
-    // Sort by count (percentage) in descending order
+    // Sort by count (percentage) in descending order, exclude 'god' from stats
     const sortedAchievements = Object.entries(achievements)
-      .filter(([_, count]) => count > 0)
+      .filter(([rarity, count]) => count > 0 && rarity !== 'god')
       .sort((a, b) => b[1] - a[1]);
 
-    sortedAchievements.forEach(([rarity, count]) => {
-      const percent = (count / total) * 100;
-      const segment = document.createElement('div');
-      segment.style.width = `${percent}%`;
-      segment.style.background = rarityColors[rarity] || '#cccccc';
-      segment.title = `${rarity}: ${count} (${percent.toFixed(1)}%)`;
-      pieSegments.appendChild(segment);
-    });
+    const total = sortedAchievements.reduce((sum, [_, count]) => sum + count, 0);
 
-    pieDiv.appendChild(pieSegments);
+    if (total > 0) {
+      const rarityColors = {
+        common: '#ebebeb',
+        uncommon: '#a1ff96',
+        rare: '#96c7ff',
+        epic: '#b996ff',
+        legendary: '#fffa96',
+        mythic: '#ff6969'
+      };
+
+      const pieSegments = document.createElement('div');
+      pieSegments.style.display = 'flex';
+      pieSegments.style.height = '20px';
+      pieSegments.style.borderRadius = '10px';
+      pieSegments.style.overflow = 'hidden';
+      pieSegments.style.marginBottom = '8px';
+
+      sortedAchievements.forEach(([rarity, count]) => {
+        const percent = (count / total) * 100;
+        const segment = document.createElement('div');
+        segment.style.width = `${percent}%`;
+        segment.style.background = rarityColors[rarity] || '#cccccc';
+        segment.title = `${rarity}: ${count} (${percent.toFixed(1)}%)`;
+        pieSegments.appendChild(segment);
+      });
+
+      pieDiv.appendChild(pieSegments);
 
     // Legend
     const legend = document.createElement('div');
@@ -643,9 +650,9 @@ async function setupDarkMode() {
 function updateUILanguage() {
   // Update header title
   const headerTitle = document.querySelector('h3');
-  if (headerTitle) {
-    headerTitle.textContent = t('wordDex');
-  }
+  // if (headerTitle) {
+  //   headerTitle.textContent = t('wordDex');
+  // }
 
   // Update search placeholder
   const searchBar = document.getElementById('searchBar');
@@ -1152,11 +1159,22 @@ function renderTeamUI() {
     if (wordData) {
       const p = calculatePower(wordData);
       power += p;
-      slot.style.borderColor = rarityScale[wordData.rarity] || '#ccc';
-      slot.innerHTML = `
-        <div class="slot-word">${wordData.word}</div>
-        <div class="slot-stats-preview">P:${p}</div>
-      `;
+      
+      if (wordData.rarity === 'god') {
+        slot.style.borderWidth = '2px';
+        slot.style.borderStyle = 'solid';
+        slot.style.borderImage = 'linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3) 1';
+        slot.innerHTML = `
+          <div class="slot-word" style="background: linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 900;">${wordData.word}</div>
+          <div class="slot-stats-preview">P:${p}</div>
+        `;
+      } else {
+        slot.style.borderColor = rarityScale[wordData.rarity] || '#ccc';
+        slot.innerHTML = `
+          <div class="slot-word">${wordData.word}</div>
+          <div class="slot-stats-preview">P:${p}</div>
+        `;
+      }
     } else {
       slot.textContent = '+';
     }
@@ -1325,9 +1343,9 @@ class BattleSystem {
   start() {
     this.renderLayout();
     this.logMsg(t('battleStart'));
-    this.updateUI();
     setTimeout(() => this.nextTurn(), 1000);
   }
+
   
   renderLayout() {
     const container = document.getElementById('battleContainer');
@@ -1446,6 +1464,7 @@ class BattleSystem {
         supabaseClient.from('profiles').update(updates).eq('id', currentUserProfile.id).then();
     }
     
+
     const exitBtn = document.getElementById('exitBattleBtn');
     exitBtn.textContent = t('battleBack');
   }
