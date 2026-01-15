@@ -7,7 +7,8 @@ const rarityScale = {
   rare: '#96c7ff',
   epic: '#b996ff',
   legendary: '#fffa96',
-  mythic: '#ff6969'
+  mythic: '#ff6969',
+  god: '#000000' // Placeholder, will be overridden with rainbow gradient
 };
 
 let lastClickedElement = null;
@@ -48,17 +49,31 @@ function showCatchAnimation(word, origin, rarity, isNew, firstCaught) {
   catchPopup.style.transition = 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
 
   // Add pulsing glow for legendary and mythic
-  if (rarity === 'legendary' || rarity === 'mythic') {
+  if (rarity === 'legendary' || rarity === 'mythic' || rarity === 'god') {
     const glowKeyframes = `
       @keyframes pulseGlow {
         0%, 100% { box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 0 20px ${rarityScale[rarity]}, 0 0 0 1px ${rarityScale[rarity]}40 inset; }
         50% { box-shadow: 0 20px 60px rgba(0,0,0,0.15), 0 0 40px ${rarityScale[rarity]}, 0 0 60px ${rarityScale[rarity]}80, 0 0 0 1px ${rarityScale[rarity]}80 inset; }
       }
+      @keyframes rainbowBorder {
+        0% { border-color: #ff0000; box-shadow: 0 0 20px #ff0000; }
+        20% { border-color: #ffff00; box-shadow: 0 0 20px #ffff00; }
+        40% { border-color: #00ff00; box-shadow: 0 0 20px #00ff00; }
+        60% { border-color: #00ffff; box-shadow: 0 0 20px #00ffff; }
+        80% { border-color: #0000ff; box-shadow: 0 0 20px #0000ff; }
+        100% { border-color: #ff00ff; box-shadow: 0 0 20px #ff00ff; }
+      }
     `;
     const styleSheet = document.createElement('style');
     styleSheet.textContent = glowKeyframes;
     document.head.appendChild(styleSheet);
-    catchPopup.style.animation = 'pulseGlow 1.5s ease-in-out infinite';
+    
+    if (rarity === 'god') {
+      catchPopup.style.animation = 'rainbowBorder 2s linear infinite';
+      catchPopup.style.borderWidth = '5px';
+    } else {
+      catchPopup.style.animation = 'pulseGlow 1.5s ease-in-out infinite';
+    }
   }
 
   // Get translation function - use translations directly with currentLanguage
@@ -98,6 +113,15 @@ function showCatchAnimation(word, origin, rarity, isNew, firstCaught) {
   wordTitle.style.fontSize = '36px';
   wordTitle.style.fontWeight = 'bold';
   wordTitle.style.color = rarityScale[rarity] || '#6b5b95';
+  
+  if (rarity === 'god') {
+     wordTitle.style.backgroundImage = 'linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3)';
+     wordTitle.style.backgroundSize = '200% auto';
+     wordTitle.style.webkitBackgroundClip = 'text';
+     wordTitle.style.webkitTextFillColor = 'transparent';
+     wordTitle.style.animation = 'rainbow 2s linear infinite';
+  }
+
   if (rarity === 'common') {
     wordTitle.style.color = '#9b9b9b';
   }
@@ -112,7 +136,15 @@ function showCatchAnimation(word, origin, rarity, isNew, firstCaught) {
   rarityBadge.style.display = 'inline-block';
   rarityBadge.style.padding = '6px 16px';
   rarityBadge.style.background = rarityScale[rarity];
-  rarityBadge.style.color = '#000000';
+  
+  if (rarity === 'god') {
+    rarityBadge.style.background = 'linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3)';
+    rarityBadge.style.color = '#ffffff';
+    rarityBadge.style.textShadow = '0 1px 2px rgba(0,0,0,0.5)';
+  } else {
+    rarityBadge.style.color = '#000000';
+  }
+
   rarityBadge.style.borderRadius = '20px';
   rarityBadge.style.fontSize = '12px';
   rarityBadge.style.fontWeight = '700';
@@ -227,6 +259,10 @@ function createParticles(element, rarity) {
     particleCount = 40;
     particleSymbols = ['*', '+', '◆', '●', '★', '▲'];
     createScreenShake();
+  } else if (rarity === 'god') {
+    particleCount = 60;
+    particleSymbols = ['★', '✦', '✧', '❂', '✹', '✨'];
+    createScreenShake();
   }
 
   for (let i = 0; i < particleCount; i++) {
@@ -239,14 +275,23 @@ function createParticles(element, rarity) {
     particle.style.fontSize = (15 + Math.random() * 15) + 'px';
     particle.style.pointerEvents = 'none';
     particle.style.zIndex = '9999998';
-    particle.style.color = rarityScale[rarity];
-    particle.style.textShadow = `0 0 10px ${rarityScale[rarity]}`;
+    
+    if (rarity === 'god') {
+       // Random rainbow color for each particle
+       const hue = Math.floor(Math.random() * 360);
+       particle.style.color = `hsl(${hue}, 100%, 50%)`;
+       particle.style.textShadow = `0 0 10px hsl(${hue}, 100%, 70%)`;
+    } else {
+       particle.style.color = rarityScale[rarity];
+       particle.style.textShadow = `0 0 10px ${rarityScale[rarity]}`;
+    }
+
     particle.style.transition = 'all ' + (1 + Math.random() * 0.5) + 's ease-out';
 
     document.body.appendChild(particle);
 
     const angle = (i / particleCount) * Math.PI * 2;
-    const distance = (rarity === 'mythic' ? 100 : rarity === 'legendary' ? 80 : 50) + Math.random() * 80;
+    const distance = (rarity === 'god' ? 120 : rarity === 'mythic' ? 100 : rarity === 'legendary' ? 80 : 50) + Math.random() * 80;
     const tx = Math.cos(angle) * distance;
     const ty = Math.sin(angle) * distance - Math.random() * 30;
 

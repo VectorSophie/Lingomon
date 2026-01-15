@@ -35,6 +35,7 @@ const translations = {
     epic: "epic",
     legendary: "legendary",
     mythic: "mythic",
+    god: "GOD",
 
     // Rarity Labels (for display)
     COMMON: "COMMON",
@@ -43,6 +44,7 @@ const translations = {
     EPIC: "EPIC",
     LEGENDARY: "LEGENDARY",
     MYTHIC: "MYTHIC",
+    GOD: "GOD",
 
     // Messages
     noWordsMessage: "No words collected yet. Right-click words on web pages to start collecting!",
@@ -84,6 +86,7 @@ const translations = {
 
     firstMythic: "First Mythic!",
     meta: "Meta",
+    huh: "Huh???",
     commonKiller: "Common Killer",
     uncommonKiller: "Uncommon Killer",
     rareKiller: "Rare Killer",
@@ -140,7 +143,43 @@ const translations = {
     newWordCaught: "New Word Caught!",
     alreadyCaught: "Already Caught! Definition Updated",
     firstCaughtOn: "First caught:",
-    failedToCatch: "Failed to Catch"
+    failedToCatch: "Failed to Catch",
+
+    // New Features (Profile, Tabs, Battle)
+    tabDex: "WordDex",
+    tabQuiz: "Quiz",
+    tabBattle: "Battle",
+    
+    // Profile
+    profileRating: "Rating",
+    profileWins: "Wins",
+    profileLosses: "Losses",
+    profileWords: "Words Collected",
+    profileTeam: "Defense Team",
+    profileSave: "Save Team",
+    profileBack: "Back to Dex",
+    profileLoginReq: "You need to login to battle!",
+    profileTeamReq: "Set up your team in Profile first!",
+    profileSaving: "Saving...",
+    profileSaved: "Saved!",
+    profileSaveFail: "Failed to save team",
+    profileLoading: "Loading profile...",
+    profileError: "Error loading profile. Please log in.",
+    
+    // Battle
+    battleStart: "Battle Start!",
+    battleRun: "Run Away",
+    battleVS: "VS Opponent",
+    battleVictory: "VICTORY!",
+    battleDefeat: "DEFEAT...",
+    battleFainted: "{word} fainted!",
+    battleAttacks: "{attacker} hits for {damage}!",
+    battleBack: "Back to Menu",
+    
+    // Quiz Menu
+    quizMenuTitle: "Quiz Settings",
+    quizNumQuestions: "Number of Questions",
+    quizStartBtn: "Start Quiz"
   },
 
   ko: {
@@ -176,6 +215,7 @@ const translations = {
     epic: "영웅",
     legendary: "전설",
     mythic: "신화",
+    god: "신",
 
     // Rarity Labels (for display)
     COMMON: "일반",
@@ -184,6 +224,7 @@ const translations = {
     EPIC: "영웅",
     LEGENDARY: "전설",
     MYTHIC: "신화",
+    GOD: "신",
 
     // Messages
     noWordsMessage: "아직 수집한 단어가 없습니다. 웹에서 단어를 우클릭하여 수집을 시작하세요!",
@@ -225,6 +266,7 @@ const translations = {
 
     firstMythic: "첫 신화!",
     meta: "메타",
+    huh: "어???",
     commonKiller: "일반 킬러",
     uncommonKiller: "특이 킬러",
     rareKiller: "희귀 킬러",
@@ -281,7 +323,43 @@ const translations = {
     newWordCaught: "새로운 단어를 잡았습니다!",
     alreadyCaught: "이미 잡았습니다! 정의가 업데이트되었습니다",
     firstCaughtOn: "처음 잡은 날:",
-    failedToCatch: "잡기 실패"
+    failedToCatch: "잡기 실패",
+
+    // New Features (Profile, Tabs, Battle)
+    tabDex: "단어장",
+    tabQuiz: "퀴즈",
+    tabBattle: "배틀",
+    
+    // Profile
+    profileRating: "레이팅",
+    profileWins: "승",
+    profileLosses: "패",
+    profileWords: "수집한 단어",
+    profileTeam: "방어팀",
+    profileSave: "팀 저장",
+    profileBack: "단어장으로",
+    profileLoginReq: "배틀을 하려면 로그인이 필요합니다!",
+    profileTeamReq: "프로필에서 팀을 먼저 설정하세요!",
+    profileSaving: "저장 중...",
+    profileSaved: "저장됨!",
+    profileSaveFail: "팀 저장 실패",
+    profileLoading: "프로필 로딩 중...",
+    profileError: "프로필 로딩 오류. 로그인 해주세요.",
+    
+    // Battle
+    battleStart: "배틀 시작!",
+    battleRun: "도망가기",
+    battleVS: "VS 상대",
+    battleVictory: "승리!",
+    battleDefeat: "패배...",
+    battleFainted: "{word} 기절!",
+    battleAttacks: "{attacker} 공격! {damage} 데미지!",
+    battleBack: "메뉴로",
+    
+    // Quiz Menu
+    quizMenuTitle: "퀴즈 설정",
+    quizNumQuestions: "문제 수",
+    quizStartBtn: "퀴즈 시작"
   }
 };
 

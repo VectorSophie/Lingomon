@@ -99,7 +99,15 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
     let origin, rarity, freqData;
 
-    if (currentLanguage === 'ko') {
+    if (word.toLowerCase() === 'lingomon') {
+      console.log('Lingomon: Caught "lingomon"! Triggering Easter Egg.');
+      origin = "The legendary creature of vocabulary! Catches words to grow stronger.";
+      rarity = "god";
+      freqData = {
+        frequency: 0.000001,
+        source: 'easter_egg'
+      };
+    } else if (currentLanguage === 'ko') {
       // Korean mode: Try Korean API first, translate to Korean if needed
       console.log(`Lingomon: Using Korean API for "${word}"`);
       try {
@@ -839,6 +847,19 @@ function updateBadges(wordDex, achievements, streakData, sitesExplored, currentR
         type: 'meta',
         name: t('meta'),
         rarity: 'epic',
+        unlocked: true
+      });
+    }
+  }
+  
+  // Huh??? badge (catch "lingomon")
+  if (isNew && wordDex['lingomon']) {
+    const hasHuh = badges.hidden.some(b => b.type === 'huh');
+    if (!hasHuh) {
+      badges.hidden.push({
+        type: 'huh',
+        name: t('huh'),
+        rarity: 'god',
         unlocked: true
       });
     }

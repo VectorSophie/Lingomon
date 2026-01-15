@@ -1,9 +1,9 @@
 {
    "manifest_version": 3,
    "name": "Lingomon",
-   "version": "1.7",
+   "version": "1.8",
    "description": "Gotta catch em all!",
-   "permissions": ["contextMenus", "storage"],
+   "permissions": ["contextMenus", "storage", "identity"],
    "action": {
      "default_popup": "popup.html",
      "default_title": "View your WordDex"
@@ -24,7 +24,8 @@
     "https://api.dictionaryapi.dev/*",
     "https://api.datamuse.com/*",
     "https://krdict.korean.go.kr/*",
-    "https://api.mymemory.translated.net/*"
+    "https://api.mymemory.translated.net/*",
+    "https://*.supabase.co/*"
    ]
 
 }

@@ -240,30 +240,23 @@
     .badge-hexagon {
       position: relative;
       width: 80px;
-      height: 46px;
-      margin: 23px 0;
+      height: 92px;
+      margin: 4px 0;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: help;
       --badge-color: #cccccc;
+      background: var(--badge-color);
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
     }
-    .badge-hexagon:before,
-    .badge-hexagon:after {
-      content: "";
-      position: absolute;
-      width: 0;
-      border-left: 40px solid transparent;
-      border-right: 40px solid transparent;
+    
+    @keyframes gradient-shift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
     }
-    .badge-hexagon:before {
-      bottom: 100%;
-      border-bottom: 23px solid var(--badge-color);
-    }
-    .badge-hexagon:after {
-      top: 100%;
-      border-top: 23px solid var(--badge-color);
-    }
+    
     .badge-content {
       position: relative;
       z-index: 1;
@@ -399,6 +392,423 @@
       transform: translateY(-2px);
       box-shadow: 0 6px 16px rgba(0,0,0,0.2);
     }
+    
+    /* Profile Styles */
+    #profileContainer {
+      background: #ffffff;
+      border-radius: 12px;
+      padding: 20px;
+      border: 2px solid #e0e0e0;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      text-align: center;
+    }
+    body.dark-mode #profileContainer {
+      background: #2a2a2a;
+      border-color: #404040;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .profile-avatar {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: #f0f0f0;
+      margin: 0 auto 12px;
+      border: 3px solid #000;
+      object-fit: cover;
+    }
+    .profile-name-input {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 8px;
+      border: 1px solid transparent;
+      background: transparent;
+      text-align: center;
+      color: inherit;
+      width: 100%;
+      padding: 4px;
+      border-radius: 4px;
+    }
+    .profile-name-input:hover {
+      border-color: #e0e0e0;
+    }
+    .profile-name-input:focus {
+      border-color: #000;
+      outline: none;
+      background: rgba(0,0,0,0.05);
+    }
+    body.dark-mode .profile-name-input:focus {
+      border-color: #fff;
+      background: rgba(255,255,255,0.1);
+    }
+    .profile-stats {
+      display: flex;
+      justify-content: space-around;
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #e0e0e0;
+    }
+    body.dark-mode .profile-stats {
+      border-top-color: #404040;
+    }
+    .stat-item {
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 20px;
+      font-weight: 800;
+      display: block;
+    }
+    .stat-label {
+      font-size: 11px;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 4px;
+      display: block;
+    }
+    body.dark-mode .stat-label {
+      color: #999;
+    }
+    .back-btn {
+      margin-top: 16px;
+      background: transparent;
+      border: 1px solid #e0e0e0;
+      padding: 8px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      color: inherit;
+      font-size: 12px;
+    }
+    body.dark-mode .back-btn {
+      border-color: #404040;
+    }
+
+    /* Team Builder Styles */
+    .team-section {
+      margin-top: 20px;
+      text-align: left;
+    }
+    .team-container {
+      margin-top: 8px;
+      display: flex;
+      gap: 6px;
+      justify-content: space-between;
+    }
+    .team-slot {
+      width: 54px;
+      height: 54px;
+      border: 2px dashed #ccc;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 20px;
+      background: #f9f9f9;
+      position: relative;
+      transition: all 0.2s;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    body.dark-mode .team-slot {
+      background: #333;
+      border-color: #555;
+      color: #ccc;
+    }
+    .team-slot:hover {
+      border-color: #000;
+      background: #fff;
+    }
+    body.dark-mode .team-slot:hover {
+      border-color: #fff;
+      background: #444;
+    }
+    .team-slot.filled {
+      border-style: solid;
+      background: #fff;
+      border-color: #6b5b95;
+    }
+    body.dark-mode .team-slot.filled {
+      background: #2a2a2a;
+    }
+    .slot-word {
+      font-size: 9px;
+      font-weight: bold;
+      text-align: center;
+      word-break: break-all;
+      line-height: 1.1;
+      padding: 2px;
+    }
+    .slot-stats-preview {
+      font-size: 8px;
+      color: #666;
+      margin-top: 2px;
+    }
+    
+    /* Modal Styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-content {
+      background: #fff;
+      width: 300px;
+      height: 450px;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    }
+    body.dark-mode .modal-content {
+      background: #1a1a1a;
+      border: 1px solid #404040;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .mini-dex-list {
+      flex: 1;
+      overflow-y: auto;
+      border: 1px solid #eee;
+      margin: 10px 0;
+      border-radius: 4px;
+    }
+    body.dark-mode .mini-dex-list {
+      border-color: #404040;
+    }
+    .mini-entry {
+      padding: 8px;
+      border-bottom: 1px solid #eee;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    body.dark-mode .mini-entry {
+      border-bottom-color: #404040;
+    }
+    .mini-entry:hover {
+      background: #f5f5f5;
+    }
+    body.dark-mode .mini-entry:hover {
+      background: #333;
+    }
+    .save-team-btn {
+      width: 100%;
+      margin-top: 12px;
+      padding: 8px;
+      background: #000;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    
+    /* Battle Arena Styles */
+    #battleContainer {
+      background: #f0f0f0;
+      border-radius: 12px;
+      padding: 16px;
+      border: 2px solid #e0e0e0;
+      height: 400px;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+    body.dark-mode #battleContainer {
+      background: #1a1a1a;
+      border-color: #404040;
+    }
+    .battle-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .battle-field {
+      flex: 1;
+      position: relative;
+    }
+    .battle-side-player {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      width: 120px;
+      text-align: center;
+    }
+    .battle-side-enemy {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      width: 120px;
+      text-align: center;
+    }
+    .battle-word {
+      font-size: 18px;
+      font-weight: 800;
+      text-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+      transition: transform 0.2s;
+      cursor: default;
+      display: inline-block;
+    }
+    .health-bar {
+      width: 100%;
+      height: 6px;
+      background: #ccc;
+      border-radius: 3px;
+      margin-top: 4px;
+      overflow: hidden;
+    }
+    .health-fill {
+      height: 100%;
+      background: #4caf50;
+      transition: width 0.3s;
+    }
+    .battle-log {
+      height: 80px;
+      background: rgba(0,0,0,0.8);
+      color: #fff;
+      border-radius: 8px;
+      padding: 8px;
+      font-size: 11px;
+      overflow-y: auto;
+      font-family: monospace;
+      margin-top: 8px;
+    }
+    .damage-text {
+      position: absolute;
+      font-weight: bold;
+      color: #ff4444;
+      font-size: 24px;
+      animation: floatUp 1s ease-out forwards;
+      pointer-events: none;
+      z-index: 10;
+    }
+    @keyframes floatUp {
+      0% { transform: translateY(0) scale(1); opacity: 1; }
+      100% { transform: translateY(-30px) scale(1.2); opacity: 0; }
+    }
+    .battle-controls {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+    
+    /* Range Input Styling */
+    input[type=range] {
+      -webkit-appearance: none;
+      width: 100%;
+      background: transparent;
+    }
+    input[type=range]:focus {
+      outline: none;
+    }
+    input[type=range]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      height: 16px;
+      width: 16px;
+      border-radius: 50%;
+      background: #000;
+      cursor: pointer;
+      margin-top: -6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+    body.dark-mode input[type=range]::-webkit-slider-thumb {
+      background: #fff;
+    }
+    input[type=range]::-webkit-slider-runnable-track {
+      width: 100%;
+      height: 4px;
+      cursor: pointer;
+      background: #ccc;
+      border-radius: 2px;
+    }
+    body.dark-mode input[type=range]::-webkit-slider-runnable-track {
+      background: #555;
+    }
+
+    /* Google Button */
+    .google-btn {
+      background: #fff;
+      color: #3c4043;
+      border: 1px solid #dadce0;
+      border-radius: 4px;
+      font-family: 'Google Sans', Roboto, Arial, sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      padding: 4px 8px;
+      transition: background-color .2s, border-color .2s;
+      margin-left: 8px;
+      height: 28px;
+      box-sizing: border-box;
+    }
+    .google-btn:hover {
+      background: #f7f8f8;
+      border-color: #d2e3fc;
+    }
+    .google-btn:active {
+      background: #f1f3f4;
+    }
+    body.dark-mode .google-btn {
+      background: #303134;
+      color: #e8eaed;
+      border-color: #5f6368;
+    }
+    body.dark-mode .google-btn:hover {
+      background: #3c4043;
+    }
+    
+    /* Navigation Tabs */
+    .nav-tabs {
+      display: flex;
+      background: #f0f0f0;
+      padding: 4px;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+    body.dark-mode .nav-tabs {
+      background: #2a2a2a;
+    }
+    .nav-tab {
+      flex: 1;
+      border: none;
+      background: transparent;
+      padding: 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 12px;
+      color: #666;
+      transition: all 0.2s;
+    }
+    body.dark-mode .nav-tab {
+      color: #999;
+    }
+    .nav-tab.active {
+      background: #fff;
+      color: #000;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    body.dark-mode .nav-tab.active {
+      background: #404040;
+      color: #fff;
+    }
   </style>
 </head>
 <body>
@@ -409,6 +819,13 @@
       <button class="dark-mode-toggle" id="darkModeToggle" title="Toggle dark mode">Dark</button>
     </div>
   </div>
+  
+  <div class="nav-tabs">
+    <button class="nav-tab active" data-tab="dex">WordDex</button>
+    <button class="nav-tab" data-tab="quiz">Quiz</button>
+    <button class="nav-tab" data-tab="battle">Battle</button>
+  </div>
+
   <div class="controls">
     <button class="sort-btn active" data-sort="alpha">A-Z</button>
     <button class="sort-btn" data-sort="recent">Recent</button>
@@ -416,17 +833,30 @@
   </div>
   <input type="text" id="searchBar" placeholder="Search words...">
   <div id="quizContainer" style="display: none;"></div>
+  <div id="profileContainer" style="display: none;"></div>
+  <div id="battleContainer" style="display: none;"></div>
   <div id="mainContent">
     <div id="dex"></div>
     <hr>
     <div id="badges"></div>
     <hr>
     <div id="stats"></div>
-    <button class="quiz-start-btn" id="quizBtn">Start Quiz</button>
     <hr>
+  </div>
+  <div id="teamSelectorModal" class="modal-overlay">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 style="margin:0;font-size:16px;">Select Word</h3>
+        <button id="closeModal" style="background:none;border:none;cursor:pointer;font-size:16px;color:inherit;">✕</button>
+      </div>
+      <input type="text" id="miniSearch" placeholder="Search..." style="width:100%;padding:8px;margin-bottom:8px;box-sizing:border-box;border:1px solid #ccc;border-radius:4px;">
+      <div id="miniDexList" class="mini-dex-list"></div>
+    </div>
   </div>
   <div id="kofi-container"></div>
   <script src="kofi-widget.js"></script>
+  <script src="libs/supabase.min.js"></script>
+  <script src="config.js"></script>
   <script src="i18n.js"></script>
   <script src="animations.js"></script>
   <script src="popup.js"></script>

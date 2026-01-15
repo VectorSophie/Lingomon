@@ -105,6 +105,27 @@ function displayWordDex(sortType = 'alpha') {
           if (rarity === 'common') {
             wordStrong.style.color = '#9b9b9b';
           }
+          
+          // Rainbow effect for 'lingomon'
+          if (word.toLowerCase() === 'lingomon') {
+            wordStrong.style.backgroundImage = 'linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet)';
+            wordStrong.style.backgroundSize = '200% auto';
+            wordStrong.style.webkitBackgroundClip = 'text';
+            wordStrong.style.webkitTextFillColor = 'transparent';
+            wordStrong.style.animation = 'rainbow 2s linear infinite';
+            
+            // Add style for keyframes if not present
+            if (!document.getElementById('rainbow-style')) {
+              const style = document.createElement('style');
+              style.id = 'rainbow-style';
+              style.innerHTML = `
+                @keyframes rainbow {
+                  to { background-position: 200% center; }
+                }
+              `;
+              document.head.appendChild(style);
+            }
+          }
 
           const rarityDiv = document.createElement('div');
           rarityDiv.className = 'rarity';
@@ -488,6 +509,8 @@ function displayBadges(badges) {
         badgeName = t('firstMythic');
       } else if (badge.type === 'meta') {
         badgeName = t('meta');
+      } else if (badge.type === 'huh') {
+        badgeName = t('huh');
       } else if (badge.type === 'rarityKiller') {
         const killerKey = `${badge.rarity}Killer`;
         badgeName = t(killerKey);
@@ -495,10 +518,21 @@ function displayBadges(badges) {
 
       hexagon.title = badgeName + (badge.count ? ` (${badge.count})` : '');
 
-      // Meta badge gets special black color
-      const color = badge.type === 'meta' ? '#000000' : (rarityScale[badge.rarity] || '#cccccc');
+      // Meta badge gets special black color, Huh??? badge gets rainbow
+      let color = rarityScale[badge.rarity] || '#cccccc';
+      if (badge.type === 'meta') {
+        color = '#000000';
+      } else if (badge.type === 'huh') {
+        color = 'linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3)';
+      }
+      
       hexagon.style.setProperty('--badge-color', color);
       hexagon.style.background = color;
+
+      if (badge.type === 'huh') {
+        hexagon.style.backgroundSize = '400% 400%';
+        hexagon.style.animation = 'gradient-shift 3s ease infinite';
+      }
 
       const content = document.createElement('div');
       content.className = 'badge-content';
@@ -627,6 +661,14 @@ function updateUILanguage() {
     sortButtons[2].textContent = t('sortRarity');
   }
 
+  // Update tabs
+  const tabs = document.querySelectorAll('.nav-tab');
+  if (tabs.length >= 3) {
+    tabs[0].textContent = t('tabDex');
+    tabs[1].textContent = t('tabQuiz');
+    tabs[2].textContent = t('tabBattle');
+  }
+
   // Update quiz button
   const quizBtn = document.getElementById('quizBtn');
   if (quizBtn) {
@@ -682,58 +724,81 @@ function setupQuizButton() {
 }
 
 function toggleQuizMode() {
-  quizMode = !quizMode;
-  const mainContent = document.getElementById('mainContent');
-  const quizContainer = document.getElementById('quizContainer');
-  const searchBar = document.getElementById('searchBar');
-  const controls = document.querySelector('.controls');
-
-  if (quizMode) {
-    // Enter quiz mode - hide everything except quiz
-    mainContent.style.display = 'none';
-    searchBar.style.display = 'none';
-    controls.style.display = 'none';
-    quizContainer.style.display = 'block';
-
-    startQuiz();
-  } else {
-    // Exit quiz mode - show everything
-    mainContent.style.display = 'block';
-    searchBar.style.display = 'block';
-    controls.style.display = 'flex';
-    quizContainer.style.display = 'none';
-  }
+  // Deprecated by Tab System
+  // Keeping logic for reuse if needed
 }
 
-function startQuiz() {
+function renderQuizMenu() {
+  const container = document.getElementById('quizContainer');
+  container.innerHTML = '<p>Loading...</p>';
+  
+  chrome.storage.local.get(['wordDex'], (data) => {
+    const wordDex = data.wordDex || {};
+    const totalWords = Object.keys(wordDex).length;
+
+    if (totalWords < 3) {
+       container.innerHTML = `<p style="padding:20px;text-align:center;">${t('quizMinWords')}</p>`;
+       return;
+    }
+
+    container.innerHTML = `
+      <div class="quiz-menu" style="text-align:center; padding:10px;">
+        <h3 style="margin-bottom:20px;">${t('quizMenuTitle')}</h3>
+        
+        <div style="margin-bottom: 24px; text-align:left; background:#f9f9f9; padding:16px; border-radius:8px; border:1px solid #eee;">
+          <label style="font-weight:bold; font-size:12px; display:block; margin-bottom:8px;">${t('quizNumQuestions')}</label>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <input type="range" id="quizSize" min="3" max="${Math.min(20, totalWords)}" value="5" style="flex:1">
+            <span id="quizSizeVal" style="font-weight:bold; width:24px;">5</span>
+          </div>
+        </div>
+
+        <button id="btnStartCustomQuiz" class="quiz-start-btn" style="font-size:16px;">${t('quizStartBtn')}</button>
+      </div>
+    `;
+
+    const range = document.getElementById('quizSize');
+    
+    // Validate range values
+    const maxVal = Math.min(20, totalWords);
+    range.max = maxVal;
+    range.value = Math.min(5, maxVal); // Ensure initial value is within bounds
+    
+    // Update display immediately
+    const valDisplay = document.getElementById('quizSizeVal');
+    valDisplay.textContent = range.value;
+    
+    range.oninput = () => valDisplay.textContent = range.value;
+
+    document.getElementById('btnStartCustomQuiz').onclick = () => {
+      startQuiz({ size: parseInt(range.value) });
+    };
+  });
+}
+
+function startQuiz(options = { size: 5 }) {
+  const container = document.getElementById('quizContainer');
+  // If we are already in the middle of a quiz (and not just starting from menu), don't reset unless force
+  
   chrome.storage.local.get(['wordDex'], (data) => {
     const wordDex = data.wordDex || {};
     const words = Object.entries(wordDex);
 
-    if (words.length < 3) {
-      const quizContainer = document.getElementById('quizContainer');
-      quizContainer.innerHTML = `<p>${t('quizMinWords')}</p>`;
-
-      const backBtn = document.createElement('button');
-      backBtn.className = 'quiz-btn';
-      backBtn.textContent = t('quizBack');
-      backBtn.addEventListener('click', toggleQuizMode);
-      quizContainer.appendChild(backBtn);
-      return;
-    }
-
     // Select random words
     const shuffled = words.sort(() => 0.5 - Math.random());
-    quizData.questions = shuffled.slice(0, Math.min(5, words.length));
+    const quizSize = options.size || 5;
+    quizData.questions = shuffled.slice(0, Math.min(quizSize, words.length));
     quizData.currentIndex = 0;
     quizData.score = 0;
     quizData.total = quizData.questions.length;
+    quizData.processing = false;
 
     showQuestion();
   });
 }
 
 function showQuestion() {
+  quizData.processing = false;
   const quizContainer = document.getElementById('quizContainer');
   if (quizData.currentIndex >= quizData.questions.length) {
     showResults();
@@ -777,7 +842,18 @@ function showQuestion() {
 }
 
 function checkAnswer(correctWord) {
+  if (quizData.processing) return;
+  quizData.processing = true;
+
   const input = document.getElementById('quizAnswer');
+  const submitBtn = document.getElementById('submitAnswer');
+  const skipBtn = document.getElementById('skipQuestion');
+  
+  // Disable controls to prevent multiple submissions
+  input.disabled = true;
+  submitBtn.disabled = true;
+  if (skipBtn) skipBtn.disabled = true;
+
   const answer = input.value.trim().toLowerCase();
   const isCorrect = answer === correctWord;
 
@@ -831,19 +907,766 @@ function showResults() {
   const backBtn = document.createElement('button');
   backBtn.className = 'quiz-btn';
   backBtn.textContent = t('quizBack');
-  backBtn.addEventListener('click', toggleQuizMode);
+  backBtn.addEventListener('click', renderQuizMenu);
 
   quizContainer.appendChild(tryAgainBtn);
   quizContainer.appendChild(backBtn);
 }
 
+let supabaseClient = null;
+
+function initSupabase() {
+  if (typeof supabase !== 'undefined' && CONFIG.SUPABASE_URL && CONFIG.SUPABASE_KEY) {
+    try {
+      supabaseClient = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
+      console.log('Supabase client initialized');
+      checkAuthState();
+    } catch (e) {
+      console.error('Failed to initialize Supabase:', e);
+    }
+  }
+}
+
+async function checkAuthState() {
+  if (!supabaseClient) return;
+  const { data: { session } } = await supabaseClient.auth.getSession();
+  updateAuthUI(session?.user);
+}
+
+function updateAuthUI(user) {
+  const container = document.querySelector('.header-container div');
+  if (!container) return;
+
+  const existingAuthBtn = document.getElementById('authBtn');
+  if (existingAuthBtn) existingAuthBtn.remove();
+
+  const authBtn = document.createElement('button');
+  authBtn.id = 'authBtn';
+  authBtn.className = 'dark-mode-toggle';
+  authBtn.style.marginLeft = '8px';
+  
+  if (user) {
+    authBtn.className = 'dark-mode-toggle';
+    authBtn.innerHTML = `
+      <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${user.id}" style="width:16px;height:16px;margin-right:4px;vertical-align:middle;border-radius:50%;">
+      Profile
+    `;
+    authBtn.title = `Logged in as ${user.email}`;
+    authBtn.onclick = showProfile;
+  } else {
+    authBtn.className = 'google-btn';
+    authBtn.innerHTML = `
+      <svg width="14" height="14" viewBox="0 0 24 24" style="margin-right:6px;vertical-align:middle;">
+        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+      </svg>Sign in
+    `;
+    authBtn.title = 'Login with Google';
+    authBtn.onclick = loginWithGoogle;
+  }
+
+  container.appendChild(authBtn);
+}
+
+async function loginWithGoogle() {
+  if (!supabaseClient) return;
+  
+  const redirectURL = chrome.identity.getRedirectURL();
+  const authUrl = `${CONFIG.SUPABASE_URL}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(redirectURL)}`;
+  
+  console.log("Launching Manual WebAuthFlow:", authUrl);
+
+  chrome.identity.launchWebAuthFlow({
+    url: authUrl,
+    interactive: true
+  }, async (redirectUrl) => {
+    console.log("WebAuthFlow callback url:", redirectUrl);
+    if (chrome.runtime.lastError || !redirectUrl) {
+      console.error('Auth flow failed:', chrome.runtime.lastError ? JSON.stringify(chrome.runtime.lastError) : 'No redirect URL');
+      return;
+    }
+    
+    // Parse the session from the URL
+    // Supabase returns the session params in the hash
+    const url = new URL(redirectUrl);
+    const params = new URLSearchParams(url.hash.substring(1)); // remove #
+    const access_token = params.get('access_token');
+    const refresh_token = params.get('refresh_token');
+    
+    console.log("Tokens received:", { access_token: !!access_token, refresh_token: !!refresh_token });
+
+    if (access_token && refresh_token) {
+      const { error } = await supabaseClient.auth.setSession({
+        access_token,
+        refresh_token
+      });
+      
+      if (error) {
+          console.error("Supabase setSession error:", error);
+      } else {
+          console.log("Session set successfully");
+          checkAuthState();
+      }
+    } else {
+        console.error("Missing tokens in redirect URL");
+    }
+  });
+}
+
+let currentUserProfile = null;
+
+async function getProfile() {
+  if (!supabaseClient) return null;
+  const { data: { user } } = await supabaseClient.auth.getUser();
+  if (!user) return null;
+
+  const { data, error } = await supabaseClient
+    .from('profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single();
+
+  if (error && error.code === 'PGRST116') { // Not found
+    // Create new profile
+    const newProfile = {
+      id: user.id,
+      username: 'Trainer ' + user.id.slice(0, 4),
+      avatar_id: 1,
+      rating: 1000,
+      wins: 0,
+      losses: 0,
+      total_words: 0
+    };
+    const { error: insertError } = await supabaseClient.from('profiles').insert([newProfile]);
+    if (insertError) {
+      console.error('Error creating profile:', insertError);
+      return null;
+    }
+    return newProfile;
+  }
+  
+  return data;
+}
+
+async function showProfile() {
+  const mainContent = document.getElementById('mainContent');
+  const quizContainer = document.getElementById('quizContainer');
+  const searchBar = document.getElementById('searchBar');
+  const controls = document.querySelector('.controls');
+  const container = document.getElementById('profileContainer');
+  
+  mainContent.style.display = 'none';
+  quizContainer.style.display = 'none';
+  searchBar.style.display = 'none';
+  controls.style.display = 'none';
+  
+  container.style.display = 'block';
+  container.innerHTML = '<p>Loading profile...</p>';
+
+  const profile = await getProfile();
+  if (!profile) {
+    container.innerHTML = '<p>Error loading profile. Please log in.</p><button class="back-btn">Back</button>';
+    container.querySelector('.back-btn').onclick = closeProfile;
+    return;
+  }
+  
+  currentUserProfile = profile;
+  
+  // Sync local word count
+  chrome.storage.local.get(['wordDex'], async (data) => {
+    const count = Object.keys(data.wordDex || {}).length;
+    if (profile && count !== profile.total_words) {
+      await supabaseClient.from('profiles').update({ total_words: count }).eq('id', profile.id);
+      profile.total_words = count;
+    }
+    renderProfileUI(profile);
+  });
+}
+
+function closeProfile() {
+  const container = document.getElementById('profileContainer');
+  container.style.display = 'none';
+  document.getElementById('mainContent').style.display = 'block';
+  document.getElementById('searchBar').style.display = 'block';
+  document.querySelector('.controls').style.display = 'flex';
+}
+
+// Team Builder Logic
+let currentTeam = [null, null, null, null, null];
+let editingSlot = -1;
+
+function calculateStat(wordData, type) {
+  if (!wordData) return 0;
+  const len = wordData.word.length;
+  const rarity = wordData.rarity;
+  
+  // Base multipliers
+  const rarityMult = { common: 1, uncommon: 1.2, rare: 1.5, epic: 2, legendary: 3, mythic: 5, god: 10 };
+  const rVal = rarityMult[rarity] || 1;
+
+  switch(type) {
+    case 'hp': return Math.floor(len * 10 * rVal); // Long = Tanky
+    case 'atk': return Math.floor((rVal * 20)); // Rarity = Damage
+    case 'speed': return Math.floor(100 / len); // Short = Fast
+    default: return 0;
+  }
+}
+
+function calculatePower(wordData) {
+  if(!wordData) return 0;
+  return calculateStat(wordData, 'hp') + calculateStat(wordData, 'atk') + calculateStat(wordData, 'speed');
+}
+
+async function fetchTeam(userId) {
+  if (!supabaseClient) return;
+  const { data } = await supabaseClient
+    .from('battle_teams')
+    .select('team_data')
+    .eq('user_id', userId)
+    .single();
+  
+  if (data && data.team_data && Array.isArray(data.team_data)) {
+    currentTeam = data.team_data;
+    // Ensure length is 5
+    while(currentTeam.length < 5) currentTeam.push(null);
+  } else {
+    currentTeam = [null, null, null, null, null];
+  }
+  renderTeamUI();
+}
+
+function renderTeamUI() {
+  const container = document.getElementById('teamUI');
+  if (!container) return;
+  
+  container.innerHTML = '';
+  let power = 0;
+  
+  currentTeam.forEach((wordData, idx) => {
+    const slot = document.createElement('div');
+    slot.className = `team-slot ${wordData ? 'filled' : ''}`;
+    slot.onclick = () => openTeamSelector(idx);
+    
+    if (wordData) {
+      const p = calculatePower(wordData);
+      power += p;
+      slot.style.borderColor = rarityScale[wordData.rarity] || '#ccc';
+      slot.innerHTML = `
+        <div class="slot-word">${wordData.word}</div>
+        <div class="slot-stats-preview">P:${p}</div>
+      `;
+    } else {
+      slot.textContent = '+';
+    }
+    container.appendChild(slot);
+  });
+  
+  const powerLabel = document.getElementById('teamPower');
+  if(powerLabel) powerLabel.textContent = `Power: ${power}`;
+  
+  document.getElementById('saveTeamBtn').style.display = 'block';
+}
+
+async function saveTeam() {
+  if (!currentUserProfile || !supabaseClient) return;
+  
+  const saveBtn = document.getElementById('saveTeamBtn');
+  const originalText = saveBtn.textContent;
+  saveBtn.textContent = 'Saving...';
+  saveBtn.disabled = true;
+
+  const power = currentTeam.reduce((acc, w) => acc + calculatePower(w), 0);
+  
+  const { error } = await supabaseClient
+    .from('battle_teams')
+    .upsert({ 
+      user_id: currentUserProfile.id,
+      team_data: currentTeam,
+      team_power: power,
+      updated_at: new Date()
+    });
+    
+  if (error) {
+    console.error('Save failed:', error);
+    alert(t('profileSaveFail'));
+  } else {
+    saveBtn.textContent = t('profileSaved');
+    setTimeout(() => {
+      saveBtn.textContent = originalText;
+      saveBtn.disabled = false;
+    }, 1500);
+  }
+}
+
+function openTeamSelector(idx) {
+  editingSlot = idx;
+  const modal = document.getElementById('teamSelectorModal');
+  const searchInput = document.getElementById('miniSearch');
+  modal.style.display = 'flex';
+  searchInput.value = '';
+  searchInput.focus();
+  
+  chrome.storage.local.get(['wordDex'], (data) => {
+    const dex = data.wordDex || {};
+    renderMiniDex(dex);
+    
+    searchInput.oninput = (e) => {
+      renderMiniDex(dex, e.target.value);
+    };
+  });
+  
+  const closeModal = document.getElementById('closeModal');
+  closeModal.onclick = () => {
+    modal.style.display = 'none';
+  };
+  
+  // Close on outside click
+  modal.onclick = (e) => {
+    if (e.target === modal) modal.style.display = 'none';
+  }
+}
+
+function renderMiniDex(dex, filter = '') {
+  const list = document.getElementById('miniDexList');
+  list.innerHTML = '';
+  
+  // Convert to array and sort by rarity then alpha
+  const entries = Object.entries(dex).filter(([word, info]) => {
+    if (!filter) return true;
+    return word.toLowerCase().includes(filter.toLowerCase());
+  });
+  
+  // Sort: Rarity Desc
+  entries.sort((a, b) => {
+    const rA = rarityOrder[a[1].rarity] ?? 5;
+    const rB = rarityOrder[b[1].rarity] ?? 5;
+    return rA - rB;
+  });
+  
+  // Add "Remove" option
+  const removeOpt = document.createElement('div');
+  removeOpt.className = 'mini-entry';
+  removeOpt.style.color = '#ff4444';
+  removeOpt.innerHTML = `<span>(Empty Slot)</span>`;
+  removeOpt.onclick = () => {
+    currentTeam[editingSlot] = null;
+    renderTeamUI();
+    document.getElementById('teamSelectorModal').style.display = 'none';
+  };
+  list.appendChild(removeOpt);
+
+  entries.forEach(([word, info]) => {
+    // Check if word is already in team (ignore current slot)
+    const isUsed = currentTeam.some((member, idx) => 
+      member && member.word === word && idx !== editingSlot
+    );
+
+    const item = document.createElement('div');
+    item.className = 'mini-entry';
+    if (isUsed) {
+      item.style.opacity = '0.5';
+      item.style.cursor = 'not-allowed';
+      item.title = 'Already in team';
+      item.style.background = '#eee'; // Visual cue
+    }
+
+    const color = rarityScale[info.rarity] || '#000';
+    
+    // Tiny stat preview
+    const dummyWord = { word: word, rarity: info.rarity };
+    const power = calculatePower(dummyWord);
+    
+    item.innerHTML = `
+      <span>${word}</span>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span style="font-size:10px; color:#666">P:${power}</span>
+        <span style="font-size:10px; color:${color}; font-weight:bold;">${info.rarity.toUpperCase().slice(0,1)}</span>
+      </div>
+    `;
+    
+    item.onclick = () => {
+      if (isUsed) return;
+      currentTeam[editingSlot] = { word: word, rarity: info.rarity };
+      renderTeamUI();
+      document.getElementById('teamSelectorModal').style.display = 'none';
+    };
+    list.appendChild(item);
+  });
+}
+
+// --- Battle System ---
+
+let battleSystem = null;
+
+class BattleSystem {
+  constructor(playerTeam, enemyTeam) {
+    // Deep copy teams to avoid mutating save state
+    this.pTeam = JSON.parse(JSON.stringify(playerTeam.filter(w => w)));
+    this.eTeam = JSON.parse(JSON.stringify(enemyTeam.filter(w => w)));
+    this.pIndex = 0;
+    this.eIndex = 0;
+    this.log = [];
+    this.timer = null;
+    this.active = true;
+    
+    // Initialize Max HP and Current HP
+    this.pTeam.forEach(w => {
+        w.maxHp = calculateStat(w, 'hp');
+        w.currentHp = w.maxHp;
+    });
+    this.eTeam.forEach(w => {
+        w.maxHp = calculateStat(w, 'hp');
+        w.currentHp = w.maxHp;
+    });
+  }
+  
+  start() {
+    this.renderLayout();
+    this.logMsg(t('battleStart'));
+    this.updateUI();
+    setTimeout(() => this.nextTurn(), 1000);
+  }
+  
+  renderLayout() {
+    const container = document.getElementById('battleContainer');
+    container.innerHTML = `
+      <div class="battle-header">
+        <button id="exitBattleBtn" style="background:none;border:none;cursor:pointer;">${t('battleRun')}</button>
+        <span id="battleStatus">${t('battleVS')}</span>
+      </div>
+      <div class="battle-field">
+        <div class="battle-side-enemy" id="enemySide">
+           <div id="enemySprite" class="battle-word"></div>
+           <div class="health-bar"><div id="enemyHp" class="health-fill" style="width:100%"></div></div>
+        </div>
+        
+        <div class="battle-side-player" id="playerSide">
+           <div id="playerSprite" class="battle-word"></div>
+           <div class="health-bar"><div id="playerHp" class="health-fill" style="width:100%"></div></div>
+        </div>
+      </div>
+      <div id="battleLog" class="battle-log"></div>
+    `;
+    
+    document.getElementById('exitBattleBtn').onclick = () => {
+        this.active = false;
+        clearTimeout(this.timer);
+        closeBattle();
+    };
+  }
+  
+  nextTurn() {
+    if (!this.active) return;
+    if (this.checkWin()) return;
+    
+    // Simple Turn: Player always attacks first for now (Speed calc later)
+    this.performAttack(this.pTeam[this.pIndex], this.eTeam[this.eIndex], true, () => {
+        if (!this.active) return;
+        if (this.eTeam[this.eIndex].currentHp <= 0) {
+            this.logMsg(t('battleFainted', { word: this.eTeam[this.eIndex].word }));
+            this.eIndex++;
+            if (this.checkWin()) return;
+            this.updateUI();
+            setTimeout(() => this.nextTurn(), 1000); // Next round
+        } else {
+            // Enemy attacks back
+            setTimeout(() => {
+                if (!this.active) return;
+                this.performAttack(this.eTeam[this.eIndex], this.pTeam[this.pIndex], false, () => {
+                    if (!this.active) return;
+                    if (this.pTeam[this.pIndex].currentHp <= 0) {
+                        this.logMsg(t('battleFainted', { word: this.pTeam[this.pIndex].word }));
+                        this.pIndex++;
+                        if (this.checkWin()) return;
+                    }
+                    this.updateUI();
+                    setTimeout(() => this.nextTurn(), 1000);
+                });
+            }, 1000);
+        }
+    });
+  }
+  
+  performAttack(attacker, defender, isPlayer, callback) {
+    const spriteId = isPlayer ? 'playerSprite' : 'enemySprite';
+    const targetId = isPlayer ? 'enemySprite' : 'playerSprite';
+    
+    // Animate Attack
+    const sprite = document.getElementById(spriteId);
+    sprite.style.transform = isPlayer ? 'translate(20px, -20px)' : 'translate(-20px, 20px)';
+    setTimeout(() => sprite.style.transform = 'translate(0,0)', 200);
+    
+    // Calc Damage
+    const damage = calculateStat(attacker, 'atk');
+    // Random variance 0.8 - 1.2
+    const variance = (Math.random() * 0.4) + 0.8;
+    const finalDamage = Math.floor(damage * variance);
+    
+    setTimeout(() => {
+        defender.currentHp = Math.max(0, defender.currentHp - finalDamage);
+        this.logMsg(t('battleAttacks', { attacker: attacker.word, damage: finalDamage }));
+        this.showDamage(document.getElementById(targetId), finalDamage);
+        this.updateUI();
+        callback();
+    }, 300);
+  }
+  
+  showDamage(element, amount) {
+    if (!element) return;
+    const dmg = document.createElement('div');
+    dmg.className = 'damage-text';
+    dmg.textContent = `-${amount}`;
+    dmg.style.left = element.offsetLeft + 'px';
+    dmg.style.top = element.offsetTop + 'px';
+    element.parentElement.appendChild(dmg);
+    setTimeout(() => dmg.remove(), 1000);
+  }
+  
+  checkWin() {
+    if (this.pIndex >= this.pTeam.length) { this.endBattle(false); return true; }
+    if (this.eIndex >= this.eTeam.length) { this.endBattle(true); return true; }
+    return false;
+  }
+  
+  endBattle(win) {
+    this.active = false;
+    const result = win ? t('battleVictory') : t('battleDefeat');
+    this.logMsg(`--- ${result} ---`);
+    document.getElementById('battleStatus').textContent = result;
+    
+    if (currentUserProfile) {
+        // Simple client-side update for immediate feedback
+        if (win) currentUserProfile.wins++; else currentUserProfile.losses++;
+        
+        // Server RPC would go here. For now, simple update.
+        // We really should use an RPC, but standard update is okay for prototype
+        const updates = win ? { wins: currentUserProfile.wins } : { losses: currentUserProfile.losses };
+        supabaseClient.from('profiles').update(updates).eq('id', currentUserProfile.id).then();
+    }
+    
+    const exitBtn = document.getElementById('exitBattleBtn');
+    exitBtn.textContent = t('battleBack');
+  }
+  
+  logMsg(msg) {
+    const logEl = document.getElementById('battleLog');
+    if(logEl) {
+        logEl.innerHTML += `<div>${msg}</div>`;
+        logEl.scrollTop = logEl.scrollHeight;
+    }
+  }
+  
+  updateUI() {
+    const pMon = this.pTeam[this.pIndex];
+    const eMon = this.eTeam[this.eIndex];
+    
+    const pSprite = document.getElementById('playerSprite');
+    const eSprite = document.getElementById('enemySprite');
+    
+    if (pMon) {
+        pSprite.textContent = pMon.word;
+        pSprite.style.color = rarityScale[pMon.rarity];
+        const pPct = (pMon.currentHp / pMon.maxHp) * 100;
+        document.getElementById('playerHp').style.width = `${pPct}%`;
+    } else {
+        pSprite.textContent = "";
+        document.getElementById('playerHp').style.width = `0%`;
+    }
+    
+    if (eMon) {
+        eSprite.textContent = eMon.word;
+        eSprite.style.color = rarityScale[eMon.rarity];
+        const ePct = (eMon.currentHp / eMon.maxHp) * 100;
+        document.getElementById('enemyHp').style.width = `${ePct}%`;
+    } else {
+        eSprite.textContent = "";
+        document.getElementById('enemyHp').style.width = `0%`;
+    }
+  }
+}
+
+async function startBattle() {
+  if (!currentUserProfile) { 
+      alert(t('profileLoginReq')); 
+      return; 
+  }
+  
+  if (currentTeam.filter(w => w).length === 0) {
+      alert(t('profileTeamReq'));
+      return;
+  }
+  
+  // Find opponent
+  // NOTE: In real app, use a random sort RPC. 
+  // Here we just fetch first 10 and pick random to save cost.
+  let enemyTeamData = [];
+  
+  if (supabaseClient) {
+      const { data } = await supabaseClient
+        .from('battle_teams')
+        .select('*')
+        .neq('user_id', currentUserProfile.id)
+        .limit(10);
+        
+      if (data && data.length > 0) {
+          const randomOpponent = data[Math.floor(Math.random() * data.length)];
+          enemyTeamData = randomOpponent.team_data;
+          console.log("Battling user:", randomOpponent.user_id);
+      }
+  }
+  
+  // Fallback Bot
+  if (enemyTeamData.length === 0) {
+      enemyTeamData = [
+          {word: "Bug", rarity: "common"}, 
+          {word: "Glitch", rarity: "rare"},
+          {word: "Error", rarity: "uncommon"}
+      ];
+  }
+  
+  // Switch UI
+  document.getElementById('mainContent').style.display = 'none';
+  document.getElementById('searchBar').style.display = 'none';
+  document.querySelector('.controls').style.display = 'none';
+  document.getElementById('battleContainer').style.display = 'flex';
+  
+  battleSystem = new BattleSystem(currentTeam, enemyTeamData);
+  battleSystem.start();
+}
+
+function closeBattle() {
+  document.getElementById('battleContainer').style.display = 'none';
+  document.getElementById('mainContent').style.display = 'block';
+  document.getElementById('searchBar').style.display = 'block';
+  document.querySelector('.controls').style.display = 'flex';
+}
+
+function renderProfileUI(profile) {
+  const container = document.getElementById('profileContainer');
+  
+  // Avatar URL (using a free placeholder service for now based on ID)
+  const avatarUrl = `https://api.dicebear.com/7.x/bottts/svg?seed=${profile.id}`;
+
+  container.innerHTML = `
+    <img src="${avatarUrl}" class="profile-avatar" alt="Avatar">
+    <input type="text" class="profile-name-input" value="${escapeHtml(profile.username)}" maxlength="15" spellcheck="false">
+    
+    <div class="profile-stats">
+      <div class="stat-item">
+        <span class="stat-value">${profile.rating}</span>
+        <span class="stat-label">${t('profileRating')}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value" style="color:#a1ff96">${profile.wins}</span>
+        <span class="stat-label">${t('profileWins')}</span>
+      </div>
+      <div class="stat-item">
+        <span class="stat-value" style="color:#ff6969">${profile.losses}</span>
+        <span class="stat-label">${t('profileLosses')}</span>
+      </div>
+    </div>
+    
+    <div class="profile-stats">
+       <div class="stat-item">
+        <span class="stat-value">${profile.total_words}</span>
+        <span class="stat-label">${t('profileWords')}</span>
+      </div>
+    </div>
+
+    <!-- Team Section -->
+    <div class="team-section">
+      <strong style="font-size:14px; display:block;">${t('profileTeam')}</strong>
+      <span id="teamPower" style="font-size:11px; color:#666;">Power: 0</span>
+      <div id="teamUI" class="team-container"></div>
+      <button id="saveTeamBtn" class="save-team-btn" style="display:none;">${t('profileSave')}</button>
+    </div>
+
+    <button class="back-btn">${t('profileBack')}</button>
+  `;
+
+  // Event Listeners
+  container.querySelector('.back-btn').onclick = closeProfile;
+  container.querySelector('#saveTeamBtn').onclick = saveTeam;
+
+  const nameInput = container.querySelector('.profile-name-input');
+  nameInput.onchange = async (e) => {
+    const newName = e.target.value.trim();
+    if (newName) {
+       await supabaseClient.from('profiles').update({ username: newName }).eq('id', profile.id);
+    }
+  };
+  
+  // Initialize Team
+  fetchTeam(profile.id);
+}
+
+function setupTabs() {
+  const tabs = document.querySelectorAll('.nav-tab');
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const tabName = tab.getAttribute('data-tab');
+      switchTab(tabName);
+    });
+  });
+}
+
+function switchTab(tabName) {
+  // Update Tab UI
+  document.querySelectorAll('.nav-tab').forEach(t => {
+    t.classList.remove('active');
+    if (t.getAttribute('data-tab') === tabName) t.classList.add('active');
+  });
+
+  // Hide All Views
+  document.getElementById('mainContent').style.display = 'none';
+  document.getElementById('quizContainer').style.display = 'none';
+  document.getElementById('battleContainer').style.display = 'none';
+  document.getElementById('profileContainer').style.display = 'none';
+  
+  // Show Controls/Search only on Dex tab
+  const showControls = (tabName === 'dex');
+  const searchBar = document.getElementById('searchBar');
+  const controls = document.querySelector('.controls');
+  
+  if (searchBar) searchBar.style.display = showControls ? 'block' : 'none';
+  if (controls) controls.style.display = showControls ? 'flex' : 'none';
+
+  // Logic per tab
+  if (tabName === 'dex') {
+    document.getElementById('mainContent').style.display = 'block';
+    displayWordDex(currentSort);
+  } else if (tabName === 'quiz') {
+    document.getElementById('quizContainer').style.display = 'block';
+    renderQuizMenu();
+  } else if (tabName === 'battle') {
+    // Check login before showing battle container
+    if (!currentUserProfile) {
+        alert("Please login to access Battle Arena");
+        switchTab('dex'); // Go back
+        return;
+    }
+    
+    document.getElementById('battleContainer').style.display = 'flex';
+    // If not currently battling, start one
+    if (!battleSystem || !battleSystem.active) {
+       startBattle();
+    }
+  }
+}
+
 async function initializePopup() {
   await setupLanguageToggle(); // Wait for language to load first
   await setupDarkMode(); // Then setup dark mode with correct language
+  initSupabase(); // Initialize Supabase
   setupSortButtons();
   setupSearchBar();
-  setupQuizButton();
-  displayWordDex(currentSort);
+  setupTabs();
+  
+  // Default to Dex
+  switchTab('dex');
+  
   initKofi();
 }
 
