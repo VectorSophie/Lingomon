@@ -713,74 +713,23 @@ async function setupLanguageToggle() {
   });
 }
 
-let quizMode = false;
-let quizData = {
-  questions: [],
-  currentIndex: 0,
-  score: 0,
-  total: 5
-};
+// Quiz logic moved to quiz.js
 
-function setupQuizButton() {
-  const quizBtn = document.getElementById('quizBtn');
-  if (quizBtn) {
-    quizBtn.addEventListener('click', () => {
-      toggleQuizMode();
-    });
-  }
-}
-
+// Deprecated functions (clean up in future)
 function toggleQuizMode() {
-  // Deprecated by Tab System
-  // Keeping logic for reuse if needed
 }
 
-function renderQuizMenu() {
-  const container = document.getElementById('quizContainer');
-  container.innerHTML = '<p>Loading...</p>';
-  
-  chrome.storage.local.get(['wordDex'], (data) => {
-    const wordDex = data.wordDex || {};
-    const totalWords = Object.keys(wordDex).length;
 
-    if (totalWords < 3) {
-       container.innerHTML = `<p style="padding:20px;text-align:center;">${t('quizMinWords')}</p>`;
-       return;
-    }
+// Quiz logic moved to quiz.js
 
-    container.innerHTML = `
-      <div class="quiz-menu" style="text-align:center; padding:10px;">
-        <h3 style="margin-bottom:20px;">${t('quizMenuTitle')}</h3>
-        
-        <div style="margin-bottom: 24px; text-align:left; background:#f9f9f9; padding:16px; border-radius:8px; border:1px solid #eee;">
-          <label style="font-weight:bold; font-size:12px; display:block; margin-bottom:8px;">${t('quizNumQuestions')}</label>
-          <div style="display:flex; align-items:center; gap:12px;">
-            <input type="range" id="quizSize" min="3" max="${Math.min(20, totalWords)}" value="5" style="flex:1">
-            <span id="quizSizeVal" style="font-weight:bold; width:24px;">5</span>
-          </div>
-        </div>
+// Deprecated functions (clean up in future)
+function toggleQuizMode() {
+}
 
-        <button id="btnStartCustomQuiz" class="quiz-start-btn" style="font-size:16px;">${t('quizStartBtn')}</button>
-      </div>
-    `;
+// Quiz logic moved to quiz.js
 
-    const range = document.getElementById('quizSize');
-    
-    // Validate range values
-    const maxVal = Math.min(20, totalWords);
-    range.max = maxVal;
-    range.value = Math.min(5, maxVal); // Ensure initial value is within bounds
-    
-    // Update display immediately
-    const valDisplay = document.getElementById('quizSizeVal');
-    valDisplay.textContent = range.value;
-    
-    range.oninput = () => valDisplay.textContent = range.value;
-
-    document.getElementById('btnStartCustomQuiz').onclick = () => {
-      startQuiz({ size: parseInt(range.value) });
-    };
-  });
+// Deprecated functions (clean up in future)
+function toggleQuizMode() {
 }
 
 function startQuiz(options = { size: 5 }) {
@@ -1100,26 +1049,8 @@ function closeProfile() {
   document.querySelector('.controls').style.display = 'flex';
 }
 
-// Team Builder Logic
-let currentTeam = [null, null, null, null, null];
-let editingSlot = -1;
-
-function calculateStat(wordData, type) {
-  if (!wordData) return 0;
-  const len = wordData.word.length;
-  const rarity = wordData.rarity;
-  
-  // Base multipliers
-  const rarityMult = { common: 1, uncommon: 1.2, rare: 1.5, epic: 2, legendary: 3, mythic: 5, god: 10 };
-  const rVal = rarityMult[rarity] || 1;
-
-  switch(type) {
-    case 'hp': return Math.floor(len * 10 * rVal); // Long = Tanky
-    case 'atk': return Math.floor((rVal * 20)); // Rarity = Damage
-    case 'speed': return Math.floor(100 / len); // Short = Fast
-    default: return 0;
-  }
-}
+// Battle logic moved to battle.js
+// Quiz logic moved to quiz.js
 
 function calculatePower(wordData) {
   if(!wordData) return 0;
@@ -1315,195 +1246,57 @@ function renderMiniDex(dex, filter = '') {
 }
 
 // --- Battle System ---
+// Moved to battle.js
 
-let battleSystem = null;
-
-class BattleSystem {
-  constructor(playerTeam, enemyTeam) {
-    // Deep copy teams to avoid mutating save state
-    this.pTeam = JSON.parse(JSON.stringify(playerTeam.filter(w => w)));
-    this.eTeam = JSON.parse(JSON.stringify(enemyTeam.filter(w => w)));
-    this.pIndex = 0;
-    this.eIndex = 0;
-    this.log = [];
-    this.timer = null;
-    this.active = true;
-    
-    // Initialize Max HP and Current HP
-    this.pTeam.forEach(w => {
-        w.maxHp = calculateStat(w, 'hp');
-        w.currentHp = w.maxHp;
-    });
-    this.eTeam.forEach(w => {
-        w.maxHp = calculateStat(w, 'hp');
-        w.currentHp = w.maxHp;
-    });
+// Moved to battle.js
+async function startBattle() {
+  if (!currentUserProfile) { 
+      alert(t('profileLoginReq')); 
+      return; 
   }
   
-  start() {
-    this.renderLayout();
-    this.logMsg(t('battleStart'));
-    setTimeout(() => this.nextTurn(), 1000);
+  if (currentTeam.filter(w => w).length === 0) {
+      alert(t('profileTeamReq'));
+      return;
   }
-
   
-  renderLayout() {
-    const container = document.getElementById('battleContainer');
-    container.innerHTML = `
-      <div class="battle-header">
-        <button id="exitBattleBtn" style="background:none;border:none;cursor:pointer;">${t('battleRun')}</button>
-        <span id="battleStatus">${t('battleVS')}</span>
-      </div>
-      <div class="battle-field">
-        <div class="battle-side-enemy" id="enemySide">
-           <div id="enemySprite" class="battle-word"></div>
-           <div class="health-bar"><div id="enemyHp" class="health-fill" style="width:100%"></div></div>
-        </div>
+  // Find opponent
+  // NOTE: In real app, use a random sort RPC. 
+  // Here we just fetch first 10 and pick random to save cost.
+  let enemyTeamData = [];
+  
+  if (supabaseClient) {
+      const { data } = await supabaseClient
+        .from('battle_teams')
+        .select('*')
+        .neq('user_id', currentUserProfile.id)
+        .limit(10);
         
-        <div class="battle-side-player" id="playerSide">
-           <div id="playerSprite" class="battle-word"></div>
-           <div class="health-bar"><div id="playerHp" class="health-fill" style="width:100%"></div></div>
-        </div>
-      </div>
-      <div id="battleLog" class="battle-log"></div>
-    `;
-    
-    document.getElementById('exitBattleBtn').onclick = () => {
-        this.active = false;
-        clearTimeout(this.timer);
-        closeBattle();
-    };
+      if (data && data.length > 0) {
+          const randomOpponent = data[Math.floor(Math.random() * data.length)];
+          enemyTeamData = randomOpponent.team_data;
+          console.log("Battling user:", randomOpponent.user_id);
+      }
   }
   
-  nextTurn() {
-    if (!this.active) return;
-    if (this.checkWin()) return;
-    
-    // Simple Turn: Player always attacks first for now (Speed calc later)
-    this.performAttack(this.pTeam[this.pIndex], this.eTeam[this.eIndex], true, () => {
-        if (!this.active) return;
-        if (this.eTeam[this.eIndex].currentHp <= 0) {
-            this.logMsg(t('battleFainted', { word: this.eTeam[this.eIndex].word }));
-            this.eIndex++;
-            if (this.checkWin()) return;
-            this.updateUI();
-            setTimeout(() => this.nextTurn(), 1000); // Next round
-        } else {
-            // Enemy attacks back
-            setTimeout(() => {
-                if (!this.active) return;
-                this.performAttack(this.eTeam[this.eIndex], this.pTeam[this.pIndex], false, () => {
-                    if (!this.active) return;
-                    if (this.pTeam[this.pIndex].currentHp <= 0) {
-                        this.logMsg(t('battleFainted', { word: this.pTeam[this.pIndex].word }));
-                        this.pIndex++;
-                        if (this.checkWin()) return;
-                    }
-                    this.updateUI();
-                    setTimeout(() => this.nextTurn(), 1000);
-                });
-            }, 1000);
-        }
-    });
+  // Fallback Bot
+  if (enemyTeamData.length === 0) {
+      enemyTeamData = [
+          {word: "Bug", rarity: "common"}, 
+          {word: "Glitch", rarity: "rare"},
+          {word: "Error", rarity: "uncommon"}
+      ];
   }
   
-  performAttack(attacker, defender, isPlayer, callback) {
-    const spriteId = isPlayer ? 'playerSprite' : 'enemySprite';
-    const targetId = isPlayer ? 'enemySprite' : 'playerSprite';
-    
-    // Animate Attack
-    const sprite = document.getElementById(spriteId);
-    sprite.style.transform = isPlayer ? 'translate(20px, -20px)' : 'translate(-20px, 20px)';
-    setTimeout(() => sprite.style.transform = 'translate(0,0)', 200);
-    
-    // Calc Damage
-    const damage = calculateStat(attacker, 'atk');
-    // Random variance 0.8 - 1.2
-    const variance = (Math.random() * 0.4) + 0.8;
-    const finalDamage = Math.floor(damage * variance);
-    
-    setTimeout(() => {
-        defender.currentHp = Math.max(0, defender.currentHp - finalDamage);
-        this.logMsg(t('battleAttacks', { attacker: attacker.word, damage: finalDamage }));
-        this.showDamage(document.getElementById(targetId), finalDamage);
-        this.updateUI();
-        callback();
-    }, 300);
-  }
+  // Switch UI
+  document.getElementById('mainContent').style.display = 'none';
+  document.getElementById('searchBar').style.display = 'none';
+  document.querySelector('.controls').style.display = 'none';
+  document.getElementById('battleContainer').style.display = 'flex';
   
-  showDamage(element, amount) {
-    if (!element) return;
-    const dmg = document.createElement('div');
-    dmg.className = 'damage-text';
-    dmg.textContent = `-${amount}`;
-    dmg.style.left = element.offsetLeft + 'px';
-    dmg.style.top = element.offsetTop + 'px';
-    element.parentElement.appendChild(dmg);
-    setTimeout(() => dmg.remove(), 1000);
-  }
-  
-  checkWin() {
-    if (this.pIndex >= this.pTeam.length) { this.endBattle(false); return true; }
-    if (this.eIndex >= this.eTeam.length) { this.endBattle(true); return true; }
-    return false;
-  }
-  
-  endBattle(win) {
-    this.active = false;
-    const result = win ? t('battleVictory') : t('battleDefeat');
-    this.logMsg(`--- ${result} ---`);
-    document.getElementById('battleStatus').textContent = result;
-    
-    if (currentUserProfile) {
-        // Simple client-side update for immediate feedback
-        if (win) currentUserProfile.wins++; else currentUserProfile.losses++;
-        
-        // Server RPC would go here. For now, simple update.
-        // We really should use an RPC, but standard update is okay for prototype
-        const updates = win ? { wins: currentUserProfile.wins } : { losses: currentUserProfile.losses };
-        supabaseClient.from('profiles').update(updates).eq('id', currentUserProfile.id).then();
-    }
-    
-
-    const exitBtn = document.getElementById('exitBattleBtn');
-    exitBtn.textContent = t('battleBack');
-  }
-  
-  logMsg(msg) {
-    const logEl = document.getElementById('battleLog');
-    if(logEl) {
-        logEl.innerHTML += `<div>${msg}</div>`;
-        logEl.scrollTop = logEl.scrollHeight;
-    }
-  }
-  
-  updateUI() {
-    const pMon = this.pTeam[this.pIndex];
-    const eMon = this.eTeam[this.eIndex];
-    
-    const pSprite = document.getElementById('playerSprite');
-    const eSprite = document.getElementById('enemySprite');
-    
-    if (pMon) {
-        pSprite.textContent = pMon.word;
-        pSprite.style.color = rarityScale[pMon.rarity];
-        const pPct = (pMon.currentHp / pMon.maxHp) * 100;
-        document.getElementById('playerHp').style.width = `${pPct}%`;
-    } else {
-        pSprite.textContent = "";
-        document.getElementById('playerHp').style.width = `0%`;
-    }
-    
-    if (eMon) {
-        eSprite.textContent = eMon.word;
-        eSprite.style.color = rarityScale[eMon.rarity];
-        const ePct = (eMon.currentHp / eMon.maxHp) * 100;
-        document.getElementById('enemyHp').style.width = `${ePct}%`;
-    } else {
-        eSprite.textContent = "";
-        document.getElementById('enemyHp').style.width = `0%`;
-    }
-  }
+  // battleSystem is defined in battle.js
+  battleSystem = new BattleSystem(currentTeam, enemyTeamData);
+  battleSystem.start();
 }
 
 async function startBattle() {
