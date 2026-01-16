@@ -1,8 +1,8 @@
 # Lingomon - Gotta Catch 'Em All!
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](https://www.gnu.org/licenses/agpl-3.0)
-[![GitHub issues](https://img.shields.io/github/issues/lalalune/lingomon.svg)](https://github.com/lalalune/lingomon/issues)
-[![GitHub stars](https://img.shields.io/github/stars/lalalune/lingomon.svg)](https://github.com/lalalune/lingomon/stargazers)
+[![GitHub issues](https://img.shields.io/github/issues/VectorSophie/lingomon.svg)](https://github.com/VectorSophie/lingomon/issues)
+[![GitHub stars](https://img.shields.io/github/stars/VectorSophie/lingomon.svg)](https://github.com/VectorSophie/lingomon/stargazers)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 
 ![Lingomon Icon](lingomon.png)
@@ -16,8 +16,8 @@ Lingomon is an educational browser extension that makes learning new words fun a
 ## Features
 
 - **Catch Words**: Right-click any word on any website to add it to your WordDex
-- **Real Frequency-Based Rarity**: Words assigned tiers based on actual linguistic data from Datamuse API (NEW v2.0!)
-- **Multi-language Support**: English + Korean (**[Add your language!](LANGUAGE_REQUEST_TEMPLATE.md)**)
+- **Real Frequency-Based Rarity**: Words assigned tiers based on actual linguistic data from Datamuse API
+- **Multi-language Support(v1.7)**: English + Korean (**[Add your language!](LANGUAGE_REQUEST_TEMPLATE.md)**)
   - Toggle between English and Korean UI
   - Korean-English dictionary lookup for Korean words
   - Automatic translation of English definitions to Korean
@@ -28,22 +28,24 @@ Lingomon is an educational browser extension that makes learning new words fun a
 - **Persistent Storage**: Your WordDex is saved locally and never lost
 - **Dark Mode**: Toggle between light and dark themes
 - **Statistics & Charts**: Track your collection with visual analytics
-- **Badges & Achievements**: Unlock badges for milestones
+- **Badges & Achievements**: Unlock badges for milestones(Also find some secret easter eggs on the way!)
 - **Daily Streaks**: Build vocabulary learning habits
 - **Quiz Mode**: Test your knowledge of caught words
+- **Battle Mode(v1.8)**: Make teams of words you collected and battle active users
+- **Profiles(v1.8)**: View your fellow catchers and battle them!
 
 ## Want Your Language in Lingomon?
 
 **No coding required!** Help me add support for your language:
 
-1. Fill out the [Language Request Template](LANGUAGE_REQUEST_TEMPLATE.md)
+1. Fill out the [Language Request Template](.github\ISSUE_TEMPLATE\language_request.md)
 2. Research free dictionary APIs (I'll guide you!)
-3. Submit as a [GitHub issue](https://github.com/lalalune/lingomon/issues/new?template=language_request.md)
+3. Submit as a [GitHub issue](https://github.com/VectorSophie/lingomon/issues/new?template=language_request.md)
 4. I implement it and credit you!
 
 **Priority Languages:** Spanish, French, German, Japanese, Portuguese, Arabic, Chinese, Hindi, Russian
 
-See [How to Request a Language](LANGUAGE_REQUEST_TEMPLATE.md) for detailed instructions.
+See [How to Request a Language](.github\ISSUE_TEMPLATE\language_request.md) for detailed instructions.
 
 ## Installation
 
@@ -54,7 +56,7 @@ See [How to Request a Language](LANGUAGE_REQUEST_TEMPLATE.md) for detailed instr
 ### From Source (Developers)
 1. Download or clone this repository
    ```bash
-   git clone https://github.com/lalalune/lingomon.git
+   git clone https://github.com/VectorSophie/lingomon.git
    cd lingomon
    ```
 2. Copy `config.example.js` to `config.js` (for Korean API support)
@@ -75,7 +77,7 @@ See [How to Request a Language](LANGUAGE_REQUEST_TEMPLATE.md) for detailed instr
 
 ## Rarity Tiers
 
-**NEW in v2.0:** Words are now classified based on **real linguistic frequency data** from the Google Trillion Word Corpus via **Datamuse API**! No more randomness - rarity reflects actual word usage in English.
+ Words are now classified based on **real linguistic frequency data** from the Google Trillion Word Corpus via **Datamuse API**! No more randomness - rarity reflects actual word usage in English.
 
 ### How Rarity Works
 
@@ -156,25 +158,6 @@ Based on linguistic analysis:
 - Words not found in the database or API are treated as **Mythic** (assumed < 0.1)
 - The system uses **Datamuse API** for real-time lookup with local database fallback
 
-## Korean Language Support (v1.7+)
-
-Lingomon now supports full Korean language interface with intelligent dictionary lookup:
-
-### How Korean Mode Works
-
-1. **Toggle Language**: Click the "KO" button in the popup to switch to Korean mode
-2. **Smart Dictionary Lookup**:
-   - **Korean words**: Direct lookup in Korean Learners' Dictionary
-   - **English words**: Automatically translated to Korean, then looked up
-   - **Fallback**: If Korean lookup fails, English definition is translated to Korean
-3. **Fully Translated UI**: All interface elements, badges, and labels appear in Korean
-4. **Part of Speech Translation**: Grammar terms (noun → 명사, verb → 동사, etc.)
-
-### Korean APIs Used
-
-- **Korean Learners' Dictionary** (krdict.korean.go.kr): Korean-English dictionary
-- **MyMemory Translation API**: English-to-Korean translation for definitions
-
 ## Privacy
 
 Lingomon values your privacy:
@@ -193,16 +176,15 @@ I welcome contributions of all kinds! Here are ways you can help:
 
 ### Add Language Support (Easiest!)
 No coding required! Research dictionary APIs for your language and I'll implement it.
-- **Guide:** [Language Request Template](LANGUAGE_REQUEST_TEMPLATE.md)
-- **Submit:** [Create Language Request](https://github.com/lalalune/lingomon/issues/new?template=language_request.md)
+- **Submit:** [Create Language Request](https://github.com/VectorSophie/lingomon/issues/new?template=language_request.md)
 
 ### Report Bugs
 Found a bug? Let me know!
-- [Report a Bug](https://github.com/lalalune/lingomon/issues/new?template=bug_report.md)
+- [Report a Bug](https://github.com/VectorSophie/lingomon/issues/new?template=bug_report.md)
 
 ### Suggest Features
 Have an idea? I'd love to hear it!
-- [Request a Feature](https://github.com/lalalune/lingomon/issues/new?template=feature_request.md)
+- [Request a Feature](https://github.com/VectorSophie/lingomon/issues/new?template=feature_request.md)
 
 ### Code Contributions
 Want to contribute code? Check out the guide:
@@ -212,9 +194,7 @@ Want to contribute code? Check out the guide:
 ### Other Ways to Help
 - Star this repo
 - Share with friends
-- Write a review on the Chrome Web Store (coming soon)
-- Join discussions in [GitHub Discussions](https://github.com/lalalune/lingomon/discussions)
-
+- Write a review on the Chrome Web Store (https://chromewebstore.google.com/detail/lingomon/panaoaejgjhkibbdmghgbgkmmkmcnkbo?hl=ko&utm_source=ext_sidebar)
 Read the full [Contributing Guide](.github/CONTRIBUTING.md) for more details.
 
 ## Contributors
@@ -223,8 +203,8 @@ Thank you to all contributors!
 
 ### Language Support Contributors
 <!-- Add contributors who submit language APIs -->
-- **Korean** - lalalune (solo developer, original implementation)
-- _More coming soon! [Add your language](LANGUAGE_REQUEST_TEMPLATE.md)_
+- **Korean** - VectorSophie (solo developer, original implementation)
+- _More coming soon! [Add your language](.github\ISSUE_TEMPLATE\language_request.md)
 
 ### Code Contributors
 <!-- GitHub will auto-populate this -->

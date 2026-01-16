@@ -114,7 +114,7 @@ Help test new features and report issues:
 
 1. **Check existing requests:** Look at [open language request issues](https://github.com/[your-username]/lingomon/labels/language-request) to avoid duplicates
 
-2. **Read the guide:** [LANGUAGE_REQUEST_TEMPLATE.md](../LANGUAGE_REQUEST_TEMPLATE.md) has detailed instructions
+2. **Read the guide:** [language_request.md](\ISSUE_TEMPLATE\language_request.md) has detailed instructions
 
 3. **Research APIs:** Find free dictionary/translation APIs for your language
    - Test them with actual requests
@@ -194,6 +194,8 @@ Use the [Feature Request Template](https://github.com/[your-username]/lingomon/i
 - **Vanilla JavaScript** (no frameworks - keeping it lightweight)
 - **Chrome Extension Manifest V3**
 - **Local Storage** (Chrome Storage API)
+- **Supabase**
+- **Google OAuth**
 - **External APIs:**
   - Free Dictionary API (English definitions)
   - Datamuse API (word frequency)
@@ -202,12 +204,20 @@ Use the [Feature Request Template](https://github.com/[your-username]/lingomon/i
 
 ### Code Areas:
 
-- `manifest.json` - Extension configuration
+- `animations.js` - Animation logic here
 - `background.js` - Service worker, context menu, API calls
-- `content.js` - Content script for word catching animations
-- `popup.js` / `popup.html` - Extension popup UI
-- `animations.js` - Catch animations and popups
+- `battle.js` - battle queueing and animation here
+- `config.js` - .env but in js
+- `content.js` - Content script for word catching.
 - `i18n.js` - Internationalization/translation system
+- `kofi-widget.js` - Only source of income here
+- `manifest.json` - Extension configuration
+- `popup.html` / `popup.js` - Extension popup UI
+- `privacy.html` / `privacy.md` - Privacy policies
+- `profile.js` - Profile display logic
+- `quiz.js` - Quiz page here
+- `stats.js` - Stat blocks all here
+- `worddex.js` - Main page or worddex here
 - `wordFrequency.js` - Local word frequency database
 
 ---
