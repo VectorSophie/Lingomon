@@ -204,7 +204,7 @@ Thank you to all contributors!
 ### Language Support Contributors
 <!-- Add contributors who submit language APIs -->
 - **Korean** - VectorSophie (solo developer, original implementation)
-- _More coming soon! [Add your language](.github\ISSUE_TEMPLATE\language_request.md)
+- More coming soon! [Add your language](https://github.com/VectorSophie/lingomon/issues/new?template=language_request.md)
 
 ### Code Contributors
 <!-- GitHub will auto-populate this -->

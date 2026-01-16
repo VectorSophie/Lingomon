@@ -203,7 +203,7 @@ Use the [Feature Request Template](https://github.com/[your-username]/lingomon/i
   - MyMemory Translation API (translations)
 
 ### Code Areas:
-
+- `libs/supabase.min.js`: Minimal supabase script to call for
 - `animations.js` - Animation logic here
 - `background.js` - Service worker, context menu, API calls
 - `battle.js` - battle queueing and animation here
@@ -331,14 +331,14 @@ Use the [Feature Request Template](https://github.com/[your-username]/lingomon/i
 
 ### What Makes a Good PR:
 
-✅ **Do:**
+**Do:**
 - Keep PRs focused (one feature/fix per PR)
 - Write clear commit messages
 - Add comments for complex logic
 - Test thoroughly before submitting
 - Respond to feedback promptly
 
-❌ **Don't:**
+**Don't:**
 - Submit huge PRs with multiple unrelated changes
 - Break existing functionality
 - Ignore code style guidelines
