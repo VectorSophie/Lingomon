@@ -17,22 +17,23 @@ Lingomon is an educational browser extension that makes learning new words fun a
 
 - **Catch Words**: Right-click any word on any website to add it to your WordDex
 - **Real Frequency-Based Rarity**: Words assigned tiers based on actual linguistic data from Datamuse API
-- **Multi-language Support(v1.7)**: English + Korean (**[Add your language!](https://github.com/VectorSophie/lingomon/issues/new?template=language_request.md)**)
   - Toggle between English and Korean UI
   - Korean-English dictionary lookup for Korean words
   - Automatic translation of English definitions to Korean
   - Translated badges and interface elements
-- **Beautiful Popups**: Enjoy vibrant, color-coded notifications when you catch a new word
-- **WordDex**: View your entire collection with frequency scores and rarity tiers
-- **Dictionary Integration**: Get definitions and etymology for words you catch
-- **Persistent Storage**: Your WordDex is saved locally and never lost
-- **Dark Mode**: Toggle between light and dark themes
-- **Statistics & Charts**: Track your collection with visual analytics
-- **Badges & Achievements**: Unlock badges for milestones(Also find some secret easter eggs on the way!)
-- **Daily Streaks**: Build vocabulary learning habits
-- **Quiz Mode**: Test your knowledge of caught words
+- **Beautiful Popups(v1.6)**: Enjoy vibrant, color-coded notifications when you catch a new word
+- **WordDex(v1.6)**: View your entire collection with frequency scores and rarity tiers
+- **Dictionary Integration(v1.6)**: Get definitions and etymology for words you catch
+- **Persistent Storage(v1.6)**: Your WordDex is saved locally and never lost
+- **Dark Mode(v1.6)**: Toggle between light and dark themes
+- **Statistics & Charts(v1.6)**: Track your collection with visual analytics
+- **Badges & Achievements(v1.6)**: Unlock badges for milestones(Also find some secret easter eggs on the way!)
+- **Daily Streaks(v1.6)**: Build vocabulary learning habits
+- **Quiz Mode(v1.6)**: Test your knowledge of caught words
+- **Multi-language Support(v1.7)**: English + Korean (**[Add your language!](https://github.com/VectorSophie/lingomon/issues/new?template=language_request.md)**)
 - **Battle Mode(v1.8)**: Make teams of words you collected and battle active users
 - **Profiles(v1.8)**: View your fellow catchers and battle them!
+- **Context preservation(v1.8)**: Preserves where you caught the word
 
 ## Want Your Language in Lingomon?
 
