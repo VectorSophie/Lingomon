@@ -17,7 +17,7 @@ Lingomon is an educational browser extension that makes learning new words fun a
 
 - **Catch Words**: Right-click any word on any website to add it to your WordDex
 - **Real Frequency-Based Rarity**: Words assigned tiers based on actual linguistic data from Datamuse API
-- **Multi-language Support(v1.7)**: English + Korean (**[Add your language!](LANGUAGE_REQUEST_TEMPLATE.md)**)
+- **Multi-language Support(v1.7)**: English + Korean (**[Add your language!](https://github.com/VectorSophie/lingomon/issues/new?template=language_request.md)**)
   - Toggle between English and Korean UI
   - Korean-English dictionary lookup for Korean words
   - Automatic translation of English definitions to Korean
