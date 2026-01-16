@@ -175,6 +175,14 @@ const translations = {
     battleFainted: "{word} fainted!",
     battleAttacks: "{attacker} hits for {damage}!",
     battleBack: "Back to Menu",
+    battleArena: "Battle Arena",
+    battleRandom: "Random Battle",
+    battleFriendId: "Trainer ID / Name",
+    battleFight: "FIGHT",
+    battleFriendNotFound: "Friend not found or no team set.",
+    battleSearching: "Searching for opponent...",
+    battleCancel: "Cancel Search",
+    battleGo: "GO",
     
     // Quiz Menu
     quizMenuTitle: "Quiz Settings",
@@ -355,6 +363,14 @@ const translations = {
     battleFainted: "{word} 기절!",
     battleAttacks: "{attacker} 공격! {damage} 데미지!",
     battleBack: "메뉴로",
+    battleArena: "배틀 아레나",
+    battleRandom: "랜덤 배틀",
+    battleFriendId: "트레이너 ID / 이름",
+    battleFight: "배틀",
+    battleFriendNotFound: "친구를 찾을 수 없거나 팀이 없습니다.",
+    battleSearching: "상대 찾는 중...",
+    battleCancel: "검색 취소",
+    battleGo: "이동",
     
     // Quiz Menu
     quizMenuTitle: "퀴즈 설정",
