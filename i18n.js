@@ -18,6 +18,16 @@ const translations = {
     sortAlpha: "A-Z",
     sortRecent: "Recent",
     sortRarity: "Rarity",
+    sortTag: "Tags",
+    
+    // Filter Menu
+    filterMenuTitle: "Tags & Filters",
+    sortView: "Sort View",
+    sortByTags: "Sort by Tags",
+    sortByRarityAll: "Sort by Rarity (Show All)",
+    filterByTag: "Filter by Tag",
+    clearFilter: "Clear Filter",
+    
     quiz: "Quiz",
 
     // Stats
@@ -207,6 +217,16 @@ const translations = {
     sortAlpha: "ABC순",
     sortRecent: "최근순",
     sortRarity: "희귀도순",
+    sortTag: "태그순",
+    
+    // Filter Menu
+    filterMenuTitle: "태그 및 필터",
+    sortView: "정렬 방식",
+    sortByTags: "태그별 정렬",
+    sortByRarityAll: "희귀도별 정렬 (전체)",
+    filterByTag: "태그로 필터",
+    clearFilter: "필터 해제",
+    
     quiz: "퀴즈",
 
     // Stats
@@ -276,7 +296,7 @@ const translations = {
 
     firstMythic: "첫 신화!",
     meta: "메타",
-    huh: "어???",
+    huh: "음???",
     commonKiller: "일반 킬러",
     uncommonKiller: "특이 킬러",
     rareKiller: "희귀 킬러",

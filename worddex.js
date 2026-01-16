@@ -1,6 +1,7 @@
 // worddex.js - Handles WordDex Display, Search, and Sort
 
 let currentSort = 'alpha';
+let currentTagFilter = null;
 let wordData = null;
 let searchQuery = '';
 
@@ -29,6 +30,24 @@ function sortEntries(entries, sortType) {
         if (rarityA !== rarityB) {
           return rarityA - rarityB;
         }
+        return a[0].localeCompare(b[0]);
+      });
+
+    case 'tag':
+      return entries.sort((a, b) => {
+        const tagsA = a[1].tags || [];
+        const tagsB = b[1].tags || [];
+        
+        // Put tagged items first
+        if (tagsA.length > 0 && tagsB.length === 0) return -1;
+        if (tagsA.length === 0 && tagsB.length > 0) return 1;
+        
+        // Sort by first tag alpha
+        if (tagsA.length > 0 && tagsB.length > 0) {
+           const tagComp = tagsA[0].localeCompare(tagsB[0]);
+           if (tagComp !== 0) return tagComp;
+        }
+        
         return a[0].localeCompare(b[0]);
       });
 
@@ -61,13 +80,45 @@ function displayWordDex(sortType = 'alpha') {
 
       let entries = Object.entries(dex);
 
-      // Filter by search query
+      // Filter by Search Query
       if (searchQuery) {
         entries = entries.filter(([word, info]) => {
           const searchLower = searchQuery.toLowerCase();
           return word.toLowerCase().includes(searchLower) ||
                  (info.origin && info.origin.toLowerCase().includes(searchLower));
         });
+      }
+
+      // Filter by Tag or Rarity (Unified)
+      if (currentTagFilter) {
+          entries = entries.filter(([word, info]) => {
+              const tagMatch = info.tags && info.tags.includes(currentTagFilter);
+              const rarityMatch = info.rarity && info.rarity.toLowerCase() === currentTagFilter.toLowerCase();
+              return tagMatch || rarityMatch;
+          });
+      }
+          
+      // Show filter indicator if any filter is active
+      if (currentTagFilter) {
+          const filterMsg = document.createElement('div');
+          filterMsg.className = 'filter-indicator';
+          
+          let msgText = `${t('filterByTag')}: `; // "Filtering:" or "Filter by Tag:"
+          // Wait, t('filterByTag') is "Filter by Tag" in menu. Maybe simpler "Filtering: " is better?
+          // Let's use a generic "Filtering" key or just hardcode if not strict. 
+          // Actually i18n doesn't have "Filtering". Let's add it or use "Filter by Tag"
+          
+          filterMsg.innerHTML = `<span>Filtering: <strong>${currentTagFilter}</strong></span> <button id="clearFilters">${t('clearFilter')}</button>`;
+          dexDiv.appendChild(filterMsg);
+          
+          // We need to attach event after appending
+          setTimeout(() => {
+              const clearBtn = document.getElementById('clearFilters');
+              if(clearBtn) clearBtn.onclick = () => {
+                  currentTagFilter = null;
+                  displayWordDex(currentSort);
+              };
+          }, 0);
       }
 
       entries = sortEntries(entries, sortType);
@@ -118,17 +169,90 @@ function displayWordDex(sortType = 'alpha') {
             }
           }
 
-          const rarityDiv = document.createElement('div');
-          rarityDiv.className = 'rarity';
-          rarityDiv.textContent = t(rarity.toUpperCase());
+          // Inline Tag Container
+          const metaRow = document.createElement('div');
+          metaRow.style.display = 'flex';
+          metaRow.style.alignItems = 'center';
+          metaRow.style.gap = '8px';
+          metaRow.style.marginTop = '2px';
+          
+          // Rarity Badge (Styled like a tag)
+          const rarityBadge = document.createElement('span');
+          rarityBadge.className = 'tag-badge rarity-badge';
+          rarityBadge.textContent = t(rarity.toUpperCase());
+          rarityBadge.style.fontWeight = 'bold';
           
           if (rarity === 'god') {
-             rarityDiv.classList.add('rainbow-text');
-             // Override specific color if needed, but the class handles text fill
-             rarityDiv.style.textShadow = '0 1px 2px rgba(0,0,0,0.2)';
+             rarityBadge.classList.add('rainbow-text');
+             // Border handled by CSS class now
           } else {
-             rarityDiv.style.color = rarityScale[rarity] || '#9b8bb5';
+             const rColor = rarityScale[rarity] || '#9b8bb5';
+             rarityBadge.style.color = rColor;
+             rarityBadge.style.borderColor = rColor;
+             // Light background tint based on rarity color?
+             // For now just white/dark background with colored text/border
+             rarityBadge.style.background = 'transparent';
           }
+          
+          metaRow.appendChild(rarityBadge);
+
+          const tagContainer = document.createElement('div');
+          tagContainer.className = 'inline-tag-container';
+          
+          const refreshInlineTags = () => {
+              tagContainer.innerHTML = '';
+              if (info.tags) {
+                  info.tags.forEach(tag => {
+                      const badge = document.createElement('span');
+                      badge.className = 'tag-badge';
+                      badge.textContent = tag;
+                      badge.title = 'Click to remove';
+                      badge.style.cursor = 'pointer';
+                      badge.onclick = (e) => {
+                          e.stopPropagation();
+                          if(confirm(`Remove tag "${tag}"?`)) {
+                              removeTagGlobal(word, tag);
+                          }
+                      };
+                      tagContainer.appendChild(badge);
+                  });
+              }
+              
+              const addBtn = document.createElement('button');
+              addBtn.className = 'tag-plus-btn';
+              addBtn.textContent = '+';
+              addBtn.onclick = (e) => {
+                  e.stopPropagation();
+                  // Switch to input
+                  const input = document.createElement('input');
+                  input.className = 'inline-tag-input';
+                  input.placeholder = 'Tag...';
+                  input.setAttribute('list', 'existingTags');
+                  
+                  // Auto-focus and handle save
+                  input.onblur = () => {
+                      const val = input.value.trim();
+                      if (val) addTagGlobal(word, val);
+                      else refreshInlineTags(); // Revert
+                  };
+                  input.onkeydown = (ev) => {
+                      if (ev.key === 'Enter') {
+                          const val = input.value.trim();
+                          if (val) addTagGlobal(word, val);
+                          else refreshInlineTags();
+                      }
+                      if (ev.key === 'Escape') refreshInlineTags();
+                  };
+                  
+                  tagContainer.innerHTML = ''; // Clear badges momentarily
+                  tagContainer.appendChild(input);
+                  input.focus();
+              };
+              tagContainer.appendChild(addBtn);
+          };
+          refreshInlineTags();
+          
+          metaRow.appendChild(tagContainer);
 
           const originDiv = document.createElement('div');
           originDiv.className = 'word-info';
@@ -138,6 +262,21 @@ function displayWordDex(sortType = 'alpha') {
           frequencyDiv.className = 'frequency-info';
           frequencyDiv.style.fontSize = '11px';
           frequencyDiv.style.marginTop = '4px';
+
+          // Tags Display (Removed - now inline)
+          /*
+          if (info.tags && info.tags.length > 0) {
+             const tagsDiv = document.createElement('div');
+             tagsDiv.className = 'word-tags';
+             info.tags.forEach(tag => {
+                 const badge = document.createElement('span');
+                 badge.className = 'tag-badge';
+                 badge.textContent = tag;
+                 tagsDiv.appendChild(badge);
+             });
+             div.appendChild(tagsDiv);
+          }
+          */
 
           if (info.frequency !== undefined && info.frequency !== null) {
             const freqDisplay = info.frequency >= 1
@@ -208,7 +347,7 @@ function displayWordDex(sortType = 'alpha') {
           };
 
           div.appendChild(wordStrong);
-          div.appendChild(rarityDiv);
+          div.appendChild(metaRow);
           div.appendChild(infoBtn); // Inserted before description
           div.appendChild(originDiv);
           div.appendChild(frequencyDiv);
@@ -380,11 +519,110 @@ function showWordContext(word, info) {
     </div>
   `;
 
+  // Tag Management Section
+  const tagContainer = document.createElement('div');
+  tagContainer.className = 'tag-input-container';
+  
+  const tagList = document.createElement('div');
+  tagList.className = 'tag-list';
+  
+  const renderTags = () => {
+      tagList.innerHTML = '';
+      const currentTags = info.tags || [];
+      currentTags.forEach(tag => {
+          const chip = document.createElement('div');
+          chip.className = 'tag-chip';
+          chip.innerHTML = `${tag} <button data-tag="${tag}">&times;</button>`;
+          chip.querySelector('button').onclick = () => removeTag(word, tag);
+          tagList.appendChild(chip);
+      });
+  };
+  renderTags();
+
+  const addRow = document.createElement('div');
+  addRow.className = 'tag-add-row';
+  
+  const input = document.createElement('input');
+  input.id = 'newTagInput';
+  input.placeholder = 'Add tag...';
+  input.setAttribute('list', 'existingTags'); // Datalist for suggestions
+
+  const addBtn = document.createElement('button');
+  addBtn.id = 'addTagBtn';
+  addBtn.textContent = 'Add';
+  addBtn.onclick = () => {
+      const newTag = input.value.trim();
+      if(newTag) {
+          addTag(word, newTag);
+          input.value = '';
+      }
+  };
+
+  addRow.appendChild(input);
+  addRow.appendChild(addBtn);
+  
+  tagContainer.appendChild(tagList);
+  tagContainer.appendChild(addRow);
+  details.appendChild(tagContainer);
+
   modal.appendChild(closeBtn);
   modal.appendChild(title);
   modal.appendChild(details);
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
+
+  // Populate Datalist for Autocomplete
+  chrome.storage.local.get(['wordDex'], (data) => {
+      const allTags = new Set();
+      Object.values(data.wordDex || {}).forEach(w => {
+          if(w.tags) w.tags.forEach(t => allTags.add(t));
+      });
+      
+      let datalist = document.getElementById('existingTags');
+      if(!datalist) {
+          datalist = document.createElement('datalist');
+          datalist.id = 'existingTags';
+          document.body.appendChild(datalist);
+      }
+      datalist.innerHTML = '';
+      allTags.forEach(tag => {
+          const option = document.createElement('option');
+          option.value = tag;
+          datalist.appendChild(option);
+      });
+  });
+
+  // Tag Actions
+  const addTag = (targetWord, tag) => {
+      chrome.storage.local.get(['wordDex'], (data) => {
+          const dex = data.wordDex || {};
+          if(dex[targetWord]) {
+              if(!dex[targetWord].tags) dex[targetWord].tags = [];
+              if(!dex[targetWord].tags.includes(tag)) {
+                  dex[targetWord].tags.push(tag);
+                  chrome.storage.local.set({ wordDex: dex }, () => {
+                      info.tags = dex[targetWord].tags; // Update local reference
+                      renderTags();
+                      displayWordDex(currentSort); // Update background list
+                  });
+              }
+          }
+      });
+  };
+
+  const removeTag = (targetWord, tag) => {
+      chrome.storage.local.get(['wordDex'], (data) => {
+          const dex = data.wordDex || {};
+          if(dex[targetWord] && dex[targetWord].tags) {
+              dex[targetWord].tags = dex[targetWord].tags.filter(t => t !== tag);
+              chrome.storage.local.set({ wordDex: dex }, () => {
+                  info.tags = dex[targetWord].tags; // Update local reference
+                  renderTags();
+                  displayWordDex(currentSort);
+              });
+          }
+      });
+  };
 }
 
 function displayError(message) {
@@ -398,15 +636,194 @@ function setupSortButtons() {
   const buttons = document.querySelectorAll('.sort-btn');
   buttons.forEach(btn => {
     btn.addEventListener('click', () => {
+      const sortType = btn.getAttribute('data-sort');
+      
+      if (sortType === 'tag') {
+          showTagFilterMenu();
+          return;
+      }
+      
       buttons.forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
-
-      const sortType = btn.getAttribute('data-sort');
-      if (sortType) {
-        currentSort = sortType;
-        displayWordDex(sortType);
-      }
+      
+      // Clear tag filter if switching sort? 
+      // User might want to sort filtered list. 
+      // If we switch to 'rarity', we keep the filter but change sort order? 
+      // The requirement says "Order by tag should also allow you to select by which tag".
+      // Let's assume 'Tag' button is SPECIAL -> It sets filter.
+      // Other buttons set SORT order.
+      
+      currentSort = sortType;
+      displayWordDex(sortType);
     });
+  });
+}
+
+function showTagFilterMenu() {
+    chrome.storage.local.get(['wordDex'], (data) => {
+        const dex = data.wordDex || {};
+        const allTags = new Set();
+        Object.values(dex).forEach(w => {
+            if(w.tags) w.tags.forEach(t => allTags.add(t));
+        });
+        
+        const tags = Array.from(allTags).sort();
+        const rarities = ['god', 'mythic', 'legendary', 'epic', 'rare', 'uncommon', 'common'];
+        
+        // Create a simple modal or overlay
+        const overlay = document.createElement('div');
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100%';
+        overlay.style.height = '100%';
+        overlay.style.background = 'rgba(0,0,0,0.5)';
+        overlay.style.zIndex = '20000';
+        overlay.style.display = 'flex';
+        overlay.style.alignItems = 'center';
+        overlay.style.justifyContent = 'center';
+        overlay.onclick = (e) => { if(e.target === overlay) overlay.remove(); };
+        
+        const modal = document.createElement('div');
+        modal.style.background = '#fff';
+        modal.style.padding = '16px';
+        modal.style.borderRadius = '8px';
+        modal.style.width = '240px';
+        modal.style.maxHeight = '400px';
+        modal.style.overflowY = 'auto';
+        
+        const title = document.createElement('h3');
+        title.textContent = t('filterMenuTitle');
+        title.style.marginTop = '0';
+        modal.appendChild(title);
+        
+        const createBtn = (text, onClick, isBold = false, color = null) => {
+            const btn = document.createElement('button');
+            btn.textContent = text;
+            btn.style.display = 'block';
+            btn.style.width = '100%';
+            btn.style.padding = '10px';
+            btn.style.textAlign = 'left';
+            btn.style.border = 'none';
+            btn.style.background = 'transparent';
+            btn.style.cursor = 'pointer';
+            btn.style.borderBottom = '1px solid #eee';
+            if(isBold) btn.style.fontWeight = 'bold';
+            if(color) btn.style.color = color;
+            
+            btn.onclick = () => {
+                onClick();
+                overlay.remove();
+            };
+            return btn;
+        };
+
+        // 1. Sorting Options
+        const sortLabel = document.createElement('div');
+        sortLabel.textContent = t('sortView');
+        sortLabel.style.fontSize = '11px';
+        sortLabel.style.fontWeight = 'bold';
+        sortLabel.style.color = '#999';
+        sortLabel.style.marginTop = '8px';
+        sortLabel.style.marginBottom = '4px';
+        modal.appendChild(sortLabel);
+
+        // Sort by Tags
+        modal.appendChild(createBtn(t('sortByTags'), () => {
+            currentTagFilter = null;
+            currentSort = 'tag';
+            displayWordDex('tag');
+            updateActiveSortButton('tag');
+        }, true));
+
+        // 2. Unified Filter List
+        const filterLabel = document.createElement('div');
+        filterLabel.textContent = t('filterByTag');
+        filterLabel.style.fontSize = '11px';
+        filterLabel.style.fontWeight = 'bold';
+        filterLabel.style.color = '#999';
+        filterLabel.style.marginTop = '12px';
+        filterLabel.style.marginBottom = '4px';
+        modal.appendChild(filterLabel);
+
+        // Add Rarities as Tags
+        rarities.forEach(r => {
+            const rColor = rarityScale[r] || '#333';
+            modal.appendChild(createBtn(t(r.toUpperCase()), () => { // Use t() for translated rarity names
+                currentTagFilter = r; // Treat rarity as a tag
+                displayWordDex(currentSort); 
+                updateActiveSortButton('tag');
+            }, false, rColor));
+        });
+
+        // Add Custom Tags
+        if (tags.length > 0) {
+            tags.forEach(tag => {
+                modal.appendChild(createBtn(tag, () => {
+                    currentTagFilter = tag;
+                    displayWordDex(currentSort);
+                    updateActiveSortButton('tag');
+                }));
+            });
+        }
+        
+        // Clear Filter Button
+        const clearBtn = document.createElement('button');
+        clearBtn.textContent = t('clearFilter');
+        clearBtn.style.width = '100%';
+        clearBtn.style.marginTop = '16px';
+        clearBtn.style.padding = '10px';
+        clearBtn.style.background = '#f5f5f5';
+        clearBtn.style.border = 'none';
+        clearBtn.style.borderRadius = '4px';
+        clearBtn.style.cursor = 'pointer';
+        clearBtn.style.fontWeight = 'bold';
+        clearBtn.onclick = () => {
+            currentTagFilter = null;
+            displayWordDex(currentSort);
+            overlay.remove();
+        };
+        modal.appendChild(clearBtn);
+        
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+    });
+}
+
+function updateActiveSortButton(type) {
+    document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+    // If type is 'tag', highlight tag button. 
+    // If type is 'rarity', we don't have a button, so maybe highlight 'Tag' as it's the "Advanced" menu?
+    // Or just highlight nothing?
+    // The previous code highlighted 'tag' for all menu actions.
+    const btn = document.querySelector(`.sort-btn[data-sort="${type}"]`) || document.querySelector(`.sort-btn[data-sort="tag"]`);
+    if(btn) btn.classList.add('active');
+}
+
+function addTagGlobal(word, tag) {
+   chrome.storage.local.get(['wordDex'], (data) => {
+      const dex = data.wordDex || {};
+      if(dex[word]) {
+          if(!dex[word].tags) dex[word].tags = [];
+          if(!dex[word].tags.includes(tag)) {
+              dex[word].tags.push(tag);
+              chrome.storage.local.set({ wordDex: dex }, () => {
+                  displayWordDex(currentSort);
+              });
+          }
+      }
+  });
+}
+
+function removeTagGlobal(word, tag) {
+   chrome.storage.local.get(['wordDex'], (data) => {
+      const dex = data.wordDex || {};
+      if(dex[word] && dex[word].tags) {
+          dex[word].tags = dex[word].tags.filter(t => t !== tag);
+          chrome.storage.local.set({ wordDex: dex }, () => {
+              displayWordDex(currentSort);
+          });
+      }
   });
 }
 

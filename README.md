@@ -34,6 +34,7 @@ Lingomon is an educational browser extension that makes learning new words fun a
 - **Battle Mode(v1.8)**: Make teams of words you collected and battle active users
 - **Profiles(v1.8)**: View your fellow catchers and battle them!
 - **Context preservation(v1.8)**: Preserves where you caught the word
+- **Custom tags(v1.8)**: 
 
 ## Want Your Language in Lingomon?
 

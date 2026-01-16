@@ -47,7 +47,7 @@ function updateUILanguage() {
   if (sortButtons.length >= 3) {
     sortButtons[0].textContent = t('sortAlpha');
     sortButtons[1].textContent = t('sortRecent');
-    sortButtons[2].textContent = t('sortRarity');
+    sortButtons[2].textContent = t('sortTag');
   }
 
   // Update tabs
