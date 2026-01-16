@@ -17,14 +17,16 @@
   - Word frequency lookups sent to api.datamuse.com (English words)
   - Korean dictionary lookups sent to krdict.korean.go.kr (when Korean mode is active)
   - Translation requests sent to api.mymemory.translated.net (when translating to Korean)
+  - Avatar generation requests sent to api.dicebear.com (User ID seed only)
 
-  These API calls only include the word or text to be translated - no personal information.
+  These API calls only include the word, text, or ID seed - no personal information.
 
   ## Third-Party Services
   - **Dictionary API** (api.dictionaryapi.dev): Provides English word definitions and etymology
   - **Datamuse API** (api.datamuse.com): Provides word frequency data for English words
   - **Korean Learners' Dictionary API** (krdict.korean.go.kr): Provides Korean-English dictionary definitions (when Korean mode is active)
   - **MyMemory Translation API** (api.mymemory.translated.net): Provides English-to-Korean translation (when Korean mode is active)
+  - **DiceBear API** (api.dicebear.com): Generates unique robot avatars for user profiles
 
   ## Data Sharing
   Lingomon does NOT:

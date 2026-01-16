@@ -169,6 +169,7 @@ Lingomon values your privacy:
   - [Datamuse API](https://www.datamuse.com/api/) - Real-time word frequency data (English)
   - [Korean Learners' Dictionary](https://krdict.korean.go.kr/) - Korean-English dictionary (Korean mode only)
   - [MyMemory Translation API](https://mymemory.translated.net/) - English-to-Korean translation (Korean mode only)
+  - [DiceBear API](https://www.dicebear.com/) - Generates unique robot avatars for user profiles
 - Fallback: Local frequency database used when APIs are unavailable
 
 ## Contributing

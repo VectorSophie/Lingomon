@@ -1,6 +1,7 @@
 
 class BattleSystem {
-  constructor(playerTeam, enemyTeam) {
+  constructor(playerTeam, enemyTeam, metadata = {}) {
+    this.metadata = metadata;
     // Helper to calculate stats safely (using global or local fallback)
     const getStat = (u, type) => {
         if (typeof window.calculateStat === 'function') return window.calculateStat(u, type);
@@ -13,6 +14,7 @@ class BattleSystem {
     this.pIndex = 0;
     this.eIndex = 0;
     this.active = true;
+    this.logs = [];
     
     // Initialize HP
     this.pTeam.forEach(u => u.maxHp = u.currentHp = getStat(u, 'hp'));
@@ -31,6 +33,7 @@ class BattleSystem {
       <div class="battle-header">
         <button id="exitBattleBtn" style="background:none;border:none;cursor:pointer;">${t('battleRun')}</button>
         <span id="battleStatus">${t('battleVS')}</span>
+        <button id="dlLogBtn" style="display:none; background:#eee; border:1px solid #ccc; padding:2px 8px; border-radius:4px; cursor:pointer; font-size:11px; margin-left:auto;">Save Log</button>
       </div>
       <div class="battle-field">
         <div class="battle-side-enemy" id="enemySide">
@@ -47,6 +50,8 @@ class BattleSystem {
     `;
     
     document.getElementById('exitBattleBtn').onclick = () => this.endBattle(false);
+    const dlBtn = document.getElementById('dlLogBtn');
+    if(dlBtn) dlBtn.onclick = () => this.downloadLog();
   }
   
   updateUI() {
@@ -191,19 +196,105 @@ class BattleSystem {
     setTimeout(() => dmg.remove(), 800);
   }
   
+  calculateRatingChange(isWin) {
+    // Current stats (already incremented before this call)
+    const wins = currentUserProfile.wins || 0;
+    const losses = currentUserProfile.losses || 0;
+    const totalGames = wins + losses;
+    const userRating = (currentUserProfile && currentUserProfile.rating) !== undefined ? currentUserProfile.rating : 0;
+    
+    let delta = 0;
+    
+    // Placement Logic (First 5 Games)
+    if (totalGames <= 5) {
+        // Start from 0 implies we add big chunks.
+        // Win: +200-300. Loss: +20-50 (Still gain a bit or lose small? Standard placement matches usually boost you to your tier).
+        // Let's implement: Win = +200, Loss = -0 (or small).
+        // If they win all 5, they get 1000.
+        // If they win 3, they get 600.
+        
+        if (isWin) {
+            delta = 200;
+            // Bonus for beating human during placement
+            if (!this.metadata.isBot) delta += 50; 
+        } else {
+            // Placement loss - minimal penalty to find "floor"
+            delta = 20; 
+        }
+        return { delta, isPlacement: true };
+    }
+    
+    // Standard Logic (Post-Placement)
+    if (this.metadata.isBot) {
+        // Bot Logic: +2~4 based on power diff
+        const userPower = this.pTeam.reduce((acc, w) => acc + (window.calculatePower ? window.calculatePower(w) : 0), 0);
+        const enemyPower = this.metadata.enemyPower || userPower;
+        
+        const adjustment = Math.round((enemyPower - userPower) / 300);
+        delta = 3 + adjustment;
+        if (delta < 2) delta = 2;
+        if (delta > 4) delta = 4;
+        
+    } else {
+        // Human Logic: +6~8 based on rating diff
+        const enemyRating = this.metadata.enemyRating || 1000;
+        const ratingDiff = enemyRating - userRating;
+        const adjustment = Math.round(ratingDiff / 100);
+        delta = 7 + adjustment;
+        if (delta < 6) delta = 6;
+        if (delta > 8) delta = 8;
+    }
+    return { delta, isPlacement: false };
+  }
+
   endBattle(win) {
     this.active = false;
     const result = win ? t('battleVictory') : t('battleDefeat');
     this.logMsg(`--- ${result} ---`);
+    
     const statusEl = document.getElementById('battleStatus');
     if(statusEl) statusEl.textContent = result;
     
     if (typeof currentUserProfile !== 'undefined' && currentUserProfile) {
-        // Simple client-side update for immediate feedback
+        // Update Stats
         if (win) currentUserProfile.wins++; else currentUserProfile.losses++;
         
+        // Calculate Rating
+        const { delta, isPlacement } = this.calculateRatingChange(win);
+        
+        // Handle undefined rating (first time user)
+        if (typeof currentUserProfile.rating === 'undefined') currentUserProfile.rating = 0;
+        
+        const currentRating = currentUserProfile.rating;
+        // Determine sign based on win/loss. 
+        // Note: In placement, we return positive delta even for loss (participation/calibration)? 
+        // No, standard ELO loses points on loss. But user wants "determine spot".
+        // Let's assume placement loss is negative or zero. 
+        // In calculateRatingChange, I returned positive delta for loss (20).
+        // Let's apply it as subtraction if loss.
+        
+        const change = win ? delta : -delta;
+        let newRating = currentRating + change;
+        if (newRating < 0) newRating = 0;
+        
+        currentUserProfile.rating = newRating;
+        
+        const sign = change >= 0 ? '+' : '';
+        
+        if (isPlacement) {
+             const gamesLeft = 5 - (currentUserProfile.wins + currentUserProfile.losses);
+             const progress = gamesLeft > 0 ? `(${gamesLeft} placements left)` : `(Placement Complete!)`;
+             this.logMsg(`Placement: ${newRating} (${sign}${change}) ${progress}`);
+        } else {
+             this.logMsg(`Rating: ${newRating} (${sign}${change})`);
+        }
+        
         if(typeof supabaseClient !== 'undefined') {
-            const updates = win ? { wins: currentUserProfile.wins } : { losses: currentUserProfile.losses };
+            const updates = { 
+                wins: currentUserProfile.wins, 
+                losses: currentUserProfile.losses,
+                rating: newRating
+            };
             supabaseClient.from('profiles').update(updates).eq('id', currentUserProfile.id).then();
         }
     }
@@ -216,9 +307,26 @@ class BattleSystem {
              renderBattleMenu();
         };
     }
+    
+    const dlBtn = document.getElementById('dlLogBtn');
+    if(dlBtn) dlBtn.style.display = 'block';
+  }
+  
+  downloadLog() {
+    if (!this.logs || this.logs.length === 0) return;
+    const blob = new Blob([this.logs.join('\n')], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `lingomon-battle-${new Date().toISOString().replace(/[:.]/g,'-')}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
   }
   
   logMsg(msg) {
+    this.logs.push(`[${new Date().toLocaleTimeString()}] ${msg}`);
     const logEl = document.getElementById('battleLog');
     if(logEl) {
         logEl.innerHTML += `<div>${msg}</div>`;
@@ -396,7 +504,23 @@ async function startRandomSearch() {
                 isSearching = false;
                 const randomOpponent = data[Math.floor(Math.random() * data.length)];
                 console.log("Found opponent:", randomOpponent);
-                initiateBattle(randomOpponent.team_data);
+                
+                // Fetch opponent rating
+                let opponentRating = 1000;
+                try {
+                    const { data: oppProfile } = await supabaseClient
+                        .from('profiles')
+                        .select('rating')
+                        .eq('id', randomOpponent.user_id)
+                        .single();
+                    if (oppProfile) opponentRating = oppProfile.rating || 1000;
+                } catch(e) { console.error("Error fetching opponent rating", e); }
+
+                initiateBattle(randomOpponent.team_data, {
+                    isBot: false,
+                    enemyRating: opponentRating,
+                    enemyPower: randomOpponent.team_power
+                });
                 return;
             }
         }
@@ -457,7 +581,22 @@ async function startFriendBattle(friendId) {
      btn.disabled = false;
      
      if (data && data.team_data) {
-         initiateBattle(data.team_data);
+          // Fetch opponent rating for friend battle
+          let opponentRating = 1000;
+          try {
+               const { data: oppProfile } = await supabaseClient
+                   .from('profiles')
+                   .select('rating')
+                   .eq('id', data.user_id)
+                   .single();
+               if (oppProfile) opponentRating = oppProfile.rating || 1000;
+          } catch(e) {}
+
+         initiateBattle(data.team_data, {
+             isBot: false,
+             enemyRating: opponentRating,
+             enemyPower: data.team_power || 0
+         });
      } else {
          alert(t('battleFriendNotFound'));
      }
@@ -469,7 +608,9 @@ function startBotBattle() {
     const targetPower = userPower; // Aim for equal
     
     chrome.storage.local.get(['wordDex'], (data) => {
-        const allWords = Object.values(data.wordDex || {});
+        const allWords = Object.entries(data.wordDex || {})
+            .map(([word, info]) => ({ word, ...info }))
+            .filter(w => w.rarity !== 'god');
         // Fallback words if local dex is empty
         const fallbackWords = [
             {word: "Bot", rarity: "common"}, {word: "AI", rarity: "uncommon"}, {word: "Luck", rarity: "rare"},
@@ -497,17 +638,23 @@ function startBotBattle() {
         }
         
         // Ensure "luck can behold" - maybe 10% chance for a GOD rarity bot?
+        // God tier disabled for battles
+        /*
         if (Math.random() < 0.1) {
             botTeam[0] = { word: "DEUS MACHINA", rarity: "god" };
         }
+        */
         
-        initiateBattle(botTeam);
+        initiateBattle(botTeam, { 
+            isBot: true, 
+            enemyPower: botTeam.reduce((acc, w) => acc + (window.calculatePower ? window.calculatePower(w) : 0), 0)
+        });
     });
 }
 
-function initiateBattle(enemyTeamData) {
-    const pTeam = currentTeam.filter(w => w);
-    battleSystem = new BattleSystem(pTeam, enemyTeamData);
+function initiateBattle(enemyTeamData, metadata = {}) {
+    const pTeam = currentTeam.filter(w => w && w.rarity !== 'god');
+    battleSystem = new BattleSystem(pTeam, enemyTeamData, metadata);
     battleSystem.start();
 }
 

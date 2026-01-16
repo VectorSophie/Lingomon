@@ -407,6 +407,7 @@ function renderMiniDex(dex, filter = '') {
   list.innerHTML = '';
   
   const entries = Object.entries(dex).filter(([word, info]) => {
+    if (info.rarity === 'god') return false;
     if (!filter) return true;
     return word.toLowerCase().includes(filter.toLowerCase());
   });
