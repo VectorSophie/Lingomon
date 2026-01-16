@@ -58,7 +58,20 @@ class BattleSystem {
         const eSprite = document.getElementById('enemySprite');
         // Restore full word display
         eSprite.textContent = enemy.word;
-        eSprite.style.color = rarityScale[enemy.rarity] || '#000';
+        
+        if (enemy.rarity === 'god') {
+             eSprite.style.backgroundImage = rarityScale[enemy.rarity];
+             eSprite.style.backgroundSize = '200% auto';
+             eSprite.style.webkitBackgroundClip = 'text';
+             eSprite.style.webkitTextFillColor = 'transparent';
+             eSprite.style.animation = 'rainbow 2s linear infinite';
+        } else {
+             eSprite.style.backgroundImage = 'none';
+             eSprite.style.webkitBackgroundClip = 'initial';
+             eSprite.style.webkitTextFillColor = 'initial';
+             eSprite.style.color = rarityScale[enemy.rarity] || '#000';
+             eSprite.style.animation = 'none';
+        }
         
         const ePct = (enemy.currentHp / enemy.maxHp) * 100;
         document.getElementById('enemyHp').style.width = `${Math.max(0, ePct)}%`;
@@ -73,7 +86,20 @@ class BattleSystem {
         const pSprite = document.getElementById('playerSprite');
         // Restore full word display
         pSprite.textContent = player.word;
-        pSprite.style.color = rarityScale[player.rarity] || '#000';
+        
+        if (player.rarity === 'god') {
+             pSprite.style.backgroundImage = rarityScale[player.rarity];
+             pSprite.style.backgroundSize = '200% auto';
+             pSprite.style.webkitBackgroundClip = 'text';
+             pSprite.style.webkitTextFillColor = 'transparent';
+             pSprite.style.animation = 'rainbow 2s linear infinite';
+        } else {
+             pSprite.style.backgroundImage = 'none';
+             pSprite.style.webkitBackgroundClip = 'initial';
+             pSprite.style.webkitTextFillColor = 'initial';
+             pSprite.style.color = rarityScale[player.rarity] || '#000';
+             pSprite.style.animation = 'none';
+        }
         
         const pPct = (player.currentHp / player.maxHp) * 100;
         document.getElementById('playerHp').style.width = `${Math.max(0, pPct)}%`;
@@ -308,7 +334,7 @@ async function startRandomSearch() {
         if(timerEl) timerEl.textContent = `${seconds}s`;
         
         // Timeout check (20s)
-        if (seconds >= 20) {
+        if (seconds >= 10) {
             clearInterval(timerInterval);
             if (isSearching) {
                 isSearching = false;

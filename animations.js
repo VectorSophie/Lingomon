@@ -8,21 +8,29 @@ const rarityScale = {
   epic: '#b996ff',
   legendary: '#fffa96',
   mythic: '#ff6969',
-  god: '#000000' // Placeholder, will be overridden with rainbow gradient
+  god: 'linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3)'
 };
 
 let lastClickedElement = null;
+let loadingPopup = null;
 
 function initAnimations() {
   // Track right-clicked elements for animations
   document.addEventListener('mousedown', (e) => {
     if (e.button === 2) {
       lastClickedElement = e.target;
+      // Expose for content.js context capture
+      window.lastClickedElement = e.target;
     }
   }, true);
 }
 
-function showCatchAnimation(word, origin, rarity, isNew, firstCaught) {
+function showCatchAnimation(word, origin, rarity, isNew, firstCaught, frequency, frequencySource) {
+  if (loadingPopup) {
+    loadingPopup.remove();
+    loadingPopup = null;
+  }
+
   console.log('Lingomon: Creating catch popup for:', word, 'rarity:', rarity);
 
   if (lastClickedElement) {
@@ -35,13 +43,22 @@ function showCatchAnimation(word, origin, rarity, isNew, firstCaught) {
   catchPopup.style.left = '50%';
   catchPopup.style.transform = 'translate(-50%, -50%) scale(0.8)';
   catchPopup.style.background = '#ffffff';
-  catchPopup.style.border = `3px solid ${rarityScale[rarity]}`;
+  if (rarity === 'god') {
+    catchPopup.style.border = '3px solid transparent';
+  } else {
+    catchPopup.style.border = `3px solid ${rarityScale[rarity]}`;
+  }
   catchPopup.style.borderRadius = '20px';
   catchPopup.style.padding = '32px';
   catchPopup.style.maxWidth = '440px';
   catchPopup.style.maxHeight = '80vh';
   catchPopup.style.overflow = 'auto';
-  catchPopup.style.boxShadow = `0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px ${rarityScale[rarity]}40 inset`;
+  
+  if (rarity === 'god') {
+    catchPopup.style.boxShadow = 'none';
+  } else {
+    catchPopup.style.boxShadow = `0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px ${rarityScale[rarity]}40 inset`;
+  }
   catchPopup.style.zIndex = '9999999';
   catchPopup.style.color = '#000000';
   catchPopup.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif';
@@ -62,6 +79,10 @@ function showCatchAnimation(word, origin, rarity, isNew, firstCaught) {
         60% { border-color: #00ffff; box-shadow: 0 0 20px #00ffff; }
         80% { border-color: #0000ff; box-shadow: 0 0 20px #0000ff; }
         100% { border-color: #ff00ff; box-shadow: 0 0 20px #ff00ff; }
+      }
+      @keyframes rainbow {
+        0% { background-position: 0% 50%; }
+        100% { background-position: 100% 50%; }
       }
     `;
     const styleSheet = document.createElement('style');
@@ -115,7 +136,7 @@ function showCatchAnimation(word, origin, rarity, isNew, firstCaught) {
   wordTitle.style.color = rarityScale[rarity] || '#6b5b95';
   
   if (rarity === 'god') {
-     wordTitle.style.backgroundImage = 'linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3)';
+     wordTitle.style.backgroundImage = rarityScale[rarity];
      wordTitle.style.backgroundSize = '200% auto';
      wordTitle.style.webkitBackgroundClip = 'text';
      wordTitle.style.webkitTextFillColor = 'transparent';
@@ -127,7 +148,11 @@ function showCatchAnimation(word, origin, rarity, isNew, firstCaught) {
   }
   wordTitle.style.textAlign = 'center';
   wordTitle.style.marginBottom = '8px';
-  wordTitle.style.textShadow = `2px 2px 8px ${rarityScale[rarity]}80, 0 0 20px ${rarityScale[rarity]}40`;
+  if (rarity === 'god') {
+    wordTitle.style.textShadow = '0 0 20px rgba(255,255,255,0.4)';
+  } else {
+    wordTitle.style.textShadow = `2px 2px 8px ${rarityScale[rarity]}80, 0 0 20px ${rarityScale[rarity]}40`;
+  }
   wordTitle.style.overflowWrap = 'break-word';
   wordTitle.style.hyphens = 'none';
   wordTitle.textContent = word;
@@ -138,9 +163,10 @@ function showCatchAnimation(word, origin, rarity, isNew, firstCaught) {
   rarityBadge.style.background = rarityScale[rarity];
   
   if (rarity === 'god') {
-    rarityBadge.style.background = 'linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3)';
     rarityBadge.style.color = '#ffffff';
     rarityBadge.style.textShadow = '0 1px 2px rgba(0,0,0,0.5)';
+    rarityBadge.style.backgroundSize = '200% 200%';
+    rarityBadge.style.animation = 'rainbow 2s linear infinite';
   } else {
     rarityBadge.style.color = '#000000';
   }
@@ -150,12 +176,49 @@ function showCatchAnimation(word, origin, rarity, isNew, firstCaught) {
   rarityBadge.style.fontWeight = '700';
   rarityBadge.style.letterSpacing = '1px';
   rarityBadge.style.marginBottom = '20px';
-  rarityBadge.style.boxShadow = `0 4px 12px ${rarityScale[rarity]}80`;
+  if (rarity === 'god') {
+    rarityBadge.style.boxShadow = 'none';
+  } else {
+    rarityBadge.style.boxShadow = `0 4px 12px ${rarityScale[rarity]}80`;
+  }
   rarityBadge.textContent = translate(rarity.toUpperCase());
 
   const rarityContainer = document.createElement('div');
   rarityContainer.style.textAlign = 'center';
   rarityContainer.appendChild(rarityBadge);
+
+  // Add frequency/scarcity info
+  if (frequency !== undefined && frequency !== null) {
+    const freqDiv = document.createElement('div');
+    freqDiv.style.fontSize = '12px';
+    freqDiv.style.color = '#888';
+    freqDiv.style.marginBottom = '16px';
+    freqDiv.style.marginTop = '-12px';
+    
+    const freqDisplay = frequency >= 1
+      ? frequency.toFixed(2)
+      : frequency.toFixed(4);
+      
+    // Simple source mapping or just display API/Local
+    let sourceLabel = 'API';
+    if (frequencySource === 'local') sourceLabel = 'Local DB';
+    else if (frequencySource === 'korean-api') sourceLabel = 'Korean API';
+    else if (frequencySource === 'unknown') sourceLabel = 'Unknown';
+    
+    // We need to handle translations if available, otherwise English defaults
+    const getTrans = (k) => {
+        if (typeof translations !== 'undefined' && typeof currentLanguage !== 'undefined') {
+             return translations[currentLanguage][k] || translations['en'][k] || k;
+        }
+        return k;
+    };
+    
+    const freqLabel = getTrans('frequency') || 'Frequency';
+    const perMillionLabel = getTrans('perMillion') || 'per million';
+    
+    freqDiv.textContent = `${freqLabel}: ${freqDisplay} ${perMillionLabel}`;
+    rarityContainer.appendChild(freqDiv);
+  }
 
   const originText = document.createElement('div');
   originText.style.fontSize = '15px';
@@ -232,8 +295,15 @@ function animateWordCatch(element, rarity) {
   const originalBoxShadow = element.style.boxShadow;
 
   element.style.transition = 'all 0.6s ease-out';
-  element.style.background = rarityScale[rarity];
-  element.style.boxShadow = `0 0 20px ${rarityScale[rarity]}`;
+  
+  if (rarity === 'god') {
+     // No background change for god tier
+     element.style.background = originalBg; 
+     element.style.boxShadow = 'none';
+  } else {
+     element.style.background = rarityScale[rarity];
+     element.style.boxShadow = `0 0 20px ${rarityScale[rarity]}`;
+  }
 
   createParticles(element, rarity);
 
@@ -325,6 +395,11 @@ function createScreenShake() {
 }
 
 function showFailureAnimation(word, error) {
+  if (loadingPopup) {
+    loadingPopup.remove();
+    loadingPopup = null;
+  }
+  
   // Get translation function - use translations directly with currentLanguage
   const translate = (key, replacements = {}) => {
     if (typeof translations !== 'undefined' && typeof currentLanguage !== 'undefined') {
@@ -438,11 +513,78 @@ function showFailureAnimation(word, error) {
   }, 5000);
 }
 
+function showLoadingAnimation(word) {
+  if (loadingPopup) {
+    loadingPopup.remove();
+  }
+
+  const translate = (key) => {
+    if (typeof translations !== 'undefined' && typeof currentLanguage !== 'undefined') {
+      return translations[currentLanguage][key] || translations['en'][key] || key;
+    }
+    return key === 'catching' ? 'Catching...' : key;
+  };
+
+  loadingPopup = document.createElement('div');
+  loadingPopup.style.position = 'fixed';
+  loadingPopup.style.top = '50%';
+  loadingPopup.style.left = '50%';
+  loadingPopup.style.transform = 'translate(-50%, -50%) scale(0.8)';
+  loadingPopup.style.background = '#ffffff';
+  loadingPopup.style.borderRadius = '20px';
+  loadingPopup.style.padding = '32px';
+  loadingPopup.style.boxShadow = '0 20px 60px rgba(0,0,0,0.1)';
+  loadingPopup.style.zIndex = '9999999';
+  loadingPopup.style.display = 'flex';
+  loadingPopup.style.flexDirection = 'column';
+  loadingPopup.style.alignItems = 'center';
+  loadingPopup.style.minWidth = '200px';
+  loadingPopup.style.opacity = '0';
+  loadingPopup.style.transition = 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+
+  const spinner = document.createElement('div');
+  spinner.style.width = '40px';
+  spinner.style.height = '40px';
+  spinner.style.border = '4px solid #f3f3f3';
+  spinner.style.borderTop = '4px solid #3498db';
+  spinner.style.borderRadius = '50%';
+  spinner.style.marginBottom = '16px';
+  
+  const spinKeyframes = `
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  `;
+  const styleSheet = document.createElement('style');
+  styleSheet.textContent = spinKeyframes;
+  document.head.appendChild(styleSheet);
+  
+  spinner.style.animation = 'spin 1s linear infinite';
+
+  const text = document.createElement('div');
+  text.textContent = `${translate('catching')} ${word}...`;
+  text.style.fontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif';
+  text.style.fontSize = '16px';
+  text.style.color = '#666';
+  text.style.fontWeight = '500';
+
+  loadingPopup.appendChild(spinner);
+  loadingPopup.appendChild(text);
+  document.body.appendChild(loadingPopup);
+
+  setTimeout(() => {
+    loadingPopup.style.opacity = '1';
+    loadingPopup.style.transform = 'translate(-50%, -50%) scale(1)';
+  }, 10);
+}
+
 // Expose functions and constants to global scope for use in browser extension
 window.rarityScale = rarityScale;
 window.initAnimations = initAnimations;
 window.showCatchAnimation = showCatchAnimation;
 window.showFailureAnimation = showFailureAnimation;
+window.showLoadingAnimation = showLoadingAnimation;
 window.animateWordCatch = animateWordCatch;
 window.createParticles = createParticles;
 window.createScreenShake = createScreenShake;

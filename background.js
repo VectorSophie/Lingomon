@@ -71,6 +71,32 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   }
 
   const word = info.selectionText.trim().toLowerCase().replace(/[-'']/g, '');
+
+  // Retrieve context from content script
+  let context = '';
+  try {
+    if (!isMetaCatch && tab && tab.id) {
+        const response = await sendMessageToContext(false, tab.id, { type: 'getContext' });
+        if (response && response.context) {
+            context = response.context;
+        }
+    }
+  } catch (e) {
+    console.log('Lingomon: Could not get context:', e);
+  }
+
+  // Optimistic UI: Send loading animation immediately
+  // This addresses "cold start" latency by giving immediate feedback while the background worker processes
+  if (word && word.match(/^[a-zA-Z]{3,}$/)) {
+    sendMessageToContext(isMetaCatch, tab.id, {
+      type: 'catchAttempt',
+      word: word
+    }).catch(err => {
+      // Just log, don't stop execution - content script might not be ready but we proceed anyway
+      console.log('Lingomon: Could not send loading animation (content script may not be loaded):', err);
+    });
+  }
+
   if (!word.match(/^[a-zA-Z]{3,}$/)) {
     let errorMessage = "Invalid word format.";
     if (word.length < 3) {
@@ -319,7 +345,8 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         timestamp: Date.now(),
         firstCaught: firstCaughtDate,
         caughtOn: domain,
-        language: currentLanguage
+        language: currentLanguage,
+        context: context // Save context
       };
 
       // Track unique sites
@@ -380,7 +407,9 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
           origin: origin,
           rarity: rarity,
           isNew: isNew,
-          firstCaught: firstCaughtDate
+          firstCaught: firstCaughtDate,
+          frequency: freqData.frequency, // Add frequency
+          frequencySource: freqData.source // Add source
         }).then(response => {
           console.log('Lingomon: Message sent successfully, response:', response);
         }).catch(err => {

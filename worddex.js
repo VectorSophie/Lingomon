@@ -177,8 +177,39 @@ function displayWordDex(sortType = 'alpha') {
             deleteWord(word, rarity);
           };
 
+          const infoBtn = document.createElement('button');
+          infoBtn.textContent = t('infoButton');
+          infoBtn.className = 'info-btn';
+          // Style like delete button (text, transparent bg)
+          infoBtn.style.background = 'transparent';
+          infoBtn.style.border = 'none';
+          infoBtn.style.cursor = 'pointer';
+          infoBtn.style.fontSize = '11px'; // Slightly smaller than title
+          infoBtn.style.color = '#888'; 
+          infoBtn.style.fontWeight = 'bold';
+          infoBtn.style.padding = '0';
+          infoBtn.style.marginTop = '4px';
+          infoBtn.style.marginBottom = '2px';
+          infoBtn.style.display = 'block'; // Ensure it sits on its own line
+          infoBtn.style.opacity = '0.8';
+          infoBtn.style.transition = 'opacity 0.2s, color 0.2s';
+          
+          infoBtn.onmouseover = () => {
+            infoBtn.style.opacity = '1';
+            infoBtn.style.color = '#555';
+          };
+          infoBtn.onmouseout = () => {
+            infoBtn.style.opacity = '0.8';
+            infoBtn.style.color = '#888';
+          };
+          infoBtn.onclick = (e) => {
+            e.stopPropagation();
+            showWordContext(word, info);
+          };
+
           div.appendChild(wordStrong);
           div.appendChild(rarityDiv);
+          div.appendChild(infoBtn); // Inserted before description
           div.appendChild(originDiv);
           div.appendChild(frequencyDiv);
           div.appendChild(deleteBtn);
@@ -256,6 +287,106 @@ function displayWordDex(sortType = 'alpha') {
   });
 }
 
+function showWordContext(word, info) {
+  // Create Modal
+  const overlay = document.createElement('div');
+  overlay.style.position = 'fixed';
+  overlay.style.top = '0';
+  overlay.style.left = '0';
+  overlay.style.width = '100%';
+  overlay.style.height = '100%';
+  overlay.style.background = 'rgba(0,0,0,0.5)';
+  overlay.style.zIndex = '10000';
+  overlay.style.display = 'flex';
+  overlay.style.alignItems = 'center';
+  overlay.style.justifyContent = 'center';
+  overlay.onclick = (e) => {
+    if (e.target === overlay) overlay.remove();
+  };
+
+  const modal = document.createElement('div');
+  modal.style.background = '#fff';
+  modal.style.padding = '24px';
+  modal.style.borderRadius = '16px';
+  modal.style.maxWidth = '90%';
+  modal.style.width = '400px';
+  modal.style.boxShadow = '0 10px 25px rgba(0,0,0,0.2)';
+  modal.style.fontFamily = 'inherit';
+  modal.style.position = 'relative';
+
+  const closeBtn = document.createElement('button');
+  closeBtn.innerHTML = '&times;';
+  closeBtn.style.position = 'absolute';
+  closeBtn.style.top = '12px';
+  closeBtn.style.right = '12px';
+  closeBtn.style.background = 'none';
+  closeBtn.style.border = 'none';
+  closeBtn.style.fontSize = '24px';
+  closeBtn.style.cursor = 'pointer';
+  closeBtn.style.color = '#999';
+  closeBtn.onclick = () => overlay.remove();
+
+  const title = document.createElement('h2');
+  title.textContent = word;
+  title.style.margin = '0 0 16px 0';
+  title.style.color = rarityScale[info.rarity] || '#333';
+  if (info.rarity === 'god') {
+     title.style.backgroundImage = rarityScale[info.rarity];
+     title.style.backgroundSize = '200% auto';
+     title.style.webkitBackgroundClip = 'text';
+     title.style.webkitTextFillColor = 'transparent';
+     title.style.animation = 'rainbow 2s linear infinite';
+  }
+
+  const details = document.createElement('div');
+  details.style.fontSize = '14px';
+  details.style.lineHeight = '1.6';
+  details.style.color = '#555';
+
+  const formatDate = (ts) => {
+    if (!ts) return 'Unknown';
+    return new Date(ts).toLocaleDateString() + ' ' + new Date(ts).toLocaleTimeString();
+  };
+
+  const firstDate = formatDate(info.firstCaught || info.timestamp);
+  const lastDate = formatDate(info.timestamp);
+  const caughtOn = info.caughtOn || 'Unknown';
+  
+  // Highlight word in context
+  let contextHtml = '<em>No context available.</em>';
+  if (info.context) {
+      // Escape HTML first
+      const escapedContext = escapeHtml(info.context);
+      // Create regex to match word (case insensitive)
+      const regex = new RegExp(`(${word})`, 'gi');
+      
+      let highlightStyle = `color: ${rarityScale[info.rarity] || '#000'}; font-weight: bold;`;
+      if (info.rarity === 'god') {
+          // For god tier text, we can't easily do gradient text in inline replacement without more complex HTML
+          // So just use a fallback color or simple style
+          highlightStyle = `color: #ff00ff; font-weight: bold; text-shadow: 0 0 5px rgba(255,0,255,0.3);`;
+      }
+      
+      contextHtml = escapedContext.replace(regex, `<span style="${highlightStyle}">$1</span>`);
+  }
+
+  details.innerHTML = `
+    <div style="margin-bottom: 8px;"><strong>First Caught:</strong> ${firstDate}</div>
+    <div style="margin-bottom: 8px;"><strong>Last Caught:</strong> ${lastDate}</div>
+    <div style="margin-bottom: 16px;"><strong>Caught On:</strong> ${caughtOn}</div>
+    <div style="background: #f5f5f5; padding: 12px; border-radius: 8px; border-left: 4px solid ${rarityScale[info.rarity] || '#ccc'};">
+        <strong>Context:</strong><br/>
+        <span style="font-style: italic;">"${contextHtml}"</span>
+    </div>
+  `;
+
+  modal.appendChild(closeBtn);
+  modal.appendChild(title);
+  modal.appendChild(details);
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+}
+
 function displayError(message) {
   const dexDiv = document.getElementById("dex");
   if (dexDiv) {
@@ -327,3 +458,4 @@ window.displayWordDex = displayWordDex;
 window.setupSortButtons = setupSortButtons;
 window.setupSearchBar = setupSearchBar;
 window.currentSort = currentSort;
+window.showWordContext = showWordContext;

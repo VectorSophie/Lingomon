@@ -51,6 +51,7 @@ const translations = {
     noSearchResults: "No words found matching your search.",
     deleteConfirm: "Delete \"{word}\" from your collection?",
     deleteButton: "delete",
+    infoButton: "info",
 
     // Charts
     wordsCaughtLast7Days: "Words Caught (Last 7 Days)",
@@ -239,6 +240,7 @@ const translations = {
     noSearchResults: "검색 결과가 없습니다.",
     deleteConfirm: "\"{word}\"을(를) 삭제하시겠습니까?",
     deleteButton: "삭제",
+    infoButton: "정보",
 
     // Charts
     wordsCaughtLast7Days: "최근 1주 수집 단어",
