@@ -146,9 +146,32 @@
       border-color: #404040;
       box-shadow: 0 2px 8px rgba(0,0,0,0.3);
     }
+    .dex-group-header {
+      background: #f8f9fa;
+      padding: 8px 12px;
+      font-weight: bold;
+      font-size: 11px;
+      color: #666;
+      border-bottom: 1px solid #e0e0e0;
+      border-top: 1px solid #e0e0e0;
+      margin-top: 0;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+    }
+    body.dark-mode .dex-group-header {
+      background: #252525;
+      border-color: #404040;
+      color: #aaa;
+    }
+    /* Adjust word-entry to play nice with headers */
     .word-entry {
       border-bottom: 1px solid #e0e0e0;
-      padding: 10px 0;
+      padding: 10px 14px; /* Match header padding mostly */
       transition: all 0.2s;
     }
     body.dark-mode .word-entry {

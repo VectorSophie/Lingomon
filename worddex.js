@@ -1,7 +1,7 @@
 // worddex.js - Handles WordDex Display, Search, and Sort
 
 let currentSort = 'alpha';
-let currentTagFilter = null;
+let activeFilters = new Set();
 let wordData = null;
 let searchQuery = '';
 
@@ -89,39 +89,48 @@ function displayWordDex(sortType = 'alpha') {
         });
       }
 
-      // Filter by Tag or Rarity (Unified)
-      if (currentTagFilter) {
+      // Filter by Tags (Multi-select OR logic)
+      if (activeFilters.size > 0) {
           entries = entries.filter(([word, info]) => {
-              const tagMatch = info.tags && info.tags.includes(currentTagFilter);
-              const rarityMatch = info.rarity && info.rarity.toLowerCase() === currentTagFilter.toLowerCase();
-              return tagMatch || rarityMatch;
+              // Check if word has ANY of the active filters
+              // 1. Check Rarity
+              if (info.rarity && activeFilters.has(info.rarity)) return true;
+              
+              // 2. Check Tags
+              if (info.tags) {
+                  return info.tags.some(tag => activeFilters.has(tag));
+              }
+              
+              return false;
           });
       }
           
       // Show filter indicator if any filter is active
-      if (currentTagFilter) {
+      if (activeFilters.size > 0) {
           const filterMsg = document.createElement('div');
           filterMsg.className = 'filter-indicator';
           
-          let msgText = `${t('filterByTag')}: `; // "Filtering:" or "Filter by Tag:"
-          // Wait, t('filterByTag') is "Filter by Tag" in menu. Maybe simpler "Filtering: " is better?
-          // Let's use a generic "Filtering" key or just hardcode if not strict. 
-          // Actually i18n doesn't have "Filtering". Let's add it or use "Filter by Tag"
+          const filterCount = activeFilters.size;
+          const filterNames = Array.from(activeFilters).join(', ');
+          const displayNames = filterNames.length > 30 ? filterNames.substring(0, 30) + '...' : filterNames;
           
-          filterMsg.innerHTML = `<span>Filtering: <strong>${currentTagFilter}</strong></span> <button id="clearFilters">${t('clearFilter')}</button>`;
+          filterMsg.innerHTML = `<span>${t('filterByTag')}: <strong>${displayNames}</strong></span> <button id="clearFilters">${t('clearFilter')}</button>`;
           dexDiv.appendChild(filterMsg);
           
           // We need to attach event after appending
           setTimeout(() => {
               const clearBtn = document.getElementById('clearFilters');
               if(clearBtn) clearBtn.onclick = () => {
-                  currentTagFilter = null;
+                  activeFilters.clear();
                   displayWordDex(currentSort);
               };
           }, 0);
       }
 
       entries = sortEntries(entries, sortType);
+
+      // Variables for grouping
+      let lastGroup = null;
 
       if (entries.length === 0 && searchQuery) {
         dexDiv.innerHTML = `<p style="color: gray; text-align: center; padding: 20px;">${t('noSearchResults')}</p>`;
@@ -134,15 +143,34 @@ function displayWordDex(sortType = 'alpha') {
             return;
           }
 
+          // Handle Group Headers for Tag Sort
+          if (sortType === 'tag') {
+              const currentTags = info.tags || [];
+              // Use first tag as group, or 'Untagged'
+              const groupName = currentTags.length > 0 ? currentTags[0] : 'Untagged';
+              
+              if (groupName !== lastGroup) {
+                  const header = document.createElement('div');
+                  header.className = 'dex-group-header';
+                  if (groupName === 'Untagged') header.classList.add('untagged');
+                  header.textContent = groupName === 'Untagged' ? 'Untagged' : groupName; // Could translate 'Untagged'
+                  dexDiv.appendChild(header);
+                  lastGroup = groupName;
+              }
+          }
+
           const div = document.createElement("div");
           div.className = "word-entry";
           div.style.position = 'relative';
+          div.style.paddingRight = '60px'; // Prevent text overlap with delete button
 
           const rarity = info.rarity || 'common';
           const origin = info.origin || info.definition || 'No information available';
 
           const wordStrong = document.createElement('strong');
           wordStrong.textContent = word;
+          wordStrong.style.overflowWrap = 'anywhere'; // Ensure long words wrap
+          wordStrong.style.display = 'block'; // Ensure it takes width to wrap properly
           wordStrong.style.color = rarityScale[rarity] || '#6b5b95';
           if (rarity === 'common') {
             wordStrong.style.color = '#9b9b9b';
@@ -691,52 +719,130 @@ function showTagFilterMenu() {
         modal.style.width = '240px';
         modal.style.maxHeight = '400px';
         modal.style.overflowY = 'auto';
+        modal.style.display = 'flex';
+        modal.style.flexDirection = 'column';
+        
+        const header = document.createElement('div');
+        header.style.display = 'flex';
+        header.style.justifyContent = 'space-between';
+        header.style.alignItems = 'center';
+        header.style.marginBottom = '12px';
         
         const title = document.createElement('h3');
         title.textContent = t('filterMenuTitle');
         title.style.marginTop = '0';
-        modal.appendChild(title);
+        title.style.marginBottom = '0';
         
-        const createBtn = (text, onClick, isBold = false, color = null) => {
-            const btn = document.createElement('button');
-            btn.textContent = text;
-            btn.style.display = 'block';
-            btn.style.width = '100%';
-            btn.style.padding = '10px';
-            btn.style.textAlign = 'left';
-            btn.style.border = 'none';
-            btn.style.background = 'transparent';
-            btn.style.cursor = 'pointer';
-            btn.style.borderBottom = '1px solid #eee';
-            if(isBold) btn.style.fontWeight = 'bold';
-            if(color) btn.style.color = color;
+        const doneBtn = document.createElement('button');
+        doneBtn.textContent = 'Done';
+        doneBtn.style.padding = '4px 8px';
+        doneBtn.style.cursor = 'pointer';
+        doneBtn.onclick = () => overlay.remove();
+        
+        header.appendChild(title);
+        header.appendChild(doneBtn);
+        modal.appendChild(header);
+
+        // Helper to create checkboxes
+        const createCheckbox = (text, value, color = null) => {
+            const row = document.createElement('div');
+            row.style.display = 'flex';
+            row.style.alignItems = 'center';
+            row.style.padding = '8px 0';
+            row.style.borderBottom = '1px solid #eee';
+            row.style.cursor = 'pointer';
             
-            btn.onclick = () => {
-                onClick();
-                overlay.remove();
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.checked = activeFilters.has(value);
+            checkbox.style.marginRight = '8px';
+            
+            const label = document.createElement('span');
+            label.textContent = text;
+            if (color) {
+                label.style.color = color;
+                label.style.fontWeight = 'bold';
+            }
+            // Special handling for GOD tier rainbow effect
+            if (value === 'god') {
+                label.classList.add('rainbow-text');
+                label.style.color = 'transparent'; // Needed for background-clip to work
+            }
+            
+            // Toggle logic
+            const toggle = () => {
+                if (activeFilters.has(value)) {
+                    activeFilters.delete(value);
+                    checkbox.checked = false;
+                } else {
+                    activeFilters.add(value);
+                    checkbox.checked = true;
+                }
+                displayWordDex(currentSort); // Live update
             };
-            return btn;
+            
+            row.onclick = (e) => {
+                if(e.target !== checkbox) toggle();
+            };
+            checkbox.onclick = (e) => {
+                e.stopPropagation();
+                toggle();
+            };
+            
+            row.appendChild(checkbox);
+            row.appendChild(label);
+            return row;
         };
 
-        // 1. Sorting Options
+        const scrollArea = document.createElement('div');
+        scrollArea.style.overflowY = 'auto';
+        scrollArea.style.flex = '1';
+        
+        // 1. Sorting Options (Radio buttons basically)
         const sortLabel = document.createElement('div');
         sortLabel.textContent = t('sortView');
         sortLabel.style.fontSize = '11px';
         sortLabel.style.fontWeight = 'bold';
         sortLabel.style.color = '#999';
-        sortLabel.style.marginTop = '8px';
+        sortLabel.style.marginTop = '4px';
         sortLabel.style.marginBottom = '4px';
-        modal.appendChild(sortLabel);
+        scrollArea.appendChild(sortLabel);
 
-        // Sort by Tags
-        modal.appendChild(createBtn(t('sortByTags'), () => {
-            currentTagFilter = null;
-            currentSort = 'tag';
-            displayWordDex('tag');
-            updateActiveSortButton('tag');
-        }, true));
+        // Sort Buttons
+        const createSortBtn = (text, sortType) => {
+            const btn = document.createElement('button');
+            btn.textContent = text;
+            btn.style.width = '100%';
+            btn.style.padding = '8px';
+            btn.style.textAlign = 'left';
+            btn.style.background = currentSort === sortType ? '#f0f0f0' : 'transparent';
+            btn.style.border = '1px solid #eee';
+            btn.style.borderRadius = '4px';
+            btn.style.marginBottom = '4px';
+            btn.style.cursor = 'pointer';
+            if (currentSort === sortType) btn.style.fontWeight = 'bold';
+            
+            btn.onclick = () => {
+                currentSort = sortType;
+                displayWordDex(sortType);
+                updateActiveSortButton(sortType);
+                // Update UI state of buttons
+                const allSorts = scrollArea.querySelectorAll('.sort-opt-btn');
+                allSorts.forEach(b => {
+                    b.style.background = 'transparent';
+                    b.style.fontWeight = 'normal';
+                });
+                btn.style.background = '#f0f0f0';
+                btn.style.fontWeight = 'bold';
+            };
+            btn.className = 'sort-opt-btn';
+            return btn;
+        };
 
-        // 2. Unified Filter List
+        scrollArea.appendChild(createSortBtn(t('sortByTags'), 'tag'));
+        // scrollArea.appendChild(createSortBtn(t('sortAlpha'), 'alpha')); // Restore ability to switch sort inside menu
+
+        // 2. Filter List
         const filterLabel = document.createElement('div');
         filterLabel.textContent = t('filterByTag');
         filterLabel.style.fontSize = '11px';
@@ -744,34 +850,36 @@ function showTagFilterMenu() {
         filterLabel.style.color = '#999';
         filterLabel.style.marginTop = '12px';
         filterLabel.style.marginBottom = '4px';
-        modal.appendChild(filterLabel);
+        scrollArea.appendChild(filterLabel);
 
-        // Add Rarities as Tags
+        // Rarities
         rarities.forEach(r => {
             const rColor = rarityScale[r] || '#333';
-            modal.appendChild(createBtn(t(r.toUpperCase()), () => { // Use t() for translated rarity names
-                currentTagFilter = r; // Treat rarity as a tag
-                displayWordDex(currentSort); 
-                updateActiveSortButton('tag');
-            }, false, rColor));
+            scrollArea.appendChild(createCheckbox(t(r.toUpperCase()), r, rColor));
         });
 
-        // Add Custom Tags
+        // Custom Tags
         if (tags.length > 0) {
             tags.forEach(tag => {
-                modal.appendChild(createBtn(tag, () => {
-                    currentTagFilter = tag;
-                    displayWordDex(currentSort);
-                    updateActiveSortButton('tag');
-                }));
+                scrollArea.appendChild(createCheckbox(tag, tag));
             });
+        } else {
+            const noTags = document.createElement('div');
+            noTags.textContent = 'No custom tags yet.';
+            noTags.style.color = '#ccc';
+            noTags.style.fontStyle = 'italic';
+            noTags.style.fontSize = '12px';
+            noTags.style.padding = '8px 0';
+            scrollArea.appendChild(noTags);
         }
+        
+        modal.appendChild(scrollArea);
         
         // Clear Filter Button
         const clearBtn = document.createElement('button');
         clearBtn.textContent = t('clearFilter');
         clearBtn.style.width = '100%';
-        clearBtn.style.marginTop = '16px';
+        clearBtn.style.marginTop = '12px';
         clearBtn.style.padding = '10px';
         clearBtn.style.background = '#f5f5f5';
         clearBtn.style.border = 'none';
@@ -779,7 +887,7 @@ function showTagFilterMenu() {
         clearBtn.style.cursor = 'pointer';
         clearBtn.style.fontWeight = 'bold';
         clearBtn.onclick = () => {
-            currentTagFilter = null;
+            activeFilters.clear();
             displayWordDex(currentSort);
             overlay.remove();
         };
@@ -842,30 +950,18 @@ function deleteWord(word, rarity) {
     return;
   }
 
-  chrome.storage.local.get(['wordDex', 'achievements'], (data) => {
-    if (chrome.runtime.lastError) {
-      console.error('Storage error:', chrome.runtime.lastError);
-      return;
-    }
-
-    const wordDex = data.wordDex || {};
-    const achievements = data.achievements || {};
-
-    if (wordDex[word]) {
-      delete wordDex[word];
-
-      if (achievements[rarity] && achievements[rarity] > 0) {
-        achievements[rarity] -= 1;
-      }
-
-      chrome.storage.local.set({ wordDex, achievements }, () => {
-        if (chrome.runtime.lastError) {
-          console.error('Storage save error:', chrome.runtime.lastError);
+  // Send delete request to background script to avoid race conditions
+  chrome.runtime.sendMessage({ type: 'deleteWord', word, rarity }, (response) => {
+      if (chrome.runtime.lastError) {
+          console.error('Delete error:', chrome.runtime.lastError);
           return;
-        }
-        displayWordDex(currentSort);
-      });
-    }
+      }
+      
+      if (response && response.success) {
+          displayWordDex(currentSort);
+      } else {
+          console.error('Failed to delete word:', response ? response.error : 'Unknown error');
+      }
   });
 }
 

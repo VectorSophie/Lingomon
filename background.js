@@ -7,6 +7,19 @@ console.log('Lingomon: Frequency-based rarity system LOADED v2.0');
 // Korean API Key (from config.js)
 const KOREAN_API_KEY = CONFIG.KOREAN_API_KEY;
 
+// Mutex for serializing storage operations to prevent race conditions
+class Mutex {
+  constructor() {
+    this.queue = Promise.resolve();
+  }
+  dispatch(fn) {
+    const next = this.queue.then(fn);
+    this.queue = next.catch(e => console.error("Mutex execution error:", e));
+    return next;
+  }
+}
+const storageMutex = new Mutex();
+
 const commonWords = new Set([
   'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'I', 'it', 'for', 'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at',
   'this', 'but', 'his', 'by', 'from', 'they', 'we', 'say', 'her', 'she', 'or', 'an', 'will', 'my', 'one', 'all', 'would', 'there', 'their',
@@ -39,6 +52,42 @@ chrome.storage.onChanged.addListener((changes, areaName) => {
   if (areaName === 'local' && changes.language) {
     updateContextMenu();
   }
+});
+
+// Listen for messages from other parts of the extension
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'deleteWord') {
+    // Handle word deletion safely via Mutex
+    storageMutex.dispatch(async () => {
+      try {
+        const data = await chrome.storage.local.get(['wordDex', 'achievements']);
+        const wordDex = data.wordDex || {};
+        const achievements = data.achievements || {};
+        const word = message.word;
+        
+        // Use the actual rarity stored in DB for decrementing, if available
+        const actualRarity = (wordDex[word] && wordDex[word].rarity) || message.rarity;
+
+        if (wordDex[word]) {
+          delete wordDex[word];
+          
+          if (achievements[actualRarity] && achievements[actualRarity] > 0) {
+            achievements[actualRarity] -= 1;
+          }
+          
+          await chrome.storage.local.set({ wordDex, achievements });
+          sendResponse({ success: true });
+        } else {
+          sendResponse({ success: false, error: 'Word not found' });
+        }
+      } catch (err) {
+        console.error('Error deleting word:', err);
+        sendResponse({ success: false, error: err.message });
+      }
+    });
+    return true; // Keep channel open for async response
+  }
+  // ... other message handlers if needed
 });
 
 // Helper function to send messages to either tabs or runtime (for extension pages)
@@ -324,17 +373,22 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       console.error('Could not extract domain:', e);
     }
 
-    chrome.storage.local.get({ wordDex: {}, achievements: {}, streakData: {}, sitesExplored: {}, badges: { main: [], hidden: [] } }, (storageData) => {
-      if (chrome.runtime.lastError) {
-        console.error('Storage error:', chrome.runtime.lastError);
-        return;
-      }
+    // Use Mutex to prevent race conditions (Read-Modify-Write)
+    await storageMutex.dispatch(async () => {
+      const storageData = await chrome.storage.local.get({ 
+        wordDex: {}, 
+        achievements: {}, 
+        streakData: {}, 
+        sitesExplored: {}, 
+        badges: { main: [], hidden: [] } 
+      });
 
       const wordDex = storageData.wordDex || {};
       const achievements = storageData.achievements || {};
       const streakData = storageData.streakData || { currentStreak: 0, longestStreak: 0, lastCatchDate: null };
       const sitesExplored = storageData.sitesExplored || {};
       const isNew = !wordDex[word];
+      // If catching again, preserve original firstCaught/timestamp unless it's missing
       const firstCaughtDate = isNew ? Date.now() : (wordDex[word].firstCaught || wordDex[word].timestamp || Date.now());
 
       wordDex[word] = {
@@ -394,28 +448,22 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       const existingBadges = storageData.badges || { main: [], hidden: [] };
       const badges = updateBadges(wordDex, achievements, streakData, sitesExplored, rarity, isNew, existingBadges, isMetaCatch);
 
-      chrome.storage.local.set({ wordDex, achievements, streakData, sitesExplored, badges }, () => {
-        if (chrome.runtime.lastError) {
-          console.error('Storage save error:', chrome.runtime.lastError);
-          return;
-        }
-
-        console.log('Lingomon: Sending wordCaught message for:', word);
-        sendMessageToContext(isMetaCatch, tab.id, {
-          type: 'wordCaught',
-          word: word,
-          origin: origin,
-          rarity: rarity,
-          isNew: isNew,
-          firstCaught: firstCaughtDate,
-          frequency: freqData.frequency, // Add frequency
-          frequencySource: freqData.source // Add source
-        }).then(response => {
-          console.log('Lingomon: Message sent successfully, response:', response);
-        }).catch(err => {
-          // Silently ignore if content script isn't loaded - this is expected for some pages
-          console.log('Lingomon: Could not send message (content script may not be loaded):', err.message);
-        });
+      await chrome.storage.local.set({ wordDex, achievements, streakData, sitesExplored, badges });
+      
+      console.log('Lingomon: Sending wordCaught message for:', word);
+      sendMessageToContext(isMetaCatch, tab.id, {
+        type: 'wordCaught',
+        word: word,
+        origin: origin,
+        rarity: rarity,
+        isNew: isNew,
+        firstCaught: firstCaughtDate,
+        frequency: freqData.frequency,
+        frequencySource: freqData.source
+      }).then(response => {
+        console.log('Lingomon: Message sent successfully, response:', response);
+      }).catch(err => {
+        console.log('Lingomon: Could not send message (content script may not be loaded):', err.message);
       });
     });
 
