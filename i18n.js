@@ -126,6 +126,11 @@ const translations = {
     quizPractice: "Keep practicing! Review your words more often.",
     quizMinWords: "You need at least 3 words in your collection to start a quiz. Catch more words!",
     quizAnswerPlaceholder: "Type your answer...",
+    
+    // Quiz Menu
+    quizMenuTitle: "Quiz Settings",
+    quizNumQuestions: "Number of Questions",
+    quizStartBtn: "Start Quiz",
 
     // Error Messages
     wordNotFound: "Word not found in dictionary",
@@ -160,47 +165,72 @@ const translations = {
     tabDex: "WordDex",
     tabQuiz: "Quiz",
     tabBattle: "Battle",
+    tabProfile: "Profile",
     
-    // Profile
+    // Word Types (Short)
+    type_n: "n",
+    type_v: "v",
+    type_adj: "adj",
+    type_adv: "adv",
+    type_p: "p",
+    type_pre: "pre",
+    type_conj: "conj",
+    type_interj: "interj",
+
+    // Profile & Friends
+    profileOverview: "Overview",
+    profileFriends: "Friends",
+    friendRequests: "Friend Requests",
+    friendPending: "Pending Sent",
+    friendWaiting: "Waiting...",
+    friendAdd: "Add",
+    friendPlaceholder: "Enter username...",
+    battleChallenge: "Battle",
+    friendNotFound: "User not found",
+    friendSelf: "You cannot add yourself!",
+    friendExists: "Friend request already exists or you are already friends.",
+    requestSent: "Request sent!",
+    requestError: "Error sending request",
+    
+    // Customization
+    editProfile: "Edit Profile",
+    custTitle: "Title",
+    custAvatar: "Avatar",
+    
+    // Profile (Missing from previous block)
     profileRating: "Rating",
-    profileWins: "Wins",
-    profileLosses: "Losses",
+    profileWins: "W",
+    profileLosses: "L",
     profileWords: "Words Collected",
     profileTeam: "Defense Team",
     profileSave: "Save Team",
     profileBack: "Back to Dex",
-    profileLoginReq: "You need to login to battle!",
+    profileLoginReq: "You must be logged in to battle!",
     profileTeamReq: "Set up your team in Profile first!",
     profileSaving: "Saving...",
     profileSaved: "Saved!",
-    profileSaveFail: "Failed to save team",
-    profileLoading: "Loading profile...",
-    profileError: "Error loading profile. Please log in.",
+    profileSaveFail: "Save Failed",
+    profileLoading: "Loading...",
+    profileError: "Error loading profile.",
     
     // Battle
     battleStart: "Battle Start!",
     battleRun: "Run Away",
     battleVS: "VS Opponent",
-    battleVictory: "VICTORY!",
-    battleDefeat: "DEFEAT...",
+    battleVictory: "Victory!",
+    battleDefeat: "Defeat...",
     battleFainted: "{word} fainted!",
-    battleAttacks: "{attacker} hits for {damage}!",
+    battleAttacks: "{attacker} attacks! {damage} damage!",
     battleBack: "Back to Menu",
     battleArena: "Battle Arena",
     battleRandom: "Random Battle",
     battleFriendId: "Trainer ID / Name",
-    battleFight: "FIGHT",
-    battleFriendNotFound: "Friend not found or no team set.",
+    battleGo: "Go",
+    battleCancel: "Cancel",
     battleSearching: "Searching for opponent...",
-    battleCancel: "Cancel Search",
-    battleGo: "GO",
-    
-    // Quiz Menu
-    quizMenuTitle: "Quiz Settings",
-    quizNumQuestions: "Number of Questions",
-    quizStartBtn: "Start Quiz"
+    battleFoeAppeared: "A new challenger approaches!"
   },
-
+  
   ko: {
     // Context Menu
     contextMenu: "'%s' 잡기",
@@ -325,6 +355,11 @@ const translations = {
     quizPractice: "계속 연습하세요! 단어를 더 자주 복습하세요.",
     quizMinWords: "퀴즈를 시작하려면 최소 3개의 단어가 필요합니다. 더 많은 단어를 수집하세요!",
     quizAnswerPlaceholder: "답을 입력하세요...",
+    
+    // Quiz Menu
+    quizMenuTitle: "퀴즈 설정",
+    quizNumQuestions: "문제 수",
+    quizStartBtn: "퀴즈 시작",
 
     // Error Messages
     wordNotFound: "사전에서 단어를 찾을 수 없습니다",
@@ -359,6 +394,37 @@ const translations = {
     tabDex: "단어장",
     tabQuiz: "퀴즈",
     tabBattle: "배틀",
+    tabProfile: "프로필",
+    
+    // Word Types (Short)
+    type_n: "명",
+    type_v: "동",
+    type_adj: "형",
+    type_adv: "부",
+    type_p: "대",
+    type_pre: "전",
+    type_conj: "접",
+    type_interj: "감",
+
+    // Profile & Friends
+    profileOverview: "개요",
+    profileFriends: "친구",
+    friendRequests: "친구 요청",
+    friendPending: "보낸 요청",
+    friendWaiting: "대기 중...",
+    friendAdd: "추가",
+    friendPlaceholder: "사용자명 입력...",
+    battleChallenge: "배틀",
+    friendNotFound: "사용자를 찾을 수 없습니다",
+    friendSelf: "자신을 추가할 수 없습니다!",
+    friendExists: "이미 친구이거나 요청을 보냈습니다.",
+    requestSent: "요청이 전송되었습니다!",
+    requestError: "요청 전송 오류",
+    
+    // Customization
+    editProfile: "프로필 편집",
+    custTitle: "칭호",
+    custAvatar: "아바타",
     
     // Profile
     profileRating: "레이팅",
@@ -388,16 +454,10 @@ const translations = {
     battleArena: "배틀 아레나",
     battleRandom: "랜덤 배틀",
     battleFriendId: "트레이너 ID / 이름",
-    battleFight: "배틀",
-    battleFriendNotFound: "친구를 찾을 수 없거나 팀이 없습니다.",
+    battleGo: "ㄱ",
+    battleCancel: "취소",
     battleSearching: "상대 찾는 중...",
-    battleCancel: "검색 취소",
-    battleGo: "이동",
-    
-    // Quiz Menu
-    quizMenuTitle: "퀴즈 설정",
-    quizNumQuestions: "문제 수",
-    quizStartBtn: "퀴즈 시작"
+    battleFoeAppeared: "새로운 도전자가 나타났다!"
   }
 };
 
@@ -440,7 +500,7 @@ async function setLanguage(lang) {
 
 // Translate a key to current language
 function t(key, replacements = {}) {
-  const translation = translations[currentLanguage][key] || translations['en'][key] || key;
+  const translation = translations[currentLanguage]?.[key] || translations['en']?.[key] || key;
 
   // Replace placeholders like {word}
   let result = translation;

@@ -578,6 +578,21 @@
       margin-top: 2px;
     }
     
+    .slot-cost-badge {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      background: #333;
+      color: #fff;
+      font-size: 9px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid #fff;
+    }
     /* Modal Styles */
     .modal-overlay {
       position: fixed;
@@ -644,6 +659,83 @@
       border: none;
       border-radius: 6px;
       cursor: pointer;
+    }
+    
+    /* Friend Styles */
+    .profile-tab-btn {
+        flex: 1;
+        padding: 8px;
+        background: none;
+        border: none;
+        border-bottom: 2px solid transparent;
+        cursor: pointer;
+        font-weight: 600;
+        color: #666;
+    }
+    .profile-tab-btn.active {
+        color: #000;
+        border-bottom-color: #000;
+    }
+    body.dark-mode .profile-tab-btn {
+        color: #999;
+    }
+    body.dark-mode .profile-tab-btn.active {
+        color: #fff;
+        border-bottom-color: #fff;
+    }
+    .friend-add-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 12px;
+    }
+    .friend-list {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    .friend-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px;
+        border-bottom: 1px solid #eee;
+    }
+    body.dark-mode .friend-item {
+        border-bottom-color: #444;
+    }
+    .friend-item.request {
+        background: #f0f8ff;
+        border-radius: 4px;
+        margin-bottom: 4px;
+    }
+    .friend-item.pending {
+        opacity: 0.7;
+    }
+    .challenge-btn {
+        padding: 4px 8px;
+        background: #ff4444;
+        color: #fff;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 11px;
+        font-weight: bold;
+    }
+    .accept-btn {
+        padding: 4px 8px;
+        background: #4caf50;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-right: 4px;
+    }
+    .reject-btn {
+        padding: 4px 8px;
+        background: #ccc;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
     }
     
     /* Battle Arena Styles */
@@ -738,6 +830,275 @@
       gap: 8px;
       justify-content: center;
       margin-bottom: 16px;
+    }
+    
+    .battle-intro-overlay {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.9);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.8s;
+    }
+    .battle-intro-overlay.fade-out {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .intro-content {
+      width: 100%;
+      text-align: center;
+      color: #fff;
+    }
+    .intro-text {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 30px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      animation: pulse 1s infinite;
+    }
+    .intro-cards {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+    }
+    .intro-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 10px;
+      width: 100px;
+      text-align: center;
+      color: #000;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
+    .intro-avatar {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      border: 3px solid #000;
+      margin-bottom: 8px;
+      background: #f0f0f0;
+    }
+    .intro-name {
+      font-weight: bold;
+      font-size: 12px;
+      margin-bottom: 4px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .intro-power {
+      font-size: 10px;
+      color: #666;
+    }
+    .intro-vs {
+      font-size: 32px;
+      font-weight: 900;
+      font-style: italic;
+      color: #ff4444;
+      text-shadow: 2px 2px 0 #fff;
+    }
+    
+    @keyframes slideInLeft {
+      from { transform: translateX(-100px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideInRight {
+      from { transform: translateX(100px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    
+    .slide-in-left { animation: slideInLeft 0.5s ease-out forwards; }
+    .slide-in-right { animation: slideInRight 0.5s ease-out forwards; }
+    
+    .battle-profile-icon {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+      cursor: pointer;
+      z-index: 20;
+      background: #f0f0f0;
+      overflow: hidden;
+      transition: transform 0.2s;
+    }
+    .battle-profile-icon:hover {
+      transform: scale(1.1);
+    }
+    .battle-profile-icon img {
+      width: 100%;
+      height: 100%;
+    }
+    .battle-profile-icon.player {
+      bottom: 10px;
+      left: 10px;
+    }
+    .battle-profile-icon.enemy {
+      top: 10px;
+      right: 10px;
+    }
+    /* Mini Profile Modal */
+    .mini-profile-modal {
+      position: absolute;
+      background: #fff;
+      border-radius: 8px;
+      padding: 12px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      z-index: 100;
+      width: 150px;
+      text-align: center;
+      font-size: 12px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .mini-profile-modal.visible {
+      pointer-events: auto;
+      opacity: 1;
+    }
+    .mini-profile-modal h4 {
+      margin: 0 0 4px 0;
+      font-size: 14px;
+    }
+    .mini-profile-modal p {
+      margin: 2px 0;
+      color: #666;
+    }
+    
+    /* Emotes */
+    .emote-fab {
+      position: absolute;
+      bottom: 60px;
+      right: 20px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #fff;
+      border: 1px solid #ccc;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      font-size: 20px;
+      cursor: pointer;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .emote-menu {
+      position: absolute;
+      bottom: 110px;
+      right: 20px;
+      background: #fff;
+      padding: 8px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      display: flex;
+      gap: 4px;
+      z-index: 50;
+      flex-wrap: wrap;
+      width: 100px;
+      justify-content: center;
+    }
+    .emote-opt {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 4px;
+      transition: transform 0.1s;
+    }
+    .emote-opt:hover {
+      transform: scale(1.2);
+    }
+    .emote-bubble {
+      background: #fff;
+      padding: 6px 10px;
+      border-radius: 12px;
+      border: 1px solid #ccc;
+      font-size: 24px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      z-index: 40;
+      animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    @keyframes popIn {
+      from { transform: scale(0); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    
+    /* GG Button */
+    .gg-btn {
+      background: linear-gradient(135deg, #FFD700, #FFA500);
+      border: none;
+      padding: 8px 24px;
+      border-radius: 20px;
+      color: #fff;
+      font-weight: 900;
+      font-size: 14px;
+      cursor: pointer;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: transform 0.1s;
+    }
+    .gg-btn:hover {
+      transform: scale(1.05);
+    }
+    .gg-btn:disabled {
+      background: #ccc;
+      cursor: default;
+      transform: none;
+    }
+    
+    /* Customization Styles */
+    .avatar-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+    .avatar-option {
+      width: 100%;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      border: 2px solid transparent;
+      cursor: pointer;
+      background: #f0f0f0;
+      transition: transform 0.1s;
+    }
+    .avatar-option:hover {
+      transform: scale(1.1);
+    }
+    .avatar-option.selected {
+      border-color: #4caf50;
+      box-shadow: 0 0 0 2px #fff inset;
+    }
+    .title-option {
+      padding: 6px 10px;
+      border: 1px solid #ccc;
+      border-radius: 20px;
+      font-size: 11px;
+      cursor: pointer;
+      margin-bottom: 4px;
+      display: inline-block;
+      margin-right: 4px;
+    }
+    .title-option.selected {
+      background: #000;
+      color: #fff;
+      border-color: #000;
+    }
+    .locked-item {
+      opacity: 0.4;
+      cursor: not-allowed;
+      filter: grayscale(1);
     }
     
     /* Range Input Styling */
@@ -1063,6 +1424,21 @@
       </div>
       <input type="text" id="miniSearch" placeholder="Search..." style="width:100%;padding:8px;margin-bottom:8px;box-sizing:border-box;border:1px solid #ccc;border-radius:4px;">
       <div id="miniDexList" class="mini-dex-list"></div>
+    </div>
+  </div>
+  <div id="customizeModal" class="modal-overlay">
+    <div class="modal-content" style="height:auto; max-height:500px;">
+      <div class="modal-header">
+        <h3 style="margin:0;font-size:16px;">Edit Profile</h3>
+        <button id="closeCustomize" style="background:none;border:none;cursor:pointer;font-size:16px;color:inherit;">✕</button>
+      </div>
+      <div style="overflow-y:auto; flex:1;">
+          <h4 style="margin:10px 0 5px;">Title</h4>
+          <div id="titleList" class="tag-list"></div>
+          
+          <h4 style="margin:15px 0 5px;">Avatar</h4>
+          <div id="avatarList" class="avatar-grid"></div>
+      </div>
     </div>
   </div>
   <div id="kofi-container"></div>

@@ -1,16 +1,55 @@
 
+// Combo Definitions
+const COMBOS = [
+    {
+        name: "The Quintuplets",
+        words: ["who", "what", "where", "when", "why"],
+        effect: (system) => {
+            system.logMsg("✨ COMBO: The Quintuplets! Resurrection active!");
+            system.metadata.hasRevive = true;
+        }
+    },
+    {
+        name: "Liberator",
+        words: ["we", "the", "people"],
+        effect: (system) => {
+             system.logMsg("✨ COMBO: Liberator! +20% ATK to all!");
+             system.pTeam.forEach(u => {
+                 u.atkModifier = (u.atkModifier || 1) * 1.2;
+             });
+        }
+    }
+];
+
 class BattleSystem {
   constructor(playerTeam, enemyTeam, metadata = {}) {
     this.metadata = metadata;
     // Helper to calculate stats safely (using global or local fallback)
     const getStat = (u, type) => {
-        if (typeof window.calculateStat === 'function') return window.calculateStat(u, type);
-        // Fallback if not available
-        return 10; 
+        let val = 10;
+        if (typeof window.calculateStat === 'function') val = window.calculateStat(u, type);
+        
+        // Apply modifiers (Combos)
+        if (type === 'atk' && u.atkModifier) val = Math.floor(val * u.atkModifier);
+        if (type === 'hp' && u.hpModifier) val = Math.floor(val * u.hpModifier);
+        
+        return val;
     };
+    this.getStat = getStat;
 
     this.pTeam = playerTeam.filter(u => u !== null);
     this.eTeam = enemyTeam.filter(u => u !== null);
+    
+    // Normalize tags/types
+    const normalize = (team) => {
+        team.forEach(u => {
+            if (!u.tags) u.tags = [];
+            if (typeof u.tags === 'string') u.tags = [u.tags];
+        });
+    };
+    normalize(this.pTeam);
+    normalize(this.eTeam);
+
     this.pIndex = 0;
     this.eIndex = 0;
     this.active = true;
@@ -19,16 +58,107 @@ class BattleSystem {
     // Initialize HP
     this.pTeam.forEach(u => u.maxHp = u.currentHp = getStat(u, 'hp'));
     this.eTeam.forEach(u => u.maxHp = u.currentHp = getStat(u, 'hp'));
+    
+    // Check Combos & Synergies
+    this.checkCombos();
+    this.checkTypeSynergies();
+  }
+  
+  checkTypeSynergies() {
+      const counts = { noun: 0, verb: 0, adjective: 0 };
+      this.pTeam.forEach(u => {
+          u.tags.forEach(t => {
+              const lower = t.toLowerCase();
+              if (counts[lower] !== undefined) counts[lower]++;
+          });
+      });
+      
+      if (counts.noun >= 3) {
+          this.logMsg("🛡️ TYPE SYNERGY: Noun Wall! +20% HP");
+          this.pTeam.forEach(u => {
+              const boost = Math.floor(u.maxHp * 0.2);
+              u.maxHp += boost;
+              u.currentHp += boost;
+          });
+      }
+      
+      if (counts.verb >= 3) {
+          this.logMsg("⚔️ TYPE SYNERGY: Verb Action! +15% ATK");
+          this.pTeam.forEach(u => {
+              u.atkModifier = (u.atkModifier || 1) * 1.15;
+          });
+      }
+      
+      if (counts.adjective >= 3) {
+          this.logMsg("🎯 TYPE SYNERGY: Descriptive! +20% Crit Chance");
+          this.pTeam.forEach(u => {
+              u.critChance = (u.critChance || 0) + 0.2;
+          });
+      }
+  }
+  
+  checkCombos() {
+      const pWords = this.pTeam.map(u => u.word.toLowerCase());
+      COMBOS.forEach(combo => {
+          // Check if all combo words exist in player team
+          const hasAll = combo.words.every(w => pWords.includes(w));
+          if (hasAll) {
+              combo.effect(this);
+          }
+      });
   }
   
   start() {
     this.renderLayout();
-    this.logMsg(t('battleStart'));
-    setTimeout(() => this.nextTurn(), 1000);
+    
+    // Intro Animation Sequence
+    this.playIntroSequence(() => {
+        this.logMsg(t('battleStart'));
+        setTimeout(() => this.nextTurn(), 1000);
+    });
+  }
+  
+  playIntroSequence(onComplete) {
+      const container = document.getElementById('battleContainer');
+      
+      // Create Intro Overlay
+      const intro = document.createElement('div');
+      intro.className = 'battle-intro-overlay';
+      intro.innerHTML = `
+        <div class="intro-content">
+            <div class="intro-text">${t('battleFoeAppeared') || 'A new challenger approaches!'}</div>
+            <div class="intro-cards">
+                <div class="intro-card player slide-in-left">
+                    <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${currentUserProfile?.id || 'player'}" class="intro-avatar">
+                    <div class="intro-name">${escapeHtml(currentUserProfile?.username || 'You')}</div>
+                    <div class="intro-power">Power: ${this.pTeam.reduce((a,b) => a + (window.calculatePower ? window.calculatePower(b):0), 0)}</div>
+                </div>
+                <div class="intro-vs">VS</div>
+                <div class="intro-card enemy slide-in-right">
+                    <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${this.metadata.enemyId || 'bot'}" class="intro-avatar">
+                    <div class="intro-name">${escapeHtml(this.metadata.enemyName || (this.metadata.isBot ? 'Wild Bot' : 'Opponent'))}</div>
+                    <div class="intro-power">Power: ${this.metadata.enemyPower || '?'}</div>
+                </div>
+            </div>
+        </div>
+      `;
+      container.appendChild(intro);
+      
+      // Animation timing
+      setTimeout(() => {
+          intro.classList.add('fade-out');
+          setTimeout(() => {
+              intro.remove();
+              onComplete();
+          }, 800); // Wait for fade out
+      }, 2500); // Display duration
   }
   
   renderLayout() {
     const container = document.getElementById('battleContainer');
+    const playerSeed = (typeof currentUserProfile !== 'undefined' && currentUserProfile) ? currentUserProfile.id : 'player';
+    const enemySeed = this.metadata.enemyId || 'bot';
+    
     container.innerHTML = `
       <div class="battle-header">
         <button id="exitBattleBtn" style="background:none;border:none;cursor:pointer;">${t('battleRun')}</button>
@@ -36,6 +166,24 @@ class BattleSystem {
         <button id="dlLogBtn" style="display:none; background:#eee; border:1px solid #ccc; padding:2px 8px; border-radius:4px; cursor:pointer; font-size:11px; margin-left:auto;">Save Log</button>
       </div>
       <div class="battle-field">
+        <div class="battle-profile-icon enemy" id="enemyProfileIcon">
+            <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${enemySeed}">
+        </div>
+        <div class="battle-profile-icon player" id="playerProfileIcon">
+            <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${playerSeed}">
+        </div>
+        
+        <!-- Emote Button -->
+        <button id="emoteBtn" class="emote-fab">💬</button>
+        <div id="emoteMenu" class="emote-menu" style="display:none;">
+            <button class="emote-opt">👋</button>
+            <button class="emote-opt">😂</button>
+            <button class="emote-opt">😡</button>
+            <button class="emote-opt">😱</button>
+            <button class="emote-opt">😎</button>
+            <button class="emote-opt">🏳️</button>
+        </div>
+      
         <div class="battle-side-enemy" id="enemySide">
            <div id="enemySprite" class="battle-word"></div>
            <div class="health-bar"><div id="enemyHp" class="health-fill" style="width:100%"></div></div>
@@ -47,22 +195,139 @@ class BattleSystem {
         </div>
       </div>
       <div id="battleLog" class="battle-log"></div>
+      <div id="endBattleControls" style="display:none; justify-content:center; margin-top:8px;">
+          <button id="ggBtn" class="gg-btn">GG</button>
+      </div>
     `;
     
     document.getElementById('exitBattleBtn').onclick = () => this.endBattle(false);
     const dlBtn = document.getElementById('dlLogBtn');
     if(dlBtn) dlBtn.onclick = () => this.downloadLog();
+    
+    document.getElementById('playerProfileIcon').onclick = () => this.showMiniProfile(true);
+    document.getElementById('enemyProfileIcon').onclick = () => this.showMiniProfile(false);
+    
+    // Emote Logic
+    const emoteBtn = document.getElementById('emoteBtn');
+    const emoteMenu = document.getElementById('emoteMenu');
+    emoteBtn.onclick = (e) => {
+        e.stopPropagation();
+        emoteMenu.style.display = emoteMenu.style.display === 'none' ? 'flex' : 'none';
+    };
+    
+    document.querySelectorAll('.emote-opt').forEach(btn => {
+        btn.onclick = () => {
+            this.showEmote(true, btn.textContent);
+            emoteMenu.style.display = 'none';
+        };
+    });
+    
+    // GG Button Logic
+    document.getElementById('ggBtn').onclick = () => {
+        this.logMsg(`${currentUserProfile?.username || 'Player'} says: Good Game!`);
+        document.getElementById('ggBtn').disabled = true;
+        document.getElementById('ggBtn').textContent = "Sent!";
+        this.showEmote(true, "🤝");
+        // TODO: Send to server if online
+    };
+  }
+  
+  showEmote(isPlayer, emoji) {
+      const parent = isPlayer ? document.getElementById('playerSide') : document.getElementById('enemySide');
+      if(!parent) return;
+      
+      const bubble = document.createElement('div');
+      bubble.className = 'emote-bubble';
+      bubble.textContent = emoji;
+      
+      // Position relative to side
+      bubble.style.position = 'absolute';
+      bubble.style.top = '-40px';
+      bubble.style.left = isPlayer ? '20px' : 'auto';
+      bubble.style.right = isPlayer ? 'auto' : '20px';
+      
+      parent.appendChild(bubble);
+      
+      setTimeout(() => {
+          bubble.style.opacity = '0';
+          bubble.style.transform = 'translateY(-20px)';
+          setTimeout(() => bubble.remove(), 500);
+      }, 2000);
+  }
+  
+  showMiniProfile(isPlayer) {
+      // Remove existing mini modals
+      const existing = document.querySelectorAll('.mini-profile-modal');
+      existing.forEach(e => e.remove());
+      
+      const container = document.getElementById('battleContainer');
+      const modal = document.createElement('div');
+      modal.className = 'mini-profile-modal visible';
+      
+      let name, rating, wins, losses, id;
+      
+      if (isPlayer) {
+          name = currentUserProfile ? currentUserProfile.username : 'You';
+          rating = currentUserProfile ? currentUserProfile.rating : 0;
+          wins = currentUserProfile ? currentUserProfile.wins : 0;
+          losses = currentUserProfile ? currentUserProfile.losses : 0;
+          id = currentUserProfile ? currentUserProfile.id : 'unknown';
+          
+          modal.style.bottom = '60px';
+          modal.style.left = '10px';
+      } else {
+          name = this.metadata.enemyName || (this.metadata.isBot ? 'Wild Bot' : 'Opponent');
+          rating = this.metadata.enemyRating || 1000;
+          // We might not have wins/losses for enemy in metadata, unless fetched
+          wins = '?';
+          losses = '?';
+          
+          modal.style.top = '60px';
+          modal.style.right = '10px';
+      }
+      
+      modal.innerHTML = `
+        <h4>${escapeHtml(name)}</h4>
+        <p>Rating: <strong>${rating}</strong></p>
+        ${isPlayer ? `<p style="font-size:10px">W: ${wins} / L: ${losses}</p>` : ''}
+        ${this.metadata.isBot && !isPlayer ? '<p style="font-size:10px; font-style:italic;">AI Trainer</p>' : ''}
+        <button style="margin-top:8px; width:100%; border:1px solid #ddd; background:#f9f9f9; cursor:pointer;">Close</button>
+      `;
+      
+      modal.querySelector('button').onclick = () => modal.remove();
+      
+      // Auto close on outside click?
+      // Simple timeout for now
+      setTimeout(() => {
+          if(modal.parentNode) modal.remove();
+      }, 5000);
+      
+      container.appendChild(modal);
   }
   
   updateUI() {
     if (!this.active) return;
     
+    const VALID_TYPES = ['noun', 'verb', 'adjective', 'adverb', 'pronoun', 'preposition', 'conjunction', 'interjection'];
+
     // Update Enemy
     if (this.eIndex < this.eTeam.length) {
         const enemy = this.eTeam[this.eIndex];
         const eSprite = document.getElementById('enemySprite');
-        // Restore full word display
-        eSprite.textContent = enemy.word;
+        // Restore full word display + Tags (Filtered)
+        const tags = enemy.tags ? enemy.tags.filter(tag => VALID_TYPES.includes(tag.toLowerCase())).map(tag => {
+            const lower = tag.toLowerCase();
+            if (lower === 'noun') return t('type_n');
+            if (lower === 'verb') return t('type_v');
+            if (lower === 'adjective') return t('type_adj');
+            if (lower === 'adverb') return t('type_adv');
+            if (lower === 'pronoun') return t('type_p');
+            if (lower === 'preposition') return t('type_pre');
+            if (lower === 'conjunction') return t('type_conj');
+            if (lower === 'interjection') return t('type_interj');
+            return tag;
+        }).join(', ') : '';
+        eSprite.innerHTML = `${enemy.word}<div style="font-size:10px; opacity:0.7;">${tags}</div>`;
         
         if (enemy.rarity === 'god') {
              eSprite.style.backgroundImage = rarityScale[enemy.rarity];
@@ -89,8 +354,20 @@ class BattleSystem {
     if (this.pIndex < this.pTeam.length) {
         const player = this.pTeam[this.pIndex];
         const pSprite = document.getElementById('playerSprite');
-        // Restore full word display
-        pSprite.textContent = player.word;
+        // Restore full word display + Tags (Filtered)
+        const tags = player.tags ? player.tags.filter(tag => VALID_TYPES.includes(tag.toLowerCase())).map(tag => {
+            const lower = tag.toLowerCase();
+            if (lower === 'noun') return t('type_n');
+            if (lower === 'verb') return t('type_v');
+            if (lower === 'adjective') return t('type_adj');
+            if (lower === 'adverb') return t('type_adv');
+            if (lower === 'pronoun') return t('type_p');
+            if (lower === 'preposition') return t('type_pre');
+            if (lower === 'conjunction') return t('type_conj');
+            if (lower === 'interjection') return t('type_interj');
+            return tag;
+        }).join(', ') : '';
+        pSprite.innerHTML = `${player.word}<div style="font-size:10px; opacity:0.7;">${tags}</div>`;
         
         if (player.rarity === 'god') {
              pSprite.style.backgroundImage = rarityScale[player.rarity];
@@ -145,8 +422,20 @@ class BattleSystem {
                 if (!this.active) return;
                 this.performAttack(this.eTeam[this.eIndex], this.pTeam[this.pIndex], false, () => {
                     if (!this.active) return;
-                    if (this.pTeam[this.pIndex].currentHp <= 0) {
-                        this.logMsg(t('battleFainted', { word: this.pTeam[this.pIndex].word }));
+                    
+                    const playerUnit = this.pTeam[this.pIndex];
+                    if (playerUnit.currentHp <= 0) {
+                        // Check Revive Combo
+                        if (this.metadata.hasRevive && Math.random() < 0.5) {
+                            this.logMsg(`✨ ${playerUnit.word} resurrected by Quintuplet power!`);
+                            playerUnit.currentHp = 1;
+                            // Disable revive after use? Or keep it? "If one dies" usually implies per unit or once.
+                            // Let's keep it simple: 50% chance always.
+                        }
+                    }
+
+                    if (playerUnit.currentHp <= 0) {
+                        this.logMsg(t('battleFainted', { word: playerUnit.word }));
                         this.pIndex++;
                         if (this.checkWin()) return;
                     }
@@ -170,9 +459,15 @@ class BattleSystem {
     }
     
     // Calc Damage
-    // Use global calculateStat if available
-    const getStat = (u, type) => (typeof window.calculateStat === 'function' ? window.calculateStat(u, type) : 10);
-    const damage = getStat(attacker, 'atk');
+    // Use instance getStat which includes modifiers
+    let damage = this.getStat(attacker, 'atk');
+    let extraMsg = '';
+    
+    // Critical Hit Check (Adjective Synergy)
+    if (attacker.critChance && Math.random() < attacker.critChance) {
+        damage = Math.floor(damage * 1.5);
+        extraMsg = ' (CRITICAL!)';
+    }
     
     // Random variance 0.8 - 1.2
     const variance = (Math.random() * 0.4) + 0.8;
@@ -180,7 +475,7 @@ class BattleSystem {
     
     setTimeout(() => {
         defender.currentHp = Math.max(0, defender.currentHp - finalDamage);
-        this.logMsg(t('battleAttacks', { attacker: attacker.word, damage: finalDamage }));
+        this.logMsg(t('battleAttacks', { attacker: attacker.word, damage: finalDamage }) + extraMsg);
         this.showDamage(document.getElementById(targetId), finalDamage);
         this.updateUI();
         callback();
@@ -310,6 +605,9 @@ class BattleSystem {
     
     const dlBtn = document.getElementById('dlLogBtn');
     if(dlBtn) dlBtn.style.display = 'block';
+    
+    const endControls = document.getElementById('endBattleControls');
+    if(endControls) endControls.style.display = 'flex';
   }
   
   downloadLog() {
@@ -356,9 +654,10 @@ function renderBattleMenu() {
         container.innerHTML = `
             <div style="text-align:center; padding:20px;">
                 <p>${t('profileLoginReq')}</p>
-                <button class="quiz-btn" onclick="switchTab('dex')">${t('battleBack')}</button>
+                <button class="quiz-btn" id="btnBackLogin">${t('battleBack')}</button>
             </div>
         `;
+        document.getElementById('btnBackLogin').onclick = () => switchTab('dex');
         return; 
     }
     
@@ -367,9 +666,10 @@ function renderBattleMenu() {
         container.innerHTML = `
             <div style="text-align:center; padding:20px;">
                 <p>${t('profileTeamReq')}</p>
-                <button class="quiz-btn" onclick="switchTab('dex')">${t('battleBack')}</button>
+                <button class="quiz-btn" id="btnBackTeam">${t('battleBack')}</button>
             </div>
         `;
+        document.getElementById('btnBackTeam').onclick = () => switchTab('dex');
         return;
     }
 
@@ -507,19 +807,25 @@ async function startRandomSearch() {
                 
                 // Fetch opponent rating
                 let opponentRating = 1000;
+                let opponentName = 'Unknown';
                 try {
                     const { data: oppProfile } = await supabaseClient
                         .from('profiles')
-                        .select('rating')
+                        .select('rating, username') // Fetch username too
                         .eq('id', randomOpponent.user_id)
                         .single();
-                    if (oppProfile) opponentRating = oppProfile.rating || 1000;
+                    if (oppProfile) {
+                        opponentRating = oppProfile.rating || 1000;
+                        opponentName = oppProfile.username || 'Unknown';
+                    }
                 } catch(e) { console.error("Error fetching opponent rating", e); }
 
                 initiateBattle(randomOpponent.team_data, {
                     isBot: false,
                     enemyRating: opponentRating,
-                    enemyPower: randomOpponent.team_power
+                    enemyPower: randomOpponent.team_power,
+                    enemyId: randomOpponent.user_id, // For avatar
+                    enemyName: opponentName
                 });
                 return;
             }
@@ -583,19 +889,25 @@ async function startFriendBattle(friendId) {
      if (data && data.team_data) {
           // Fetch opponent rating for friend battle
           let opponentRating = 1000;
+          let opponentName = 'Friend';
           try {
                const { data: oppProfile } = await supabaseClient
                    .from('profiles')
-                   .select('rating')
+                   .select('rating, username')
                    .eq('id', data.user_id)
                    .single();
-               if (oppProfile) opponentRating = oppProfile.rating || 1000;
+               if (oppProfile) {
+                   opponentRating = oppProfile.rating || 1000;
+                   opponentName = oppProfile.username || 'Friend';
+               }
           } catch(e) {}
 
          initiateBattle(data.team_data, {
              isBot: false,
              enemyRating: opponentRating,
-             enemyPower: data.team_power || 0
+             enemyPower: data.team_power || 0,
+             enemyId: data.user_id,
+             enemyName: opponentName
          });
      } else {
          alert(t('battleFriendNotFound'));
@@ -647,7 +959,9 @@ function startBotBattle() {
         
         initiateBattle(botTeam, { 
             isBot: true, 
-            enemyPower: botTeam.reduce((acc, w) => acc + (window.calculatePower ? window.calculatePower(w) : 0), 0)
+            enemyPower: botTeam.reduce((acc, w) => acc + (window.calculatePower ? window.calculatePower(w) : 0), 0),
+            enemyId: 'bot_' + Math.random(), // Random seed for bot avatar
+            enemyName: 'Wild Bot'
         });
     });
 }

@@ -105,17 +105,45 @@ function displayWordDex(sortType = 'alpha') {
           });
       }
           
-      // Show filter indicator if any filter is active
-      if (activeFilters.size > 0) {
-          const filterMsg = document.createElement('div');
-          filterMsg.className = 'filter-indicator';
-          
-          const filterCount = activeFilters.size;
-          const filterNames = Array.from(activeFilters).join(', ');
-          const displayNames = filterNames.length > 30 ? filterNames.substring(0, 30) + '...' : filterNames;
-          
-          filterMsg.innerHTML = `<span>${t('filterByTag')}: <strong>${displayNames}</strong></span> <button id="clearFilters">${t('clearFilter')}</button>`;
-          dexDiv.appendChild(filterMsg);
+        // Show filter indicator if any filter is active
+        if (activeFilters.size > 0) {
+            const filterMsg = document.createElement('div');
+            filterMsg.className = 'filter-indicator';
+            
+            const filterNames = Array.from(activeFilters).map(filter => {
+                // Check if it's a rarity or type and translate
+                const lower = filter.toLowerCase();
+                const rarityKey = lower.toUpperCase(); // COMMON, RARE, etc.
+                
+                // Map full type name to key
+                let typeKey = null;
+                const typeMap = {
+                    noun: 'type_n',
+                    verb: 'type_v',
+                    adjective: 'type_adj',
+                    adverb: 'type_adv',
+                    pronoun: 'type_p',
+                    preposition: 'type_pre',
+                    conjunction: 'type_conj',
+                    interjection: 'type_interj'
+                };
+                if (typeMap[lower]) {
+                    return t(typeMap[lower]);
+                }
+                
+                // Check Rarities
+                const rarities = ['common', 'uncommon', 'rare', 'epic', 'legendary', 'mythic', 'god'];
+                if (rarities.includes(lower)) {
+                    return t(rarityKey);
+                }
+                
+                return filter;
+            }).join(', ');
+            
+            const displayNames = filterNames.length > 30 ? filterNames.substring(0, 30) + '...' : filterNames;
+            
+            filterMsg.innerHTML = `<span>${t('filterByTag')}: <strong>${displayNames}</strong></span> <button id="clearFilters">${t('clearFilter')}</button>`;
+            dexDiv.appendChild(filterMsg);
           
           // We need to attach event after appending
           setTimeout(() => {
@@ -316,7 +344,12 @@ function displayWordDex(sortType = 'alpha') {
               'korean-api': t('sourceKoreanAPI')
             };
             const sourceLabel = sourceMap[info.frequencySource] || t('sourceAPI');
-            frequencyDiv.textContent = `${t('frequency')}: ${freqDisplay} ${t('perMillion')} (${sourceLabel})`;
+            
+            if (currentLanguage === 'ko') {
+                frequencyDiv.textContent = `${t('frequency')}: ${t('perMillion')} ${freqDisplay} (${sourceLabel})`;
+            } else {
+                frequencyDiv.textContent = `${t('frequency')}: ${freqDisplay} ${t('perMillion')} (${sourceLabel})`;
+            }
             frequencyDiv.title = `Source: ${info.frequencySource || 'unknown'}`;
           } else {
             frequencyDiv.textContent = `${t('frequency')}: ${t('frequencyNA')}`;
@@ -746,6 +779,7 @@ function showTagFilterMenu() {
         // Helper to create checkboxes
         const createCheckbox = (text, value, color = null) => {
             const row = document.createElement('div');
+            // ... (rest of createCheckbox logic) ...
             row.style.display = 'flex';
             row.style.alignItems = 'center';
             row.style.padding = '8px 0';
@@ -758,7 +792,26 @@ function showTagFilterMenu() {
             checkbox.style.marginRight = '8px';
             
             const label = document.createElement('span');
-            label.textContent = text;
+            // Translate display text if it matches a type or rarity
+            let displayText = text;
+            
+            // Check if value is a known type
+            const typeMap = {
+                noun: 'type_n',
+                verb: 'type_v',
+                adjective: 'type_adj',
+                adverb: 'type_adv',
+                pronoun: 'type_p',
+                preposition: 'type_pre',
+                conjunction: 'type_conj',
+                interjection: 'type_interj'
+            };
+            
+            if (typeMap[value.toLowerCase()]) {
+                displayText = t(typeMap[value.toLowerCase()]);
+            }
+            
+            label.textContent = displayText;
             if (color) {
                 label.style.color = color;
                 label.style.fontWeight = 'bold';
@@ -766,7 +819,7 @@ function showTagFilterMenu() {
             // Special handling for GOD tier rainbow effect
             if (value === 'god') {
                 label.classList.add('rainbow-text');
-                label.style.color = 'transparent'; // Needed for background-clip to work
+                label.style.color = 'transparent'; 
             }
             
             // Toggle logic
@@ -778,7 +831,7 @@ function showTagFilterMenu() {
                     activeFilters.add(value);
                     checkbox.checked = true;
                 }
-                displayWordDex(currentSort); // Live update
+                displayWordDex(currentSort); 
             };
             
             row.onclick = (e) => {
@@ -861,6 +914,7 @@ function showTagFilterMenu() {
         // Custom Tags
         if (tags.length > 0) {
             tags.forEach(tag => {
+                // If tag is a word type, use translated text, else use raw
                 scrollArea.appendChild(createCheckbox(tag, tag));
             });
         } else {

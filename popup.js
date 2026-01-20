@@ -170,6 +170,10 @@ function switchTab(tabName) {
     renderQuizMenu();
   } else if (tabName === 'battle') {
     startBattle();
+  } else if (tabName === 'profile') {
+    if (typeof showProfile !== 'undefined') {
+        showProfile(false); // Pass false to indicate it's a tab switch, don't hide everything manually if possible (but current implementation does)
+    }
   }
 }
 

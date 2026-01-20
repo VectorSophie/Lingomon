@@ -173,6 +173,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     });
 
     let origin, rarity, freqData;
+    let types = [];
 
     if (word.toLowerCase() === 'lingomon') {
       console.log('Lingomon: Caught "lingomon"! Triggering Easter Egg.');
@@ -254,6 +255,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
           const definition = defObj.definition || 'No definition found.';
           const example = defObj.example || '';
           const partOfSpeech = firstMeaning.partOfSpeech || '';
+          if (partOfSpeech) types.push(partOfSpeech);
           let etymology = data[0].origin || '';
 
           // Translate part of speech
@@ -349,6 +351,10 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       const definition = defObj.definition || 'No definition found.';
       const example = defObj.example || '';
       const partOfSpeech = firstMeaning.partOfSpeech || '';
+      
+      // Store partOfSpeech in freqData as a side-channel or just extract it later
+      // Actually, let's just use it to populate the `types` array in storage
+      if (partOfSpeech) types.push(partOfSpeech);
 
       let etymology = data[0].origin || '';
 
@@ -400,7 +406,8 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         firstCaught: firstCaughtDate,
         caughtOn: domain,
         language: currentLanguage,
-        context: context // Save context
+        context: context,
+        tags: types // Store auto-detected tags (Part of Speech)
       };
 
       // Track unique sites
