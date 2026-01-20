@@ -60,8 +60,10 @@ function updateAuthUI(user) {
   
   if (user) {
     authBtn.className = 'dark-mode-toggle';
+    // Use avatar_seed from profile if available, else user.id
+    const seed = (currentUserProfile && currentUserProfile.avatar_seed) ? currentUserProfile.avatar_seed : user.id;
     authBtn.innerHTML = `
-      <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${user.id}" style="width:16px;height:16px;margin-right:4px;vertical-align:middle;border-radius:50%;">
+      <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${seed}" style="width:16px;height:16px;margin-right:4px;vertical-align:middle;border-radius:50%;">
       Profile
     `;
     authBtn.title = `Logged in as ${user.email}`;
@@ -229,6 +231,7 @@ function renderProfileUI(profile) {
             <img src="${avatarUrl}" class="profile-avatar" alt="Avatar">
             <div style="margin-top:-10px; margin-bottom:10px;">
                 <span style="font-size:10px; color:#666; background:#f0f0f0; padding:2px 8px; border-radius:10px; border:1px solid #e0e0e0;">${profile.title || t('Rookie Trainer')}</span>
+                ${getFeaturedBadgeHtml(profile.featured_badge)}
                 <button id="btnCustomize" style="font-size:10px; background:none; border:none; cursor:pointer; text-decoration:underline; color:#666; margin-left:4px;">${t('editProfile')}</button>
             </div>
             <input type="text" class="profile-name-input" value="${escapeHtml(profile.username)}" maxlength="15" spellcheck="false">
@@ -295,6 +298,12 @@ function renderProfileUI(profile) {
                await supabaseClient.from('profiles').update({ username: newName }).eq('id', profile.id);
             }
           };
+          
+          if (profile.featured_badge) {
+              // Defer rendering slightly to ensure DOM insertion is complete
+              setTimeout(() => renderFeaturedBadge(profile.featured_badge), 0);
+          }
+          
           fetchTeam(profile.id);
       } else {
           container.querySelector('#addFriendBtn').onclick = () => addFriend();
@@ -484,6 +493,59 @@ async function respondFriend(friendshipId, accept) {
     fetchFriends();
 }
 
+function getFeaturedBadgeHtml(featuredBadgeId) {
+    return `<div id="featuredBadgeDisplay" style="margin-top:4px; min-height:20px;"></div>`;
+}
+
+async function renderFeaturedBadge(featuredBadgeId) {
+    const container = document.getElementById('featuredBadgeDisplay');
+    if (!container) {
+        console.warn("Featured Badge Container not found");
+        return;
+    }
+    if (!featuredBadgeId) {
+        container.innerHTML = '';
+        return;
+    }
+    
+    chrome.storage.local.get(['badges'], (data) => {
+        const badges = data.badges || { main: [], hidden: [] };
+        const allBadges = [...badges.main, ...badges.hidden];
+        
+        console.log("Searching for badge:", featuredBadgeId);
+        // Match by type (since id might not be unique/present on all legacy badges)
+        const badge = allBadges.find(b => b.type === featuredBadgeId || b.name === featuredBadgeId);
+        
+        if (badge) {
+            let badgeName = badge.name;
+            if (badge.nameKey) badgeName = t(badge.nameKey);
+            // Handle hidden badge translation logic duplicate
+            else if (badge.type === 'firstMythic') badgeName = t('firstMythic');
+            else if (badge.type === 'meta') badgeName = t('meta');
+            else if (badge.type === 'huh') badgeName = t('huh');
+            else if (badge.type === 'rarityKiller') badgeName = t(`${badge.rarity}Killer`);
+            
+            // Check if rarityScale is available (it should be global from animations.js)
+            const scale = window.rarityScale || { common: '#ccc' }; // Fallback
+            let color = scale[badge.rarity] || '#cccccc';
+            
+            if (badge.type === 'meta') color = '#000000';
+            else if (badge.type === 'huh') color = 'linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3)';
+            
+            // Render a mini hexagon or pill
+            container.innerHTML = `
+                <div style="display:inline-flex; align-items:center; gap:6px; background:#f9f9f9; padding:4px 8px; border-radius:12px; border:1px solid #e0e0e0; font-size:10px;">
+                    <div style="width:14px; height:16px; background:${color}; clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);"></div>
+                    <span style="font-weight:bold; color:#555;">${badgeName}</span>
+                </div>
+            `;
+        } else {
+            console.warn("Badge not found in storage:", featuredBadgeId);
+            container.innerHTML = `<span style="font-size:10px; color:red;">Badge not found</span>`;
+        }
+    });
+}
+
 // Customization
 const UNLOCKABLES = {
     titles: [
@@ -502,53 +564,125 @@ const UNLOCKABLES = {
     ]
 };
 
-function openCustomize() {
+function openCustomize(settings = null) {
     const modal = document.getElementById('customizeModal');
     const titleList = document.getElementById('titleList');
     const avatarList = document.getElementById('avatarList');
     modal.style.display = 'flex';
     
+    // Local state management for modal
+    // If settings passed, use them (re-render). Else clone current profile.
+    const profileState = settings || { 
+        title: currentUserProfile.title,
+        avatar_seed: currentUserProfile.avatar_seed,
+        featured_badge: currentUserProfile.featured_badge
+    };
+    
     // Update Modal Title if needed
     modal.querySelector('h3').textContent = t('editProfile');
     modal.querySelectorAll('h4')[0].textContent = t('custTitle');
-    modal.querySelectorAll('h4')[1].textContent = t('custAvatar');
+    // Insert Badge Section Header if not present
+    if (!document.getElementById('badgeSectionHeader')) {
+        const badgeHeader = document.createElement('h4');
+        badgeHeader.id = 'badgeSectionHeader';
+        badgeHeader.style.margin = '15px 0 5px';
+        badgeHeader.textContent = "Featured Badge";
+        
+        const badgeList = document.createElement('div');
+        badgeList.id = 'badgeList';
+        badgeList.className = 'tag-list';
+        
+        // Insert after titleList
+        titleList.parentNode.insertBefore(badgeHeader, titleList.nextSibling);
+        titleList.parentNode.insertBefore(badgeList, badgeHeader.nextSibling);
+    }
     
-    chrome.storage.local.get(['achievements', 'streakData'], (data) => {
+    modal.querySelectorAll('h4')[1].textContent = t('custAvatar'); 
+
+    chrome.storage.local.get(['achievements', 'streakData', 'badges'], (data) => {
         const achievements = data.achievements || {};
         const streakData = data.streakData || {};
-        const profile = currentUserProfile;
+        const badges = data.badges || { main: [], hidden: [] };
+        
+        // Check unlock status against ACTUAL profile stats, not the temp state
+        // But we use profileState for selection highlighting
+        const actualProfile = currentUserProfile; 
         
         titleList.innerHTML = '';
         UNLOCKABLES.titles.forEach(item => {
-            const unlocked = !item.check || item.check(profile, achievements, streakData);
+            const unlocked = !item.check || item.check(actualProfile, achievements, streakData);
             const el = document.createElement('div');
-            el.className = `title-option ${unlocked ? '' : 'locked-item'} ${profile.title === item.id ? 'selected' : ''}`;
+            el.className = `title-option ${unlocked ? '' : 'locked-item'} ${profileState.title === item.id ? 'selected' : ''}`;
             el.textContent = item.id;
             el.title = item.req;
             if (unlocked) {
                 el.onclick = () => {
-                    profile.title = item.id;
-                    updateProfileCosmetics();
-                    openCustomize();
+                    profileState.title = item.id;
+                    openCustomize(profileState);
                 };
             }
             titleList.appendChild(el);
         });
         
+        // Render Badges
+        const badgeList = document.getElementById('badgeList');
+        if (badgeList) {
+            badgeList.innerHTML = '';
+            
+            // "None" option
+            const noneEl = document.createElement('div');
+            noneEl.className = `title-option ${!profileState.featured_badge ? 'selected' : ''}`;
+            noneEl.textContent = "None";
+            noneEl.onclick = () => {
+                profileState.featured_badge = null;
+                openCustomize(profileState);
+            };
+            badgeList.appendChild(noneEl);
+            
+            const allBadges = [...badges.main, ...badges.hidden];
+            allBadges.forEach(badge => {
+                // Use type as ID if available, else name
+                const badgeId = badge.type || badge.name; 
+                if (!badgeId) return;
+                
+                // Translate name
+                let badgeName = badge.name;
+                if (badge.nameKey) badgeName = t(badge.nameKey);
+                else if (badge.type === 'firstMythic') badgeName = t('firstMythic');
+                else if (badge.type === 'meta') badgeName = t('meta');
+                else if (badge.type === 'huh') badgeName = t('huh');
+                else if (badge.type === 'rarityKiller') badgeName = t(`${badge.rarity}Killer`);
+                
+                const el = document.createElement('div');
+                el.className = `title-option ${profileState.featured_badge === badgeId ? 'selected' : ''}`;
+                
+                // Add color indicator?
+                let color = rarityScale[badge.rarity] || '#ccc';
+                if (badge.type === 'meta') color = '#000';
+                
+                el.innerHTML = `<span style="display:inline-block;width:8px;height:8px;background:${color};border-radius:50%;margin-right:4px;"></span>${badgeName}`;
+                
+                el.onclick = () => {
+                    profileState.featured_badge = badgeId;
+                    openCustomize(profileState);
+                };
+                badgeList.appendChild(el);
+            });
+        }
+        
         avatarList.innerHTML = '';
         UNLOCKABLES.avatars.forEach(item => {
-            const unlocked = !item.check || item.check(profile, achievements, streakData);
-            const seed = item.id === 'default' ? profile.id : `${profile.id}_${item.id}`;
+            const unlocked = !item.check || item.check(actualProfile, achievements, streakData);
+            const seed = item.id === 'default' ? actualProfile.id : `${actualProfile.id}_${item.id}`;
             const el = document.createElement('img');
             el.src = `https://api.dicebear.com/7.x/bottts/svg?seed=${seed}`;
-            el.className = `avatar-option ${unlocked ? '' : 'locked-item'} ${profile.avatar_seed === seed ? 'selected' : ''}`;
+            el.className = `avatar-option ${unlocked ? '' : 'locked-item'} ${profileState.avatar_seed === seed ? 'selected' : ''}`;
             el.title = item.req;
             
             if (unlocked) {
                 el.onclick = () => {
-                    profile.avatar_seed = seed;
-                    updateProfileCosmetics();
-                    openCustomize();
+                    profileState.avatar_seed = seed;
+                    openCustomize(profileState);
                 };
             }
             avatarList.appendChild(el);
@@ -557,16 +691,60 @@ function openCustomize() {
     
     document.getElementById('closeCustomize').onclick = () => {
         modal.style.display = 'none';
-        showProfile();
+        showProfile(); // Reverts changes if not saved
     };
+    
+    // Bind Save Button
+    const saveBtn = document.getElementById('saveCustomizeBtn');
+    if(saveBtn) {
+        saveBtn.onclick = () => {
+            saveProfileChanges(profileState);
+        };
+    }
+}
+
+async function saveProfileChanges(newSettings) {
+    if (!currentUserProfile || !supabaseClient) return;
+    
+    const saveBtn = document.getElementById('saveCustomizeBtn');
+    if(saveBtn) {
+        saveBtn.textContent = t('profileSaving') || "Saving...";
+        saveBtn.disabled = true;
+    }
+    
+    // Update local state
+    currentUserProfile.title = newSettings.title;
+    currentUserProfile.avatar_seed = newSettings.avatar_seed;
+    currentUserProfile.featured_badge = newSettings.featured_badge;
+    
+    // Update DB
+    await updateProfileCosmetics();
+    
+    if(saveBtn) {
+        saveBtn.textContent = "Saved!";
+        setTimeout(() => {
+            saveBtn.textContent = "Save Changes";
+            saveBtn.disabled = false;
+            document.getElementById('customizeModal').style.display = 'none';
+            // Force re-render of profile UI to show changes
+            renderProfileUI(currentUserProfile); 
+        }, 800);
+    }
 }
 
 async function updateProfileCosmetics() {
     if (!currentUserProfile || !supabaseClient) return;
-    await supabaseClient.from('profiles').update({
+    const { error } = await supabaseClient.from('profiles').update({
         title: currentUserProfile.title,
-        avatar_seed: currentUserProfile.avatar_seed
+        avatar_seed: currentUserProfile.avatar_seed,
+        featured_badge: currentUserProfile.featured_badge
     }).eq('id', currentUserProfile.id);
+    
+    if(error) console.error("Error updating profile cosmetics:", JSON.stringify(error, null, 2));
+    
+    // Update Auth UI avatar immediately
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if(user) updateAuthUI(user);
 }
 
 // Team Logic
