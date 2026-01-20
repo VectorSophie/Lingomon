@@ -572,6 +572,45 @@ async function updateProfileCosmetics() {
 // Team Logic
 const TEAM_CAPACITY = 5;
 
+// Combo Definitions (Handled via global check or mirrored)
+// If profile.js loads first, it defines it. If battle.js loads first, it defines it.
+if (typeof window.COMBOS === 'undefined') {
+    window.COMBOS = [
+        {
+            name: "The Quintuplets",
+            words: ["who", "what", "where", "when", "why"],
+            desc: "Resurrects first fallen unit with 1 HP (50% chance)",
+            color: "#FFD700" // Gold
+        },
+        {
+            name: "Liberator",
+            words: ["we", "the", "people"],
+            desc: "Grants +20% Attack to all team members",
+            color: "#00BFFF" // Deep Sky Blue
+        },
+        {
+            name: "Time Traveler",
+            words: ["time", "travel", "past", "future"],
+            desc: "+15% Speed to all team members",
+            color: "#FF69B4" // Hot Pink
+        },
+        {
+            name: "Nature's Wrath",
+            words: ["fire", "water", "earth", "wind"],
+            desc: "Deal 10% extra elemental damage on every hit",
+            color: "#32CD32" // Lime Green
+        },
+        {
+            name: "Binary Code",
+            words: ["zero", "one", "code"],
+            desc: "+10% Crit Chance for digital constructs",
+            color: "#00FF00" // Electric Green
+        }
+    ];
+}
+// Local alias for convenience in this file
+const COMBOS = window.COMBOS;
+
 const COST_TABLE = {
   mythic: 3,
   legendary: 3,
@@ -675,6 +714,50 @@ function renderTeamUI() {
   let power = 0;
   let totalCost = calculateTeamCost(currentTeam);
   
+  // Calculate Active Combos & Type Synergies
+  const activeCombos = [];
+  const activeComboWords = {}; // map word -> color
+  
+  const teamWords = currentTeam.filter(w => w).map(w => w.word.toLowerCase());
+  
+  // Combos
+  COMBOS.forEach(combo => {
+      const hasAll = combo.words.every(w => teamWords.includes(w));
+      if (hasAll) {
+          activeCombos.push(combo);
+          combo.words.forEach(w => activeComboWords[w] = combo.color);
+      }
+  });
+  
+  // Type Synergies
+  const typeCounts = {};
+  currentTeam.forEach(w => {
+      if(w && w.tags) {
+          w.tags.forEach(t => {
+              const lower = t.toLowerCase();
+              typeCounts[lower] = (typeCounts[lower] || 0) + 1;
+          });
+      }
+  });
+  
+  const activeSynergies = [];
+  const SYNERGIES = [
+      { id: 'noun', name: 'Noun Wall', desc: '+20% HP', color: '#808080' },
+      { id: 'verb', name: 'Verb Action', desc: '+15% ATK', color: '#808080' },
+      { id: 'adjective', name: 'Descriptive', desc: '+20% Crit Chance', color: '#808080' },
+      { id: 'adverb', name: 'Swiftly', desc: '+10% Evasion', color: '#808080' },
+      { id: 'pronoun', name: 'Identity', desc: '+10% HP & ATK', color: '#808080' },
+      { id: 'preposition', name: 'Positional', desc: '+15% Shield', color: '#808080' },
+      { id: 'conjunction', name: 'Connector', desc: '-15% Dmg Taken', color: '#808080' },
+      { id: 'interjection', name: 'Exclamation!', desc: 'First Strike +50%', color: '#808080' }
+  ];
+  
+  SYNERGIES.forEach(s => {
+      if (typeCounts[s.id] >= 3) {
+          activeSynergies.push(s);
+      }
+  });
+
   // Render Slots
   currentTeam.forEach((wordData, idx) => {
     const slot = document.createElement('div');
@@ -688,6 +771,15 @@ function renderTeamUI() {
       const p = calculatePower(wordData);
       power += p;
       const cost = getWordCost(wordData.rarity);
+      
+      // Combo Outline Check
+      const comboColor = activeComboWords[wordData.word.toLowerCase()];
+      if (comboColor) {
+          slot.style.boxShadow = `0 0 0 2px ${comboColor}`;
+          // If multiple combos? Currently just overwrite, fine for simple system.
+      } else {
+          slot.style.boxShadow = 'none';
+      }
       
       // ... existing rendering code ...
       if (wordData.rarity === 'god') {
@@ -720,6 +812,84 @@ function renderTeamUI() {
   if(powerLabel) {
       const costColor = totalCost > TEAM_CAPACITY ? 'red' : (totalCost === TEAM_CAPACITY ? 'orange' : '#666');
       powerLabel.innerHTML = `Power: ${power} <span style="margin-left:8px; color:${costColor}; font-weight:bold;">Slots: ${totalCost}/${TEAM_CAPACITY}</span>`;
+  }
+  
+  // Render Active Combos Below Team (moved outside flex container logic if needed, but appending to container works if styled right)
+  // Actually, container is 'teamUI' which is the grid. Appending a full-width div inside a grid/flex container might break layout if it expects slots.
+  // The 'teamUI' container usually has `display: flex` or grid for slots.
+  // Let's check CSS/layout assumption. The slots are appended to `container`.
+  // If `container` is flex row, appending a div makes it a flex item.
+  // We want it BELOW.
+  
+  // Solution: Append combos to a separate container OUTSIDE 'teamUI', or restructure.
+  // Currently 'teamUI' is cleared and rebuilt.
+  // Let's create a specific div for combos if it doesn't exist, OR strictly append after the loop but ensure it breaks to new line?
+  
+  // Safer: Don't append to `container` (teamUI). Append to the parent `team-section`.
+  // But renderTeamUI only has reference to `container`.
+  // Let's check `container.parentNode`.
+  
+  const parent = container.parentNode;
+  let comboDisplay = document.getElementById('teamCombosDisplay');
+  if (!comboDisplay) {
+      comboDisplay = document.createElement('div');
+      comboDisplay.id = 'teamCombosDisplay';
+      comboDisplay.style.marginTop = '10px';
+      // Insert after container
+      if (container.nextSibling) {
+          parent.insertBefore(comboDisplay, container.nextSibling);
+      } else {
+          parent.appendChild(comboDisplay);
+      }
+  }
+  comboDisplay.innerHTML = ''; // Clear previous
+
+  if (activeCombos.length > 0) {
+      activeCombos.forEach(combo => {
+          const badge = document.createElement('div');
+          badge.style.border = `1px solid ${combo.color}`;
+          badge.style.background = '#fff';
+          badge.style.padding = '4px 8px';
+          badge.style.borderRadius = '4px';
+          badge.style.fontSize = '10px';
+          badge.style.marginBottom = '4px';
+          badge.style.fontWeight = 'bold';
+          badge.style.textAlign = 'center';
+          badge.style.boxShadow = `0 1px 3px rgba(0,0,0,0.1)`;
+          badge.style.cursor = 'help'; // Show pointer/help cursor
+          
+          badge.innerHTML = `COMBO: ${combo.name}`;
+          badge.title = combo.desc || "Active Combo Effect"; // Native browser tooltip
+          
+          badge.style.borderLeft = `4px solid ${combo.color}`;
+          badge.style.color = '#333';
+          
+          comboDisplay.appendChild(badge);
+      });
+  }
+  
+  if (activeSynergies.length > 0) {
+      activeSynergies.forEach(syn => {
+          const badge = document.createElement('div');
+          badge.style.border = `1px solid ${syn.color}`;
+          badge.style.background = '#f9f9f9'; // Slight diff
+          badge.style.padding = '4px 8px';
+          badge.style.borderRadius = '4px';
+          badge.style.fontSize = '10px';
+          badge.style.marginBottom = '4px';
+          badge.style.fontWeight = 'bold';
+          badge.style.textAlign = 'center';
+          badge.style.boxShadow = `0 1px 3px rgba(0,0,0,0.1)`;
+          badge.style.cursor = 'help';
+          
+          badge.innerHTML = `${syn.name}`;
+          badge.title = `${syn.desc} (3+ ${syn.id}s)`;
+          
+          badge.style.borderLeft = `4px solid ${syn.color}`;
+          badge.style.color = '#555';
+          
+          comboDisplay.appendChild(badge);
+      });
   }
   
   // Validation for Save

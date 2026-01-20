@@ -42,10 +42,10 @@ function renderQuizMenu() {
         <h3 style="margin-bottom:20px;">${t('quizMenuTitle')}</h3>
         
         <div style="margin-bottom: 24px; text-align:left; background:#f9f9f9; padding:16px; border-radius:8px; border:1px solid #eee;">
-          <label style="font-weight:bold; font-size:12px; display:block; margin-bottom:8px;">${t('quizNumQuestions')}</label>
+          <label class="quiz-setting-label" style="font-weight:bold; font-size:12px; display:block; margin-bottom:8px;">${t('quizNumQuestions')}</label>
           <div style="display:flex; align-items:center; gap:12px;">
             <input type="range" id="quizSize" min="3" max="${Math.min(20, totalWords)}" value="5" style="flex:1">
-            <span id="quizSizeVal" style="font-weight:bold; width:24px;">5</span>
+            <span id="quizSizeVal" class="quiz-setting-label" style="font-weight:bold; width:24px;">5</span>
           </div>
         </div>
 

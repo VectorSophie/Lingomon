@@ -397,14 +397,14 @@ const translations = {
     tabProfile: "프로필",
     
     // Word Types (Short)
-    type_n: "명",
-    type_v: "동",
-    type_adj: "형",
-    type_adv: "부",
-    type_p: "대",
-    type_pre: "전",
-    type_conj: "접",
-    type_interj: "감",
+    type_n: "명사",
+    type_v: "동사",
+    type_adj: "형용사",
+    type_adv: "부사",
+    type_p: "대명사",
+    type_pre: "전치사",
+    type_conj: "접속사",
+    type_interj: "감탄사",
 
     // Profile & Friends
     profileOverview: "개요",

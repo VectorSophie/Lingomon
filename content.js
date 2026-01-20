@@ -39,7 +39,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   } else if (message.type === 'wordCaught') {
     console.log('Lingomon: Showing success popup for:', message.word);
     if (typeof showCatchAnimation !== 'undefined') {
-      showCatchAnimation(message.word, message.origin, message.rarity, message.isNew, message.firstCaught, message.frequency, message.frequencySource);
+      showCatchAnimation(
+          message.word, 
+          message.origin, 
+          message.rarity, 
+          message.isNew, 
+          message.firstCaught, 
+          message.frequency, 
+          message.frequencySource,
+          message.tags // Pass tags
+      );
     }
     sendResponse({ received: true });
   } else if (message.type === 'wordFailed') {

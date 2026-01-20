@@ -190,6 +190,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         const koreanData = await fetchKoreanDefinition(word);
         origin = koreanData.origin;
         rarity = koreanData.rarity;
+        types = koreanData.tags || []; // Use tags from Korean API
         freqData = {
           frequency: koreanData.frequency,
           source: koreanData.frequencySource
@@ -202,10 +203,11 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
           const translatedWord = await translateToKorean(word);
           console.log(`Lingomon: Translated "${word}" to "${translatedWord}"`);
 
-          // Try Korean API again with translated word
+        // Try Korean API again with translated word
           const koreanData = await fetchKoreanDefinition(translatedWord);
           origin = `[${word} → ${translatedWord}]\n\n${koreanData.origin}`;
           rarity = koreanData.rarity;
+          types = koreanData.tags || []; // Use tags from Korean API
           freqData = {
             frequency: koreanData.frequency,
             source: koreanData.frequencySource
@@ -352,9 +354,14 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       const example = defObj.example || '';
       const partOfSpeech = firstMeaning.partOfSpeech || '';
       
-      // Store partOfSpeech in freqData as a side-channel or just extract it later
-      // Actually, let's just use it to populate the `types` array in storage
-      if (partOfSpeech) types.push(partOfSpeech);
+      // Extract ALL parts of speech from all meanings
+      const allTypes = new Set();
+      if (data[0].meanings && Array.isArray(data[0].meanings)) {
+          data[0].meanings.forEach(m => {
+              if (m.partOfSpeech) allTypes.add(m.partOfSpeech.toLowerCase());
+          });
+      }
+      types = Array.from(allTypes);
 
       let etymology = data[0].origin || '';
 
@@ -466,7 +473,8 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         isNew: isNew,
         firstCaught: firstCaughtDate,
         frequency: freqData.frequency,
-        frequencySource: freqData.source
+        frequencySource: freqData.source,
+        tags: types // Pass tags to the frontend animation
       }).then(response => {
         console.log('Lingomon: Message sent successfully, response:', response);
       }).catch(err => {
@@ -731,6 +739,28 @@ async function fetchKoreanDefinition(word) {
     // Extract data
     const wordElement = item.querySelector('word');
     const koreanWord = wordElement?.textContent || word;
+    
+    // Extract POS
+    const posElement = item.querySelector('pos');
+    const posRaw = posElement?.textContent || '';
+    
+    // Map Korean POS to English standard tags
+    const posMap = {
+        '명사': 'noun',
+        '대명사': 'pronoun',
+        '동사': 'verb',
+        '형용사': 'adjective',
+        '부사': 'adverb',
+        '전치사': 'preposition', // rarely used in Kr, but mapping just in case
+        '조사': 'preposition',   // close equivalent for particles
+        '접속사': 'conjunction',
+        '감탄사': 'interjection',
+        '수사': 'noun',          // Numeral -> treat as noun-like
+        '관형사': 'adjective',   // Determiner -> adjective-like
+        '의존 명사': 'noun'
+    };
+    const mappedPos = posMap[posRaw] || '';
+    const tags = mappedPos ? [mappedPos] : [];
 
     const senseElements = item.querySelectorAll('sense');
     const definitions = [];
@@ -781,6 +811,7 @@ async function fetchKoreanDefinition(word) {
     return {
       origin,
       rarity,
+      tags, // Return extracted tags
       frequency: freqData.frequency,
       frequencySource: freqData.source
     };

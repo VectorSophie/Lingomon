@@ -5,6 +5,17 @@ let activeFilters = new Set();
 let wordData = null;
 let searchQuery = '';
 
+const typeMap = {
+  noun: 'type_n',
+  verb: 'type_v',
+  adjective: 'type_adj',
+  adverb: 'type_adv',
+  pronoun: 'type_p',
+  preposition: 'type_pre',
+  conjunction: 'type_conj',
+  interjection: 'type_interj'
+};
+
 function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
@@ -116,17 +127,6 @@ function displayWordDex(sortType = 'alpha') {
                 const rarityKey = lower.toUpperCase(); // COMMON, RARE, etc.
                 
                 // Map full type name to key
-                let typeKey = null;
-                const typeMap = {
-                    noun: 'type_n',
-                    verb: 'type_v',
-                    adjective: 'type_adj',
-                    adverb: 'type_adv',
-                    pronoun: 'type_p',
-                    preposition: 'type_pre',
-                    conjunction: 'type_conj',
-                    interjection: 'type_interj'
-                };
                 if (typeMap[lower]) {
                     return t(typeMap[lower]);
                 }
@@ -796,16 +796,6 @@ function showTagFilterMenu() {
             let displayText = text;
             
             // Check if value is a known type
-            const typeMap = {
-                noun: 'type_n',
-                verb: 'type_v',
-                adjective: 'type_adj',
-                adverb: 'type_adv',
-                pronoun: 'type_p',
-                preposition: 'type_pre',
-                conjunction: 'type_conj',
-                interjection: 'type_interj'
-            };
             
             if (typeMap[value.toLowerCase()]) {
                 displayText = t(typeMap[value.toLowerCase()]);

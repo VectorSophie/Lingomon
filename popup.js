@@ -223,7 +223,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'wordCaught') {
     console.log('Lingomon Popup: Showing success popup for:', message.word);
     if (typeof showCatchAnimation !== 'undefined') {
-      showCatchAnimation(message.word, message.origin, message.rarity, message.isNew, message.firstCaught);
+      showCatchAnimation(message.word, message.origin, message.rarity, message.isNew, message.firstCaught, message.frequency, message.frequencySource, message.tags);
     }
     // Refresh the display to show the newly caught word
     if (typeof displayWordDex !== 'undefined') {

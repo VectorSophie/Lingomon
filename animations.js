@@ -25,7 +25,7 @@ function initAnimations() {
   }, true);
 }
 
-function showCatchAnimation(word, origin, rarity, isNew, firstCaught, frequency, frequencySource) {
+function showCatchAnimation(word, origin, rarity, isNew, firstCaught, frequency, frequencySource, tags = []) {
   if (loadingPopup) {
     loadingPopup.remove();
     loadingPopup = null;
@@ -147,7 +147,7 @@ function showCatchAnimation(word, origin, rarity, isNew, firstCaught, frequency,
     wordTitle.style.color = '#9b9b9b';
   }
   wordTitle.style.textAlign = 'center';
-  wordTitle.style.marginBottom = '8px';
+  wordTitle.style.marginBottom = '4px'; // Reduced bottom margin for tags
   if (rarity === 'god') {
     wordTitle.style.textShadow = '0 0 20px rgba(255,255,255,0.4)';
   } else {
@@ -156,6 +156,40 @@ function showCatchAnimation(word, origin, rarity, isNew, firstCaught, frequency,
   wordTitle.style.overflowWrap = 'break-word';
   wordTitle.style.hyphens = 'none';
   wordTitle.textContent = word;
+
+  // Word Type Tags
+  const tagsContainer = document.createElement('div');
+  tagsContainer.style.textAlign = 'center';
+  tagsContainer.style.marginBottom = '12px';
+  
+  if (tags && tags.length > 0) {
+      const typeMap = {
+          noun: 'type_n',
+          verb: 'type_v',
+          adjective: 'type_adj',
+          adverb: 'type_adv',
+          pronoun: 'type_p',
+          preposition: 'type_pre',
+          conjunction: 'type_conj',
+          interjection: 'type_interj'
+      };
+      
+      tags.forEach(tag => {
+          const lower = tag.toLowerCase();
+          if (typeMap[lower]) {
+              const tagBadge = document.createElement('span');
+              tagBadge.textContent = translate(typeMap[lower]);
+              tagBadge.style.fontSize = '12px';
+              tagBadge.style.color = '#666';
+              tagBadge.style.background = '#f0f0f0';
+              tagBadge.style.padding = '2px 8px';
+              tagBadge.style.borderRadius = '10px';
+              tagBadge.style.margin = '0 4px';
+              tagBadge.style.fontWeight = 'bold';
+              tagsContainer.appendChild(tagBadge);
+          }
+      });
+  }
 
   const rarityBadge = document.createElement('div');
   rarityBadge.style.display = 'inline-block';
@@ -199,24 +233,20 @@ function showCatchAnimation(word, origin, rarity, isNew, firstCaught, frequency,
       ? frequency.toFixed(2)
       : frequency.toFixed(4);
       
-    // Simple source mapping or just display API/Local
     let sourceLabel = 'API';
-    if (frequencySource === 'local') sourceLabel = 'Local DB';
-    else if (frequencySource === 'korean-api') sourceLabel = 'Korean API';
+    if (frequencySource === 'local') sourceLabel = translate('sourceLocalDB');
+    else if (frequencySource === 'korean-api') sourceLabel = translate('sourceKoreanAPI');
     else if (frequencySource === 'unknown') sourceLabel = 'Unknown';
     
-    // We need to handle translations if available, otherwise English defaults
-    const getTrans = (k) => {
-        if (typeof translations !== 'undefined' && typeof currentLanguage !== 'undefined') {
-             return translations[currentLanguage][k] || translations['en'][k] || k;
-        }
-        return k;
-    };
+    const freqLabel = translate('frequency') || 'Frequency';
+    const perMillionLabel = translate('perMillion') || 'per million';
     
-    const freqLabel = getTrans('frequency') || 'Frequency';
-    const perMillionLabel = getTrans('perMillion') || 'per million';
+    if (typeof currentLanguage !== 'undefined' && currentLanguage === 'ko') {
+        freqDiv.textContent = `${freqLabel}: ${perMillionLabel} ${freqDisplay} (${sourceLabel})`;
+    } else {
+        freqDiv.textContent = `${freqLabel}: ${freqDisplay} ${perMillionLabel} (${sourceLabel})`;
+    }
     
-    freqDiv.textContent = `${freqLabel}: ${freqDisplay} ${perMillionLabel}`;
     rarityContainer.appendChild(freqDiv);
   }
 
@@ -267,6 +297,7 @@ function showCatchAnimation(word, origin, rarity, isNew, firstCaught, frequency,
     catchPopup.appendChild(firstCaughtDiv);
   }
   catchPopup.appendChild(wordTitle);
+  catchPopup.appendChild(tagsContainer); // Add tags container
   catchPopup.appendChild(rarityContainer);
   catchPopup.appendChild(originText);
   catchPopup.appendChild(closeBtn);

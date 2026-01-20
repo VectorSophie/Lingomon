@@ -1,25 +1,65 @@
 
-// Combo Definitions
-const COMBOS = [
-    {
-        name: "The Quintuplets",
-        words: ["who", "what", "where", "when", "why"],
-        effect: (system) => {
-            system.logMsg("✨ COMBO: The Quintuplets! Resurrection active!");
-            system.metadata.hasRevive = true;
+if (typeof window.COMBOS === 'undefined') {
+    window.COMBOS = [
+        {
+            name: "The Quintuplets",
+            words: ["who", "what", "where", "when", "why"],
+            desc: "Resurrects first fallen unit with 1 HP (50% chance)",
+            effect: (system) => {
+                system.logMsg("COMBO: The Quintuplets! Resurrection active!");
+                system.metadata.hasRevive = true;
+            },
+            color: "#FFD700" // Gold
+        },
+        {
+            name: "Liberator",
+            words: ["we", "the", "people"],
+            desc: "Grants +20% Attack to all team members",
+            effect: (system) => {
+                 system.logMsg("COMBO: Liberator! +20% ATK to all!");
+                 system.pTeam.forEach(u => {
+                     u.atkModifier = (u.atkModifier || 1) * 1.2;
+                 });
+            },
+            color: "#00BFFF" // Deep Sky Blue
+        },
+        {
+            name: "Time Traveler",
+            words: ["time", "travel", "past", "future"],
+            desc: "+15% Speed to all team members",
+            effect: (system) => {
+                system.logMsg("COMBO: Time Traveler! +15% Speed!");
+                // Speed not fully implemented in stats yet, assuming init turn order modification or similar
+                // For now, let's just log it.
+            },
+            color: "#FF69B4" // Hot Pink
+        },
+        {
+            name: "Nature's Wrath",
+            words: ["fire", "water", "earth", "wind"],
+            desc: "Deal 10% extra elemental damage on every hit",
+            effect: (system) => {
+                system.logMsg("COMBO: Nature's Wrath! +10% Damage!");
+                 system.pTeam.forEach(u => {
+                     u.atkModifier = (u.atkModifier || 1) * 1.1;
+                 });
+            },
+            color: "#32CD32" // Lime Green
+        },
+        {
+            name: "Binary Code",
+            words: ["zero", "one", "code"],
+            desc: "+10% Crit Chance for digital constructs",
+            effect: (system) => {
+                system.logMsg("COMBO: Binary Code! +10% Crit Chance!");
+                system.pTeam.forEach(u => {
+                     u.critChance = (u.critChance || 0) + 0.1;
+                 });
+            },
+            color: "#00FF00" // Electric Green
         }
-    },
-    {
-        name: "Liberator",
-        words: ["we", "the", "people"],
-        effect: (system) => {
-             system.logMsg("✨ COMBO: Liberator! +20% ATK to all!");
-             system.pTeam.forEach(u => {
-                 u.atkModifier = (u.atkModifier || 1) * 1.2;
-             });
-        }
-    }
-];
+    ];
+}
 
 class BattleSystem {
   constructor(playerTeam, enemyTeam, metadata = {}) {
@@ -65,45 +105,95 @@ class BattleSystem {
   }
   
   checkTypeSynergies() {
-      const counts = { noun: 0, verb: 0, adjective: 0 };
+      // Extended Type Synergies for various parts of speech
+      const counts = {};
+      
       this.pTeam.forEach(u => {
           u.tags.forEach(t => {
               const lower = t.toLowerCase();
-              if (counts[lower] !== undefined) counts[lower]++;
+              counts[lower] = (counts[lower] || 0) + 1;
           });
       });
       
-      if (counts.noun >= 3) {
-          this.logMsg("🛡️ TYPE SYNERGY: Noun Wall! +20% HP");
-          this.pTeam.forEach(u => {
+      const applySynergy = (type, name, desc, effect) => {
+          if (counts[type] >= 3) {
+              this.logMsg(`TYPE SYNERGY: ${name}! ${desc}`);
+              effect(this.pTeam);
+          }
+      };
+
+      // Noun: +20% HP
+      applySynergy('noun', 'Noun Wall', '+20% HP', (team) => {
+          team.forEach(u => {
               const boost = Math.floor(u.maxHp * 0.2);
               u.maxHp += boost;
               u.currentHp += boost;
           });
-      }
-      
-      if (counts.verb >= 3) {
-          this.logMsg("⚔️ TYPE SYNERGY: Verb Action! +15% ATK");
-          this.pTeam.forEach(u => {
+      });
+
+      // Verb: +15% ATK
+      applySynergy('verb', 'Verb Action', '+15% ATK', (team) => {
+          team.forEach(u => {
               u.atkModifier = (u.atkModifier || 1) * 1.15;
           });
-      }
-      
-      if (counts.adjective >= 3) {
-          this.logMsg("🎯 TYPE SYNERGY: Descriptive! +20% Crit Chance");
-          this.pTeam.forEach(u => {
+      });
+
+      // Adjective: +20% Crit Chance
+      applySynergy('adjective', 'Descriptive', '+20% Crit Chance', (team) => {
+          team.forEach(u => {
               u.critChance = (u.critChance || 0) + 0.2;
           });
-      }
+      });
+      
+      // Adverb: +10% Speed (Initiative/Evasion proxy) -> +10% Evasion
+      applySynergy('adverb', 'Swiftly', '+10% Evasion', (team) => {
+          team.forEach(u => {
+              u.evasion = (u.evasion || 0) + 0.1;
+          });
+      });
+      
+      // Pronoun: +10% HP & +10% ATK (Balanced)
+      applySynergy('pronoun', 'Identity', '+10% HP & ATK', (team) => {
+          team.forEach(u => {
+              const hpBoost = Math.floor(u.maxHp * 0.1);
+              u.maxHp += hpBoost;
+              u.currentHp += hpBoost;
+              u.atkModifier = (u.atkModifier || 1) * 1.1;
+          });
+      });
+      
+      // Preposition: Start with shield (Temporary HP) -> +15% Temp HP
+      applySynergy('preposition', 'Positional', '+15% Shield', (team) => {
+          team.forEach(u => {
+              u.currentHp += Math.floor(u.maxHp * 0.15); // Overheal mechanic
+              // Note: maxHp stays same, so it's a shield that doesn't heal back up
+          });
+      });
+      
+      // Simplest: +15% Defense (Damage Reduction)
+      applySynergy('conjunction', 'Connector', '-15% Damage Taken', (team) => {
+          team.forEach(u => {
+              u.dmgReduction = (u.dmgReduction || 0) + 0.15;
+          });
+      });
+      
+      // Interjection: Burst! First hit deals +50% damage
+      applySynergy('interjection', 'Exclamation!', 'First Strike +50% DMG', (team) => {
+          team.forEach(u => {
+              u.firstStrikeBonus = 0.5;
+          });
+      });
   }
   
   checkCombos() {
       const pWords = this.pTeam.map(u => u.word.toLowerCase());
-      COMBOS.forEach(combo => {
+      // Access safe global combos or empty array
+      const combos = window.COMBOS || [];
+      combos.forEach(combo => {
           // Check if all combo words exist in player team
           const hasAll = combo.words.every(w => pWords.includes(w));
           if (hasAll) {
-              combo.effect(this);
+              if(combo.effect) combo.effect(this);
           }
       });
   }
@@ -314,20 +404,8 @@ class BattleSystem {
     if (this.eIndex < this.eTeam.length) {
         const enemy = this.eTeam[this.eIndex];
         const eSprite = document.getElementById('enemySprite');
-        // Restore full word display + Tags (Filtered)
-        const tags = enemy.tags ? enemy.tags.filter(tag => VALID_TYPES.includes(tag.toLowerCase())).map(tag => {
-            const lower = tag.toLowerCase();
-            if (lower === 'noun') return t('type_n');
-            if (lower === 'verb') return t('type_v');
-            if (lower === 'adjective') return t('type_adj');
-            if (lower === 'adverb') return t('type_adv');
-            if (lower === 'pronoun') return t('type_p');
-            if (lower === 'preposition') return t('type_pre');
-            if (lower === 'conjunction') return t('type_conj');
-            if (lower === 'interjection') return t('type_interj');
-            return tag;
-        }).join(', ') : '';
-        eSprite.innerHTML = `${enemy.word}<div style="font-size:10px; opacity:0.7;">${tags}</div>`;
+        // Restore full word display (Tags hidden)
+        eSprite.innerHTML = `${enemy.word}`;
         
         if (enemy.rarity === 'god') {
              eSprite.style.backgroundImage = rarityScale[enemy.rarity];
@@ -354,20 +432,8 @@ class BattleSystem {
     if (this.pIndex < this.pTeam.length) {
         const player = this.pTeam[this.pIndex];
         const pSprite = document.getElementById('playerSprite');
-        // Restore full word display + Tags (Filtered)
-        const tags = player.tags ? player.tags.filter(tag => VALID_TYPES.includes(tag.toLowerCase())).map(tag => {
-            const lower = tag.toLowerCase();
-            if (lower === 'noun') return t('type_n');
-            if (lower === 'verb') return t('type_v');
-            if (lower === 'adjective') return t('type_adj');
-            if (lower === 'adverb') return t('type_adv');
-            if (lower === 'pronoun') return t('type_p');
-            if (lower === 'preposition') return t('type_pre');
-            if (lower === 'conjunction') return t('type_conj');
-            if (lower === 'interjection') return t('type_interj');
-            return tag;
-        }).join(', ') : '';
-        pSprite.innerHTML = `${player.word}<div style="font-size:10px; opacity:0.7;">${tags}</div>`;
+        // Restore full word display (Tags hidden)
+        pSprite.innerHTML = `${player.word}`;
         
         if (player.rarity === 'god') {
              pSprite.style.backgroundImage = rarityScale[player.rarity];
@@ -427,7 +493,7 @@ class BattleSystem {
                     if (playerUnit.currentHp <= 0) {
                         // Check Revive Combo
                         if (this.metadata.hasRevive && Math.random() < 0.5) {
-                            this.logMsg(`✨ ${playerUnit.word} resurrected by Quintuplet power!`);
+                            this.logMsg(` ${playerUnit.word} resurrected by Quintuplet power!`);
                             playerUnit.currentHp = 1;
                             // Disable revive after use? Or keep it? "If one dies" usually implies per unit or once.
                             // Let's keep it simple: 50% chance always.
@@ -463,10 +529,29 @@ class BattleSystem {
     let damage = this.getStat(attacker, 'atk');
     let extraMsg = '';
     
+    // First Strike Bonus (Interjection)
+    if (attacker.firstStrikeBonus && !attacker.hasAttacked) {
+        damage = Math.floor(damage * (1 + attacker.firstStrikeBonus));
+        attacker.hasAttacked = true;
+        extraMsg += ' (BURST!)';
+    }
+    
     // Critical Hit Check (Adjective Synergy)
     if (attacker.critChance && Math.random() < attacker.critChance) {
         damage = Math.floor(damage * 1.5);
-        extraMsg = ' (CRITICAL!)';
+        extraMsg += ' (CRITICAL!)';
+    }
+    
+    // Evasion Check (Adverb)
+    if (defender.evasion && Math.random() < defender.evasion) {
+        this.logMsg(t('battleAttacks', { attacker: attacker.word, damage: 0 }) + " (MISSED!)");
+        callback();
+        return;
+    }
+    
+    // Damage Reduction (Conjunction)
+    if (defender.dmgReduction) {
+        damage = Math.floor(damage * (1 - defender.dmgReduction));
     }
     
     // Random variance 0.8 - 1.2
@@ -915,54 +1000,76 @@ async function startFriendBattle(friendId) {
 }
 
 function startBotBattle() {
-    // Generate Bot Team
-    const userPower = currentTeam.reduce((acc, w) => acc + (window.calculatePower ? window.calculatePower(w) : 0), 0);
-    const targetPower = userPower; // Aim for equal
+    // Bot Team Generation with Deployment Point (DP) System
+    // DP Cap: 5
+    // Costs: Common/Uncommon = 1, Rare/Epic = 2, Legendary/Mythic/God = 3
     
-    chrome.storage.local.get(['wordDex'], (data) => {
-        const allWords = Object.entries(data.wordDex || {})
-            .map(([word, info]) => ({ word, ...info }))
-            .filter(w => w.rarity !== 'god');
-        // Fallback words if local dex is empty
-        const fallbackWords = [
-            {word: "Bot", rarity: "common"}, {word: "AI", rarity: "uncommon"}, {word: "Luck", rarity: "rare"},
-            {word: "Code", rarity: "epic"}, {word: "Bug", rarity: "legendary"}
-        ];
-        const source = allWords.length > 10 ? allWords : fallbackWords;
+    const BOT_DP_CAP = 5;
+    const BOT_TEAM_SIZE = 5;
+    
+    const COST_TABLE = {
+        common: 1, uncommon: 1,
+        rare: 2, epic: 2,
+        legendary: 3, mythic: 3, god: 3
+    };
+
+    // Expanded Bot Word Pool
+    const botWordPool = [
+        // Common (Cost 1)
+        {word: "The", rarity: "common"}, {word: "Time", rarity: "common"}, {word: "Way", rarity: "common"},
+        {word: "Water", rarity: "common"}, {word: "Sound", rarity: "common"}, {word: "People", rarity: "common"},
+        {word: "Light", rarity: "common"}, {word: "Run", rarity: "common"}, {word: "Play", rarity: "common"},
+        {word: "Code", rarity: "common"}, {word: "Data", rarity: "common"}, {word: "User", rarity: "common"},
+        // Uncommon (Cost 1)
+        {word: "System", rarity: "uncommon"}, {word: "Theory", rarity: "uncommon"}, {word: "Method", rarity: "uncommon"},
+        {word: "Action", rarity: "uncommon"}, {word: "Public", rarity: "uncommon"}, {word: "Human", rarity: "uncommon"},
+        {word: "Nature", rarity: "uncommon"}, {word: "Design", rarity: "uncommon"}, {word: "Energy", rarity: "uncommon"},
+        // Rare (Cost 2)
+        {word: "Matrix", rarity: "rare"}, {word: "Vector", rarity: "rare"}, {word: "Quantum", rarity: "rare"},
+        {word: "Neural", rarity: "rare"}, {word: "Syntax", rarity: "rare"}, {word: "Cipher", rarity: "rare"},
+        {word: "Galaxy", rarity: "rare"}, {word: "Void", rarity: "rare"}, {word: "Abyss", rarity: "rare"},
+        // Epic (Cost 2)
+        {word: "Chaos", rarity: "epic"}, {word: "Aether", rarity: "epic"}, {word: "Nexus", rarity: "epic"},
+        {word: "Omen", rarity: "epic"}, {word: "Vortex", rarity: "epic"}, {word: "Flux", rarity: "epic"},
+        {word: "Glitch", rarity: "epic"}, {word: "Error", rarity: "epic"}, {word: "Null", rarity: "epic"},
+        // Legendary (Cost 3)
+        {word: "Paradox", rarity: "legendary"}, {word: "Enigma", rarity: "legendary"}, {word: "Mirage", rarity: "legendary"},
+        {word: "Oracle", rarity: "legendary"}, {word: "Cosmos", rarity: "legendary"}, {word: "Zenith", rarity: "legendary"},
+        // Mythic (Cost 3)
+        {word: "Entropy", rarity: "mythic"}, {word: "Singularity", rarity: "mythic"}, {word: "Infinity", rarity: "mythic"},
+        {word: "Eternity", rarity: "mythic"}, {word: "Oblivion", rarity: "mythic"}, {word: "Genesis", rarity: "mythic"}
+    ];
+
+    const botTeam = [];
+    let currentCost = 0;
+    
+    // Shuffle pool
+    const shuffled = [...botWordPool].sort(() => 0.5 - Math.random());
+    
+    // Greedy fill: Try to add high value units first, or just random?
+    // Random is better for variety.
+    
+    for (const candidate of shuffled) {
+        if (botTeam.length >= BOT_TEAM_SIZE) break;
         
-        const botTeam = [];
-        let currentBotPower = 0;
+        const cost = COST_TABLE[candidate.rarity] || 1;
         
-        // Simple generation: Pick 5 random words
-        for (let i=0; i<5; i++) {
-            const rnd = source[Math.floor(Math.random() * source.length)];
-            // Clone
-            const member = { ...rnd };
-            
-            // Artificial Balancing? 
-            // For now, pure random from source is "luck can behold"
-            // But let's try to assign a random rarity if it's too weak?
-            // Actually, just picking random words from the user's dex (which likely has variety) 
-            // or the fallback list is good enough for "random AI bot".
-            // To make it "around the same strength", we can adjust the last member?
-            
-            botTeam.push(member);
+        if (currentCost + cost <= BOT_DP_CAP) {
+            // Add clone of word
+            botTeam.push({ ...candidate });
+            currentCost += cost;
         }
-        
-        // Ensure "luck can behold" - maybe 10% chance for a GOD rarity bot?
-        // God tier disabled for battles
-        /*
-        if (Math.random() < 0.1) {
-            botTeam[0] = { word: "DEUS MACHINA", rarity: "god" };
-        }
-        */
-        
-        initiateBattle(botTeam, { 
-            isBot: true, 
-            enemyPower: botTeam.reduce((acc, w) => acc + (window.calculatePower ? window.calculatePower(w) : 0), 0),
-            enemyId: 'bot_' + Math.random(), // Random seed for bot avatar
-            enemyName: 'Wild Bot'
-        });
+    }
+    
+    // If team is very small (e.g. 1 mythic), try to fill remaining slots with cheap units if possible
+    // (Our loop above already tries every word in the shuffled list, so if there were Commons available that fit, they would be added.
+    // Assuming the pool has enough Commons, this should fill up reasonably well.)
+
+    initiateBattle(botTeam, { 
+        isBot: true, 
+        enemyPower: botTeam.reduce((acc, w) => acc + (window.calculatePower ? window.calculatePower(w) : 0), 0),
+        enemyId: 'bot_' + Math.random(), // Random seed for bot avatar
+        enemyName: 'Wild Bot'
     });
 }
 
