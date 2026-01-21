@@ -1069,7 +1069,36 @@ function renderTeamUI() {
   const powerLabel = document.getElementById('teamPower');
   if(powerLabel) {
       const costColor = totalCost > TEAM_CAPACITY ? 'red' : (totalCost === TEAM_CAPACITY ? 'orange' : '#666');
-      powerLabel.innerHTML = `Power: ${power} <span style="margin-left:8px; color:${costColor}; font-weight:bold;">Slots: ${totalCost}/${TEAM_CAPACITY}</span>`;
+      
+      // Animate Power (Dragonball style)
+      const startPower = parseInt(powerLabel.dataset.currentPower || 0);
+      const endPower = power;
+      
+      // Store new power for next time
+      powerLabel.dataset.currentPower = endPower;
+
+      // Animation helper
+      const animate = (timestamp) => {
+          if (!powerLabel.dataset.startTime) powerLabel.dataset.startTime = timestamp;
+          const progress = timestamp - parseFloat(powerLabel.dataset.startTime);
+          const duration = 800; // ms
+          
+          if (progress < duration) {
+              const current = Math.floor(startPower + (endPower - startPower) * (progress / duration));
+              powerLabel.innerHTML = `Power: ${current} <span style="margin-left:8px; color:${costColor}; font-weight:bold;">Slots: ${totalCost}/${TEAM_CAPACITY}</span>`;
+              requestAnimationFrame(animate);
+          } else {
+              powerLabel.innerHTML = `Power: ${endPower} <span style="margin-left:8px; color:${costColor}; font-weight:bold;">Slots: ${totalCost}/${TEAM_CAPACITY}</span>`;
+              delete powerLabel.dataset.startTime;
+          }
+      };
+      
+      // Only animate if value changed
+      if (startPower !== endPower) {
+          requestAnimationFrame(animate);
+      } else {
+           powerLabel.innerHTML = `Power: ${endPower} <span style="margin-left:8px; color:${costColor}; font-weight:bold;">Slots: ${totalCost}/${TEAM_CAPACITY}</span>`;
+      }
   }
   
   // Render Active Combos Below Team (moved outside flex container logic if needed, but appending to container works if styled right)
