@@ -211,6 +211,9 @@ class BattleSystem {
   playIntroSequence(onComplete) {
       const container = document.getElementById('battleContainer');
       
+      const playerSeed = (currentUserProfile && currentUserProfile.avatar_seed) ? currentUserProfile.avatar_seed : (currentUserProfile?.id || 'player');
+      const enemySeed = this.metadata.enemySeed || this.metadata.enemyId || 'bot';
+
       // Create Intro Overlay
       const intro = document.createElement('div');
       intro.className = 'battle-intro-overlay';
@@ -219,13 +222,13 @@ class BattleSystem {
             <div class="intro-text">${t('battleFoeAppeared') || 'A new challenger approaches!'}</div>
             <div class="intro-cards">
                 <div class="intro-card player slide-in-left">
-                    <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${currentUserProfile?.id || 'player'}" class="intro-avatar">
+                    <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${playerSeed}" class="intro-avatar">
                     <div class="intro-name">${escapeHtml(currentUserProfile?.username || 'You')}</div>
                     <div class="intro-power">Power: ${this.pTeam.reduce((a,b) => a + (window.calculatePower ? window.calculatePower(b):0), 0)}</div>
                 </div>
                 <div class="intro-vs">VS</div>
                 <div class="intro-card enemy slide-in-right">
-                    <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${this.metadata.enemyId || 'bot'}" class="intro-avatar">
+                    <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${enemySeed}" class="intro-avatar">
                     <div class="intro-name">${escapeHtml(this.metadata.enemyName || (this.metadata.isBot ? 'Wild Bot' : 'Opponent'))}</div>
                     <div class="intro-power">Power: ${this.metadata.enemyPower || '?'}</div>
                 </div>
@@ -246,8 +249,8 @@ class BattleSystem {
   
   renderLayout() {
     const container = document.getElementById('battleContainer');
-    const playerSeed = (typeof currentUserProfile !== 'undefined' && currentUserProfile) ? currentUserProfile.id : 'player';
-    const enemySeed = this.metadata.enemyId || 'bot';
+    const playerSeed = (currentUserProfile && currentUserProfile.avatar_seed) ? currentUserProfile.avatar_seed : (currentUserProfile?.id || 'player');
+    const enemySeed = this.metadata.enemySeed || this.metadata.enemyId || 'bot';
     
     container.innerHTML = `
       <div class="battle-header">
@@ -676,6 +679,20 @@ class BattleSystem {
                 rating: newRating
             };
             supabaseClient.from('profiles').update(updates).eq('id', currentUserProfile.id).then();
+            
+            // Record History
+            supabaseClient.from('battle_history').insert({
+                user_id: currentUserProfile.id,
+                opponent_id: this.metadata.isBot ? null : this.metadata.enemyId,
+                opponent_name: this.metadata.enemyName || (this.metadata.isBot ? 'Wild Bot' : 'Opponent'),
+                opponent_avatar: this.metadata.enemySeed || this.metadata.enemyId || 'bot',
+                result: win ? 'win' : 'loss',
+                rating_change: change,
+                player_team: this.pTeam.map(u => ({ word: u.word, rarity: u.rarity })),
+                opponent_team: this.eTeam.map(u => ({ word: u.word, rarity: u.rarity }))
+            }).then(({error}) => {
+                if(error) console.error("History insert error:", error);
+            });
         }
     }
     
@@ -893,15 +910,18 @@ async function startRandomSearch() {
                 // Fetch opponent rating
                 let opponentRating = 1000;
                 let opponentName = 'Unknown';
+                let opponentSeed = randomOpponent.user_id;
+
                 try {
                     const { data: oppProfile } = await supabaseClient
                         .from('profiles')
-                        .select('rating, username') // Fetch username too
+                        .select('rating, username, avatar_seed') // Fetch username too
                         .eq('id', randomOpponent.user_id)
                         .single();
                     if (oppProfile) {
                         opponentRating = oppProfile.rating || 1000;
                         opponentName = oppProfile.username || 'Unknown';
+                        opponentSeed = oppProfile.avatar_seed || randomOpponent.user_id;
                     }
                 } catch(e) { console.error("Error fetching opponent rating", e); }
 
@@ -909,7 +929,8 @@ async function startRandomSearch() {
                     isBot: false,
                     enemyRating: opponentRating,
                     enemyPower: randomOpponent.team_power,
-                    enemyId: randomOpponent.user_id, // For avatar
+                    enemyId: randomOpponent.user_id, // For ID
+                    enemySeed: opponentSeed, // For Avatar
                     enemyName: opponentName
                 });
                 return;
@@ -975,15 +996,18 @@ async function startFriendBattle(friendId) {
           // Fetch opponent rating for friend battle
           let opponentRating = 1000;
           let opponentName = 'Friend';
+          let opponentSeed = data.user_id;
+
           try {
                const { data: oppProfile } = await supabaseClient
                    .from('profiles')
-                   .select('rating, username')
+                   .select('rating, username, avatar_seed')
                    .eq('id', data.user_id)
                    .single();
                if (oppProfile) {
                    opponentRating = oppProfile.rating || 1000;
                    opponentName = oppProfile.username || 'Friend';
+                   opponentSeed = oppProfile.avatar_seed || data.user_id;
                }
           } catch(e) {}
 
@@ -992,6 +1016,7 @@ async function startFriendBattle(friendId) {
              enemyRating: opponentRating,
              enemyPower: data.team_power || 0,
              enemyId: data.user_id,
+             enemySeed: opponentSeed,
              enemyName: opponentName
          });
      } else {

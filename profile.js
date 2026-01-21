@@ -224,6 +224,7 @@ function renderProfileUI(profile) {
         <div style="display:flex; gap:10px; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">
             <button class="profile-tab-btn ${activeTab === 'overview' ? 'active' : ''}" id="tabOverview">${t('profileOverview')}</button>
             <button class="profile-tab-btn ${activeTab === 'friends' ? 'active' : ''}" id="tabFriends">${t('profileFriends')}</button>
+            <button class="profile-tab-btn ${activeTab === 'history' ? 'active' : ''}" id="tabHistory">History</button>
         </div>
 
         <!-- Overview Tab -->
@@ -278,6 +279,13 @@ function renderProfileUI(profile) {
             </div>
         </div>
 
+        <!-- History Tab -->
+        <div id="viewHistory" style="display:${activeTab === 'history' ? 'block' : 'none'}">
+            <div id="historyList" class="friend-list">
+                <p style="color:#666; font-size:12px; margin-top:20px;">Loading history...</p>
+            </div>
+        </div>
+
         <button class="back-btn">${t('profileBack')}</button>
       `;
 
@@ -287,6 +295,7 @@ function renderProfileUI(profile) {
       // Tabs
       container.querySelector('#tabOverview').onclick = () => { activeTab = 'overview'; render(); };
       container.querySelector('#tabFriends').onclick = () => { activeTab = 'friends'; render(); fetchFriends(); };
+      container.querySelector('#tabHistory').onclick = () => { activeTab = 'history'; render(); fetchHistory(); };
 
       if (activeTab === 'overview') {
           container.querySelector('#btnCustomize').onclick = openCustomize;
@@ -324,7 +333,8 @@ async function fetchFriends() {
         .or(`user_id.eq.${currentUserProfile.id},friend_id.eq.${currentUserProfile.id}`);
         
     if (error) {
-        list.innerHTML = `<p style="color:red">Error fetching friends</p>`;
+        console.error('Error fetching friends:', error);
+        list.innerHTML = `<p style="color:red">Error fetching friends: ${error.message}</p>`;
         return;
     }
     
@@ -345,7 +355,7 @@ async function fetchFriends() {
     
     const { data: profiles } = await supabaseClient
         .from('profiles')
-        .select('id, username, rating')
+        .select('id, username, rating, avatar_seed')
         .in('id', otherIds);
         
     const profileMap = {};
@@ -364,7 +374,7 @@ async function fetchFriends() {
         }
     });
     
-    // Render Requests
+        // Render Requests
     if (requests.length > 0) {
         const reqHeader = document.createElement('div');
         reqHeader.innerHTML = `<strong>${t('friendRequests')}</strong>`;
@@ -377,7 +387,7 @@ async function fetchFriends() {
             el.className = 'friend-item request';
             el.innerHTML = `
                 <div style="display:flex; align-items:center; gap:8px;">
-                    <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${req.other.id}" style="width:24px; height:24px; border-radius:50%;">
+                    <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${req.other.avatar_seed || req.other.id}" style="width:24px; height:24px; border-radius:50%;">
                     <span>${escapeHtml(req.other.username)}</span>
                 </div>
                 <div>
@@ -399,17 +409,21 @@ async function fetchFriends() {
         el.className = 'friend-item';
         el.innerHTML = `
             <div style="display:flex; align-items:center; gap:8px;">
-                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${f.other.id}" style="width:32px; height:32px; border-radius:50%; border:1px solid #ccc;">
+                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${f.other.avatar_seed || f.other.id}" style="width:32px; height:32px; border-radius:50%; border:1px solid #ccc;">
                 <div style="text-align:left;">
                     <div style="font-weight:bold; font-size:12px;">${escapeHtml(f.other.username)}</div>
                     <div style="font-size:10px; color:#666;">${t('profileRating')}: ${f.other.rating || 0}</div>
                 </div>
             </div>
-            <button class="challenge-btn">⚔️ ${t('battleChallenge')}</button>
+            <button class="challenge-btn">${t('battleChallenge')}</button>
         `;
         el.querySelector('.challenge-btn').onclick = () => {
-            closeProfile();
-            startFriendBattle(f.other.id);
+            // Switch to Battle tab first
+            switchTab('battle');
+            // Wait slightly for UI to switch then start
+            setTimeout(() => {
+                startFriendBattle(f.other.id);
+            }, 100);
         };
         list.appendChild(el);
     });
@@ -433,6 +447,72 @@ async function fetchFriends() {
             list.appendChild(el);
         });
     }
+}
+
+async function fetchHistory() {
+    const list = document.getElementById('historyList');
+    if (!list || !supabaseClient || !currentUserProfile) return;
+    
+    const { data, error } = await supabaseClient
+        .from('battle_history')
+        .select('*')
+        .eq('user_id', currentUserProfile.id)
+        .order('created_at', { ascending: false })
+        .limit(20);
+        
+    if (error) {
+        console.error('Error fetching history:', error);
+        list.innerHTML = `<p style="color:red">Error: ${error.message}</p>`;
+        return;
+    }
+    
+    if (data.length === 0) {
+        list.innerHTML = `<p style="color:#999; font-style:italic; margin-top:20px;">No battles recorded yet.</p>`;
+        return;
+    }
+    
+    list.innerHTML = '';
+    
+    data.forEach(match => {
+        const el = document.createElement('div');
+        el.className = 'friend-item'; // Reuse styling
+        
+        const resultColor = match.result === 'win' ? '#4caf50' : '#ff4444';
+        const resultText = match.result === 'win' ? 'WIN' : 'LOSS';
+        const sign = match.rating_change >= 0 ? '+' : '';
+        
+        // Render mini team icons
+        let teamHtml = '';
+        if (match.player_team && Array.isArray(match.player_team)) {
+            teamHtml = `<div style="display:flex; gap:2px; margin-top:4px;">`;
+            match.player_team.forEach(unit => {
+                if(unit) {
+                    const rarityColor = rarityScale[unit.rarity] || '#ccc';
+                    teamHtml += `<div style="width:8px; height:8px; background:${rarityColor}; border-radius:50%;" title="${unit.word}"></div>`;
+                }
+            });
+            teamHtml += `</div>`;
+        }
+        
+        const date = new Date(match.created_at).toLocaleDateString();
+        
+        el.innerHTML = `
+            <div style="display:flex; align-items:center; gap:10px; width:100%;">
+                <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${match.opponent_avatar || match.opponent_name}" style="width:32px; height:32px; border-radius:50%; border:1px solid #ccc;">
+                <div style="flex:1;">
+                    <div style="display:flex; justify-content:space-between;">
+                        <span style="font-weight:bold; font-size:12px;">vs ${escapeHtml(match.opponent_name)}</span>
+                        <span style="font-weight:bold; font-size:11px; color:${resultColor}">${resultText}</span>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        ${teamHtml}
+                        <span style="font-size:10px; color:#666;">${sign}${match.rating_change} (${date})</span>
+                    </div>
+                </div>
+            </div>
+        `;
+        list.appendChild(el);
+    });
 }
 
 async function addFriend() {
@@ -475,8 +555,8 @@ async function addFriend() {
         .insert({ user_id: currentUserProfile.id, friend_id: targetId, status: 'pending' });
         
     if (insertError) {
-        alert(t('requestError'));
-        console.error(insertError);
+        console.error('Error adding friend:', insertError);
+        alert(`${t('requestError')}: ${insertError.message}`);
     } else {
         alert(t('requestSent'));
         input.value = '';
