@@ -40,6 +40,7 @@ async function checkAuthState() {
     if (profile) {
       currentUserProfile = profile;
       fetchTeam(profile.id); // Also pre-fetch team
+      restoreDataFromCloud(); // Try to restore if local is empty
     }
   }
   
@@ -197,14 +198,77 @@ async function showProfile(isOverlay = true) {
   currentUserProfile = profile;
   
   // Sync local word count
-  chrome.storage.local.get(['wordDex'], async (data) => {
+  chrome.storage.local.get(['wordDex', 'achievements', 'streakData', 'sitesExplored', 'badges'], async (data) => {
     const count = Object.keys(data.wordDex || {}).length;
     if (profile && count !== profile.total_words) {
       await supabaseClient.from('profiles').update({ total_words: count }).eq('id', profile.id);
       profile.total_words = count;
     }
+    
+    // Auto-backup whenever profile is opened
+    backupDataToCloud(data);
+
     renderProfileUI(profile);
   });
+}
+
+async function backupDataToCloud(data = null) {
+    if (!currentUserProfile || !supabaseClient) return;
+    
+    // If data not provided, fetch it
+    if (!data) {
+        data = await new Promise(resolve => {
+            chrome.storage.local.get(['wordDex', 'achievements', 'streakData', 'sitesExplored', 'badges'], resolve);
+        });
+    }
+
+    const { error } = await supabaseClient
+        .from('profiles')
+        .update({ data: data })
+        .eq('id', currentUserProfile.id);
+        
+    if (error) {
+        console.error('Backup failed:', error);
+    } else {
+        console.log('Backup successful');
+        const btn = document.getElementById('forceBackupBtn');
+        if (btn) {
+            const originalText = btn.textContent;
+            btn.textContent = t('profileSaved') || "Saved!";
+            setTimeout(() => { btn.textContent = originalText; }, 2000);
+        }
+    }
+}
+
+async function restoreDataFromCloud() {
+    if (!currentUserProfile || !supabaseClient) return;
+    
+    // Check if local data is empty (only wordDex matters for "freshness")
+    const local = await new Promise(resolve => chrome.storage.local.get(['wordDex'], resolve));
+    
+    if (local.wordDex && Object.keys(local.wordDex).length > 0) {
+        console.log('Local data exists, skipping auto-restore');
+        return; 
+    }
+    
+    console.log('Local data empty, attempting restore from cloud...');
+    
+    // Fetch profile data
+    const { data, error } = await supabaseClient
+        .from('profiles')
+        .select('data')
+        .eq('id', currentUserProfile.id)
+        .single();
+        
+    if (error || !data || !data.data) {
+        console.log('No backup found or error:', error);
+        return;
+    }
+    
+    // Restore
+    const backup = data.data;
+    await new Promise(resolve => chrome.storage.local.set(backup, resolve));
+    console.log('Data restored from cloud');
 }
 
 function closeProfile() {
@@ -257,6 +321,12 @@ function renderProfileUI(profile) {
                 <span class="stat-value">${profile.total_words}</span>
                 <span class="stat-label">${t('profileWords')}</span>
               </div>
+            </div>
+
+            <div style="text-align:center; margin-top:10px;">
+                <button id="forceBackupBtn" style="font-size:11px; padding:4px 8px; background:#f0f0f0; border:1px solid #ccc; border-radius:4px; cursor:pointer;">
+                    ☁️ ${t('forceBackup') || 'Backup Data'}
+                </button>
             </div>
         
             <!-- Team Section -->
@@ -312,6 +382,8 @@ function renderProfileUI(profile) {
               // Defer rendering slightly to ensure DOM insertion is complete
               setTimeout(() => renderFeaturedBadge(profile.featured_badge), 0);
           }
+          
+          container.querySelector('#forceBackupBtn').onclick = () => backupDataToCloud();
           
           fetchTeam(profile.id);
       } else {

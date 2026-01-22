@@ -212,6 +212,7 @@ const translations = {
     profileSaveFail: "Save Failed",
     profileLoading: "Loading...",
     profileError: "Error loading profile.",
+    forceBackup: "Force Backup",
     
     // Battle
     battleStart: "Battle Start!",
@@ -441,6 +442,7 @@ const translations = {
     profileSaveFail: "팀 저장 실패",
     profileLoading: "프로필 로딩 중...",
     profileError: "프로필 로딩 오류. 로그인 해주세요.",
+    forceBackup: "데이터 백업",
     
     // Battle
     battleStart: "배틀 시작!",
