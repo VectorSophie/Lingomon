@@ -70,6 +70,17 @@ function updateUILanguage() {
     const isDark = document.body.classList.contains('dark-mode');
     darkModeToggle.textContent = isDark ? t('lightMode') : t('darkMode');
   }
+
+  // Update Profile Button
+  const authBtn = document.getElementById('authBtn');
+  if (authBtn && authBtn.classList.contains('dark-mode-toggle')) {
+      const img = authBtn.querySelector('img');
+      if (img) {
+          authBtn.innerHTML = '';
+          authBtn.appendChild(img);
+          authBtn.appendChild(document.createTextNode('\n      ' + t('tabProfile') + '\n    '));
+      }
+  }
 }
 
 async function setupLanguageToggle() {

@@ -49,8 +49,15 @@ async function checkAuthState() {
 }
 
 function updateAuthUI(user) {
-  const container = document.querySelector('.header-container div');
-  if (!container) return;
+  // Target the button container specifically, NOT the first div in header-container
+  // The header structure is: <div class="header-container"> <div>Logo+Title</div> <div id="controlsContainer">Buttons</div> </div>
+  // We need to find the SECOND div.
+  const header = document.querySelector('.header-container');
+  if (!header) return;
+  
+  // The second child div holds the buttons
+  let container = header.children[1];
+  if (!container) return; 
 
   const existingAuthBtn = document.getElementById('authBtn');
   if (existingAuthBtn) existingAuthBtn.remove();
@@ -65,7 +72,7 @@ function updateAuthUI(user) {
     const seed = (currentUserProfile && currentUserProfile.avatar_seed) ? currentUserProfile.avatar_seed : user.id;
     authBtn.innerHTML = `
       <img src="https://api.dicebear.com/7.x/bottts/svg?seed=${seed}" style="width:16px;height:16px;margin-right:4px;vertical-align:middle;border-radius:50%;">
-      Profile
+      ${t('tabProfile')}
     `;
     authBtn.title = `Logged in as ${user.email}`;
     authBtn.onclick = () => switchTab('profile'); // Use global switchTab
