@@ -44,48 +44,61 @@
         strong {
             color: #2c3e50;
         }
+        a {
+            color: #72a4f2;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Lingomon Privacy Policy</h1>
-        <p class="last-updated">Last updated: January 10, 2026</p>
+        <p class="last-updated">Last updated: January 21, 2026</p>
 
         <h2>Data Collection</h2>
-        <p>Lingomon collects and stores the following data LOCALLY on your device:</p>
+        <p>Lingomon collects and stores the following data:</p>
         <ul>
-            <li>Words you select and catch from web pages</li>
-            <li>Word definitions and etymology from dictionary APIs</li>
-            <li>Website domains where you caught words (for statistics)</li>
-            <li>Your vocabulary achievements, streaks, and badges</li>
-            <li>Language preference (English or Korean)</li>
+            <li><strong>Vocabulary:</strong> Words you select and catch from web pages.</li>
+            <li><strong>Context:</strong> The specific sentence where you found the word (saved locally to help you remember usage).</li>
+            <li><strong>Definitions:</strong> Word definitions and etymology fetched from dictionary APIs.</li>
+            <li><strong>Statistics:</strong> Website domains where words were caught, your achievements, streaks, and badges.</li>
+            <li><strong>Profile:</strong> Your username, avatar preference, and battle team configuration.</li>
+            <li><strong>Language Preference:</strong> Whether you are using English or Korean mode.</li>
         </ul>
 
-        <h2>Data Storage</h2>
-        <p>All data is stored locally using Chrome's storage API. Your word collection never leaves your device except for:</p>
+        <h2>Data Storage & Cloud Sync</h2>
         <ul>
-            <li>Dictionary lookups sent to api.dictionaryapi.dev (English definitions)</li>
-            <li>Word frequency lookups sent to api.datamuse.com (English words)</li>
-            <li>Korean dictionary lookups sent to krdict.korean.go.kr (when Korean mode is active)</li>
-            <li>Translation requests sent to api.mymemory.translated.net (when translating to Korean)</li>
+            <li><strong>Local Storage:</strong> All data is initially stored locally on your device using Chrome's storage API.</li>
+            <li><strong>Cloud Backup (New in v1.8):</strong> To prevent data loss and enable cross-device sync, your WordDex collection, stats, and profile are securely backed up to our cloud database (Supabase). This ensures you can restore your progress if you reinstall the extension.</li>
+            <li><strong>Authentication:</strong> We use <strong>Google Sign-In</strong> (via Supabase Auth) to securely identify your account and manage your cloud backup.</li>
         </ul>
-        <p>These API calls only include the word or text to be translated - no personal information.</p>
+
+        <h2>Multiplayer & Sharing</h2>
+        <p>Lingomon includes multiplayer features (Battle Mode, Friend List) which require sharing limited data:</p>
+        <ul>
+            <li><strong>Public Profile:</strong> Your username, avatar, battle team, and win/loss statistics are visible to other Lingomon users to facilitate battles.</li>
+            <li><strong>Private Data:</strong> Your full WordDex collection and personal learning history are <strong>NOT</strong> shared with other users.</li>
+        </ul>
 
         <h2>Third-Party Services</h2>
+        <p>Lingomon uses the following services to provide functionality:</p>
         <ul>
-            <li><strong>Dictionary API</strong> (api.dictionaryapi.dev): Provides English word definitions and etymology</li>
-            <li><strong>Datamuse API</strong> (api.datamuse.com): Provides word frequency data for English words</li>
-            <li><strong>Korean Learners' Dictionary API</strong> (krdict.korean.go.kr): Provides Korean-English dictionary definitions (when Korean mode is active)</li>
-            <li><strong>MyMemory Translation API</strong> (api.mymemory.translated.net): Provides English-to-Korean translation (when Korean mode is active)</li>
+            <li><strong>Supabase</strong> (supabase.com): Provides secure database storage, authentication, and real-time features for multiplayer.</li>
+            <li><strong>Dictionary API</strong> (api.dictionaryapi.dev): Provides English word definitions.</li>
+            <li><strong>Datamuse API</strong> (api.datamuse.com): Provides word frequency data.</li>
+            <li><strong>Korean Learners' Dictionary API</strong> (krdict.korean.go.kr): Provides Korean-English dictionary definitions.</li>
+            <li><strong>MyMemory Translation API</strong> (api.mymemory.translated.net): Provides English-to-Korean translation.</li>
+            <li><strong>DiceBear API</strong> (api.dicebear.com): Generates robot avatars based on your User ID.</li>
         </ul>
 
-        <h2>Data Sharing</h2>
-        <p>Lingomon does NOT:</p>
+        <h2>Your Rights</h2>
         <ul>
-            <li>Sell or share your data with third parties</li>
-            <li>Track your browsing history</li>
-            <li>Collect personally identifiable information</li>
-            <li>Send your vocabulary collection to any servers</li>
+            <li>You can <strong>export</strong> your local data at any time (via Chrome Storage).</li>
+            <li>You can <strong>delete</strong> your account and cloud data by contacting us.</li>
+            <li>You can use the extension without logging in, but cloud backup and multiplayer features will be unavailable.</li>
         </ul>
 
         <h2>Contact</h2>
