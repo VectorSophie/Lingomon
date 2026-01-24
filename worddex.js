@@ -165,7 +165,28 @@ function displayWordDex(sortType = 'alpha') {
       } else if (entries.length === 0) {
         dexDiv.innerHTML = `<p style="color: gray; text-align: center; padding: 20px;">${t('noWordsMessage')}</p>`;
       } else {
-        entries.forEach(([word, info]) => {
+    // --- Rarity Styles ---
+    const rarityColors = {
+      common: '#707070',
+      uncommon: '#2b9348',
+      rare: '#0077b6',
+      epic: '#9d4edd',
+      legendary: '#d00000',
+      mythic: '#ffba08',
+      god: 'linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3)'
+    };
+    
+    // Helper to get specialized card class/style
+    const getCardStyle = (tags) => {
+        if (!tags || !tags.length) return '';
+        if (tags.includes('tech')) return 'tech-card';
+        if (tags.includes('bio')) return 'bio-card';
+        if (tags.includes('chem')) return 'chem-card';
+        if (tags.includes('astro')) return 'astro-card';
+        return '';
+    };
+
+    entries.forEach(([word, info]) => {
           if (!info || typeof info !== 'object') {
             console.warn(`Invalid data for word: ${word}`);
             return;
@@ -188,7 +209,7 @@ function displayWordDex(sortType = 'alpha') {
           }
 
           const div = document.createElement("div");
-          div.className = "word-entry";
+          div.className = "word-entry " + getCardStyle(info.tags);
           div.style.position = 'relative';
           div.style.paddingRight = '60px'; // Prevent text overlap with delete button
 
@@ -223,6 +244,14 @@ function displayWordDex(sortType = 'alpha') {
               `;
               document.head.appendChild(style);
             }
+          }
+          
+          // Custom color for Heathcliff
+          if (word.toLowerCase() === 'heathcliff') {
+              wordStrong.style.color = '#4e3076';
+              // Also style the border of the card?
+              div.style.borderLeft = '4px solid #4e3076';
+              div.style.background = 'linear-gradient(90deg, rgba(78, 48, 118, 0.1) 0%, transparent 100%)';
           }
 
           // Inline Tag Container
@@ -312,7 +341,12 @@ function displayWordDex(sortType = 'alpha') {
 
           const originDiv = document.createElement('div');
           originDiv.className = 'word-info';
-          originDiv.textContent = origin.length > 150 ? origin.substring(0, 150) + '...' : origin;
+          
+          // Enhanced Origin Display
+          let originText = origin.length > 150 ? origin.substring(0, 150) + '...' : origin;
+          let originHtml = escapeHtml(originText).replace(/\n/g, '<br>');
+          
+          originDiv.innerHTML = originHtml;
 
           const frequencyDiv = document.createElement('div');
           frequencyDiv.className = 'frequency-info';

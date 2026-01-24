@@ -10,7 +10,7 @@ window.rarityOrder = {
 };
 
 let currentUserProfile = null;
-let currentTeam = [null, null, null, null, null];
+let currentTeam = Array(5).fill(null);
 let editingSlot = -1;
 let supabaseClient = null;
 let isAuthChecking = true;
@@ -907,7 +907,8 @@ async function updateProfileCosmetics() {
 }
 
 // Team Logic
-const TEAM_CAPACITY = 5;
+const TEAM_CAPACITY = 7; // Cost Limit (Deployment Points)
+const MAX_TEAM_SLOTS = 5; // Max number of units
 
 // Combo Definitions (Handled via global check or mirrored)
 // If profile.js loads first, it defines it. If battle.js loads first, it defines it.
@@ -969,6 +970,10 @@ function calculateTeamCost(team) {
     }, 0);
 }
 
+// NOTE: We now allow up to 7 slots, but the "Cost" limit (TEAM_CAPACITY) is what constrains power.
+// TEAM_CAPACITY is set to 7 (e.g. 7 commons, or 2 mythics + 1 common).
+// This creates a strategic tradeoff between "More Units" vs "Stronger Units".
+
 function calculateStat(wordData, type) {
   if (!wordData) return 0;
   const len = wordData.word.length;
@@ -1022,7 +1027,7 @@ async function fetchTeam(userId) {
   
   if (data && data.team_data && Array.isArray(data.team_data)) {
     currentTeam = data.team_data;
-    while(currentTeam.length < 5) currentTeam.push(null);
+    while(currentTeam.length < MAX_TEAM_SLOTS) currentTeam.push(null);
     
     // Enrich with local Dex data to get tags
     chrome.storage.local.get(['wordDex'], (localData) => {
@@ -1038,7 +1043,7 @@ async function fetchTeam(userId) {
         renderTeamUI();
     });
   } else {
-    currentTeam = [null, null, null, null, null];
+    currentTeam = Array(MAX_TEAM_SLOTS).fill(null);
     renderTeamUI();
   }
 }

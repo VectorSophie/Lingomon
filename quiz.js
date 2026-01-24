@@ -82,10 +82,57 @@ function startQuiz(options = { size: 5 }) {
     // Exclude GOD rarity words
     const words = Object.entries(wordDex).filter(([word, info]) => info.rarity !== 'god');
 
+    // Filter scientific words if available
+    const scientificWords = words.filter(([word, info]) => 
+        info.tags && (info.tags.includes('chem') || info.tags.includes('astro') || info.tags.includes('bio'))
+    );
+    
+    // Mix standard and scientific questions
+    // 30% chance for a specialized scientific question if we have enough scientific words
+    // ... logic inside question generation ...
+
     // Select random words
     const shuffled = words.sort(() => 0.5 - Math.random());
     const quizSize = options.size || 5;
     quizData.questions = shuffled.slice(0, Math.min(quizSize, words.length));
+    
+    // Generate Questions
+    quizData.questions = quizData.questions.map(([word, info]) => {
+        // Default Question: Definition -> Word
+        let type = 'definition';
+        let questionText = info.origin || 'No definition available';
+        let answer = word.toLowerCase();
+        let label = t('quizDefinition');
+        let hint = t('quizFillBlank');
+
+        // Specialized Questions
+        if (info.tags) {
+            if (info.tags.includes('chem') && info.origin.includes('Symbol:')) {
+                // Chemical Element: Symbol -> Name
+                const symbolMatch = info.origin.match(/Symbol: (\w+)/);
+                if (symbolMatch) {
+                    type = 'symbol';
+                    questionText = `${t('quizSymbolQuestion')} ${symbolMatch[1]}?`;
+                    label = t('quizChemistry');
+                    hint = t('quizElementName');
+                }
+            } else if (info.tags.includes('astro') && info.origin.includes('Type: Planet')) {
+                // Planet: Fact -> Name
+                type = 'astro';
+                label = t('quizAstronomy');
+            }
+        }
+        
+        return {
+            word: word,
+            type: type,
+            question: questionText,
+            answer: answer,
+            label: label,
+            hint: hint
+        };
+    });
+
     quizData.currentIndex = 0;
     quizData.score = 0;
     quizData.total = quizData.questions.length;
@@ -103,17 +150,16 @@ function showQuestion() {
     return;
   }
 
-  const [word, info] = quizData.questions[quizData.currentIndex];
-  const definition = info.origin || 'No definition available';
+  const q = quizData.questions[quizData.currentIndex];
 
   quizContainer.innerHTML = `
     <div class="quiz-score">${t('quizQuestion')} ${quizData.currentIndex + 1} ${t('quizOf')} ${quizData.total}</div>
     <div class="quiz-question">
-      <strong>${t('quizDefinition')}</strong><br>
-      ${escapeHtml(definition)}
+      <strong>${q.label}</strong><br>
+      ${escapeHtml(q.question)}
     </div>
     <div class="quiz-question">
-      <strong>${t('quizFillBlank')}</strong><br>
+      <strong>${q.hint}</strong><br>
       ${t('quizTheWordIs')} <input type="text" class="quiz-input" id="quizAnswer" placeholder="${t('quizAnswerPlaceholder')}">
     </div>
     <button class="quiz-btn" id="submitAnswer">${t('quizSubmit')}</button>
@@ -125,10 +171,10 @@ function showQuestion() {
   
   // Submit on Enter
   input.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') checkAnswer(word.toLowerCase());
+    if (e.key === 'Enter') checkAnswer(q.answer);
   });
 
-  document.getElementById('submitAnswer').onclick = () => checkAnswer(word.toLowerCase());
+  document.getElementById('submitAnswer').onclick = () => checkAnswer(q.answer);
   document.getElementById('skipQuestion').onclick = () => {
     if(quizData.processing) return;
     checkAnswer(null); // incorrect

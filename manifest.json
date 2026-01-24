@@ -1,7 +1,7 @@
 {
    "manifest_version": 3,
    "name": "Lingomon",
-   "version": "1.8",
+   "version": "1.8.1",
    "description": "Gotta catch em all!",
    "permissions": ["contextMenus", "storage", "identity"],
    "action": {
@@ -20,12 +20,27 @@
        "js": ["i18n.js", "animations.js", "content.js"]
      }
    ],
-   "host_permissions": [
-    "https://api.dictionaryapi.dev/*",
-    "https://api.datamuse.com/*",
-    "https://krdict.korean.go.kr/*",
-    "https://api.mymemory.translated.net/*",
-    "https://*.supabase.co/*"
-   ]
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "content.js",
+        "animations.js",
+        "stats.js", 
+        "i18n.js", 
+        "lingomon.png"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "host_permissions": [
+     "https://api.dictionaryapi.dev/*",
+     "https://api.datamuse.com/*",
+     "https://krdict.korean.go.kr/*",
+     "https://api.mymemory.translated.net/*",
+     "https://*.supabase.co/*",
+     "https://api.gbif.org/*",
+     "https://pubchem.ncbi.nlm.nih.gov/*",
+     "https://api.le-systeme-solaire.net/*"
+    ]
 
 }

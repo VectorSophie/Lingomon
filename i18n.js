@@ -229,7 +229,12 @@ const translations = {
     battleGo: "Go",
     battleCancel: "Cancel",
     battleSearching: "Searching for opponent...",
-    battleFoeAppeared: "A new challenger approaches!"
+    battleFoeAppeared: "A new challenger approaches!",
+    quizAstronomy: "Astronomy Question",
+    quizChemistry: "Chemistry Question",
+    quizSymbolQuestion: "Which Element has the symbol",
+    quizElementName: "Element Name",
+    quizFact: "Fact"
   },
   
   ko: {
@@ -459,7 +464,12 @@ const translations = {
     battleGo: "ㄱ",
     battleCancel: "취소",
     battleSearching: "상대 찾는 중...",
-    battleFoeAppeared: "새로운 도전자가 나타났다!"
+    battleFoeAppeared: "새로운 도전자가 나타났다!",
+    quizAstronomy: "천문학 퀴즈",
+    quizChemistry: "화학 퀴즈",
+    quizSymbolQuestion: "다음 원소 기호의 이름은 무엇입니까:",
+    quizElementName: "원소 이름",
+    quizFact: "설명"
   }
 };
 

@@ -37,6 +37,8 @@ function showCatchAnimation(word, origin, rarity, isNew, firstCaught, frequency,
     animateWordCatch(lastClickedElement, rarity);
   }
 
+  // Sound Effects removed by user request
+  
   const catchPopup = document.createElement('div');
   catchPopup.style.position = 'fixed';
   catchPopup.style.top = '50%';
@@ -605,8 +607,11 @@ function showLoadingAnimation(word) {
   document.body.appendChild(loadingPopup);
 
   setTimeout(() => {
-    loadingPopup.style.opacity = '1';
-    loadingPopup.style.transform = 'translate(-50%, -50%) scale(1)';
+    // Check if loadingPopup still exists before manipulating it
+    if (loadingPopup) {
+      loadingPopup.style.opacity = '1';
+      loadingPopup.style.transform = 'translate(-50%, -50%) scale(1)';
+    }
   }, 10);
 }
 

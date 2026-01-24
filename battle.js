@@ -1,4 +1,19 @@
 
+// Standardized Power Calculation for Display
+window.calculatePower = (u) => {
+    if (!u) return 0;
+    const len = u.word.length;
+    const effectiveLen = Math.min(len, 20); 
+    
+    const rarityBonus = {
+        'common': 0, 'uncommon': 5, 'rare': 10, 'epic': 20, 
+        'legendary': 40, 'mythic': 80, 'god': 200
+    }[u.rarity ? u.rarity.toLowerCase() : 'common'] || 0;
+    
+    // Power Score = Base Power
+    return (effectiveLen * 2) + rarityBonus;
+};
+
 if (typeof window.COMBOS === 'undefined') {
     window.COMBOS = [
         {
@@ -57,6 +72,70 @@ if (typeof window.COMBOS === 'undefined') {
                  });
             },
             color: "#00FF00" // Electric Green
+        },
+        {
+            name: "Tech Stack",
+            words: ["html", "css", "javascript"],
+            desc: "Optimization: +20% Speed to all",
+            effect: (system) => {
+                system.logMsg("COMBO: Tech Stack! Systems Optimized!");
+                 system.pTeam.forEach(u => {
+                     // Speed not fully implemented, but let's add the modifier
+                     u.speedModifier = (u.speedModifier || 1) * 1.2;
+                     // Also give small evasion boost as speed proxy
+                     u.evasion = (u.evasion || 0) + 0.1;
+                 });
+            },
+            color: "#61DAFB" // Cyan
+        },
+        {
+            name: "Bio Hazard",
+            words: ["virus", "bacteria", "infection"],
+            desc: "Infects enemies: -10% Attack",
+            effect: (system) => {
+                system.logMsg("COMBO: Bio Hazard! Enemies weakened!");
+                 system.eTeam.forEach(u => {
+                     u.atkModifier = (u.atkModifier || 1) * 0.9;
+                 });
+            },
+            color: "#7FFF00" // Chartreuse
+        },
+        {
+            name: "Jurassic Park",
+            words: ["tyrannosaurus", "velociraptor", "dinosaur"],
+            desc: "Primal Rage: +30% Attack",
+            effect: (system) => {
+                system.logMsg("COMBO: Jurassic Park! Primal Rage!");
+                 system.pTeam.forEach(u => {
+                     u.atkModifier = (u.atkModifier || 1) * 1.3;
+                 });
+            },
+            color: "#A0522D" // Sienna
+        },
+        {
+            name: "Big Bang",
+            words: ["star", "galaxy", "supernova"],
+            desc: "Cosmic Event: Deals 20 damage to ALL units (Friend & Foe)",
+            effect: (system) => {
+                system.logMsg("COMBO: BIG BANG! Cosmic damage!");
+                // Damage everyone
+                [...system.pTeam, ...system.eTeam].forEach(u => {
+                    u.currentHp = Math.max(1, u.currentHp - 20); // Don't kill, leave at 1
+                });
+            },
+            color: "#4B0082" // Indigo
+        },
+        {
+            name: "H2O",
+            words: ["hydrogen", "oxygen"],
+            desc: "Healing Rain: Restores 30% HP to team",
+            effect: (system) => {
+                system.logMsg("COMBO: H2O! Healing Rain!");
+                system.pTeam.forEach(u => {
+                    u.currentHp = Math.min(u.maxHp, u.currentHp + Math.floor(u.maxHp * 0.3));
+                });
+            },
+            color: "#00CED1" // Dark Turquoise
         }
     ];
 }
@@ -67,13 +146,31 @@ class BattleSystem {
     // Helper to calculate stats safely (using global or local fallback)
     const getStat = (u, type) => {
         let val = 10;
-        if (typeof window.calculateStat === 'function') val = window.calculateStat(u, type);
+        
+        // Logarithmic scaling for length to prevent exponential runaway for long words
+        // Base stat = (Length * 2) + RarityBonus
+        // RarityBonus: Common=0, Uncommon=5, Rare=10, Epic=20, Legendary=40, Mythic=80, God=200
+        const len = u.word.length;
+        // Cap length contribution at 20 chars (40 points) to stop pneumono... from dominating
+        const effectiveLen = Math.min(len, 20); 
+        
+        const rarityBonus = {
+            'common': 0, 'uncommon': 5, 'rare': 10, 'epic': 20, 
+            'legendary': 40, 'mythic': 80, 'god': 200
+        }[u.rarity.toLowerCase()] || 0;
+        
+        let basePower = (effectiveLen * 2) + rarityBonus;
+        
+        // HP is higher base
+        if (type === 'hp') val = basePower * 5;
+        // ATK is lower base
+        if (type === 'atk') val = basePower;
         
         // Apply modifiers (Combos)
         if (type === 'atk' && u.atkModifier) val = Math.floor(val * u.atkModifier);
         if (type === 'hp' && u.hpModifier) val = Math.floor(val * u.hpModifier);
         
-        return val;
+        return Math.floor(val);
     };
     this.getStat = getStat;
 
@@ -181,6 +278,42 @@ class BattleSystem {
       applySynergy('interjection', 'Exclamation!', 'First Strike +50% DMG', (team) => {
           team.forEach(u => {
               u.firstStrikeBonus = 0.5;
+          });
+      });
+
+      // Tech: Overclock (+10% Crit & Evasion)
+      applySynergy('tech', 'Overclock', '+10% Crit & Evasion', (team) => {
+          team.forEach(u => {
+              u.critChance = (u.critChance || 0) + 0.1;
+              u.evasion = (u.evasion || 0) + 0.1;
+          });
+      });
+
+      // Bio: Adaptation (+20% HP)
+      applySynergy('bio', 'Adaptation', '+20% HP', (team) => {
+          team.forEach(u => {
+              const boost = Math.floor(u.maxHp * 0.2);
+              u.maxHp += boost;
+              u.currentHp += boost;
+          });
+      });
+
+      // Chem: Volatile (+15% Attack, -10% HP)
+      applySynergy('chem', 'Volatile', '+15% ATK / -10% HP', (team) => {
+          team.forEach(u => {
+              u.atkModifier = (u.atkModifier || 1) * 1.15;
+              u.currentHp = Math.floor(u.currentHp * 0.9);
+          });
+      });
+
+      // Astro: Stardust (+10% HP, +10% Speed)
+      applySynergy('astro', 'Stardust', '+10% HP & Speed', (team) => {
+          team.forEach(u => {
+               const boost = Math.floor(u.maxHp * 0.1);
+               u.maxHp += boost;
+               u.currentHp += boost;
+               // Speed proxy
+               u.evasion = (u.evasion || 0) + 0.05;
           });
       });
   }
@@ -1029,8 +1162,8 @@ function startBotBattle() {
     // DP Cap: 5
     // Costs: Common/Uncommon = 1, Rare/Epic = 2, Legendary/Mythic/God = 3
     
-    const BOT_DP_CAP = 5;
-    const BOT_TEAM_SIZE = 5;
+    const BOT_DP_CAP = 7; // Cost Cap
+    const BOT_TEAM_SIZE = 5; // Unit Cap
     
     const COST_TABLE = {
         common: 1, uncommon: 1,

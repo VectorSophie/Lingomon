@@ -1391,6 +1391,112 @@
       background: #404040;
       color: #fff;
     }
+    
+    /* Specialized Card Styles - Thematic Decorators */
+    
+    /* Tech: Circuit traces */
+    .word-entry.tech-card {
+        border-left: 4px solid #61DAFB;
+        background-color: #f0fbff;
+        background-image: 
+            linear-gradient(90deg, transparent 50%, rgba(97, 218, 251, 0.1) 50%),
+            linear-gradient(0deg, transparent 50%, rgba(97, 218, 251, 0.1) 50%);
+        background-size: 20px 20px;
+    }
+    .word-entry.tech-card::after {
+        content: "10110";
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        font-family: monospace;
+        font-size: 10px;
+        color: #61DAFB;
+        opacity: 0.5;
+    }
+
+    /* Bio: Organic Leaves */
+    .word-entry.bio-card {
+        border-left: 4px solid #7FFF00;
+        background-color: #f4fff0;
+        background-image: 
+            repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(46, 125, 50, 0.03) 10px, rgba(46, 125, 50, 0.03) 20px),
+            radial-gradient(circle at 10% 10%, rgba(127, 255, 0, 0.1) 0%, transparent 20%),
+            radial-gradient(circle at 90% 90%, rgba(127, 255, 0, 0.1) 0%, transparent 20%);
+        position: relative;
+        overflow: hidden;
+    }
+    .word-entry.bio-card::before {
+        content: "🌿 🌿 🌿 🌿 🌿 🌿 🌿 🌿 🌿";
+        position: absolute;
+        top: -5px;
+        left: -10px;
+        width: 120%;
+        height: 100%;
+        font-size: 40px;
+        opacity: 0.05;
+        color: #2e7d32;
+        letter-spacing: 20px;
+        line-height: 60px;
+        pointer-events: none;
+        z-index: 0;
+        transform: rotate(-5deg);
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    /* Chem: Hexagonal Molecules */
+    .word-entry.chem-card {
+        border-left: 4px solid #F0E68C;
+        background-color: #fffff0;
+        background-image: 
+            radial-gradient(#F0E68C 15%, transparent 16%), 
+            radial-gradient(#F0E68C 15%, transparent 16%);
+        background-size: 20px 20px;
+        background-position: 0 0, 10px 10px;
+        opacity: 0.95;
+    }
+    .word-entry.chem-card::after {
+        content: "⚗️";
+        position: absolute;
+        bottom: 5px;
+        right: 5px;
+        font-size: 20px;
+        opacity: 0.2;
+    }
+
+    /* Astro: Starry Night */
+    .word-entry.astro-card {
+        border-left: 4px solid #9370DB;
+        background: radial-gradient(circle at center, #2a2a4e 0%, #16213e 100%);
+        color: #e0e0e0 !important; /* Force light text for dark bg */
+    }
+    .word-entry.astro-card strong {
+        color: #fff !important;
+        text-shadow: 0 0 5px #9370DB;
+    }
+    .word-entry.astro-card .word-info {
+        color: #d1d1d1 !important;
+    }
+    .word-entry.astro-card::before {
+        content: "✨ . ✦ . * .";
+        position: absolute;
+        top: 5px;
+        right: 10px;
+        color: #fff;
+        opacity: 0.3;
+        font-size: 10px;
+    }
+
+    .tag-badge.tech { background: #e3f2fd; color: #0277bd; border-color: #81d4fa; }
+    .tag-badge.bio { background: #e8f5e9; color: #2e7d32; border-color: #a5d6a7; }
+    .tag-badge.chem { background: #fffde7; color: #f9a825; border-color: #fff59d; }
+    .tag-badge.astro { background: #f3e5f5; color: #7b1fa2; border-color: #ce93d8; }
+    
+    body.dark-mode .tag-badge.tech { background: #01579b; color: #e1f5fe; border-color: #0288d1; }
+    body.dark-mode .tag-badge.bio { background: #1b5e20; color: #e8f5e9; border-color: #388e3c; }
+    body.dark-mode .tag-badge.chem { background: #f57f17; color: #fffde7; border-color: #fbc02d; }
+    body.dark-mode .tag-badge.astro { background: #4a148c; color: #f3e5f5; border-color: #7b1fa2; }
+
   </style>
 </head>
 <body>
@@ -1459,6 +1565,11 @@
   <script src="libs/supabase.min.js"></script>
   <script src="config.js"></script>
   <script src="i18n.js"></script>
+  <script src="wordFrequency.js"></script>
+  <script src="techApi.js"></script>
+  <script src="bioApi.js"></script>
+  <script src="chemApi.js"></script>
+  <script src="astroApi.js"></script>
   <script src="animations.js"></script>
   <script src="stats.js"></script>
   <script src="worddex.js"></script>
