@@ -41,7 +41,46 @@ const BioAPI = {
       // 2. confidence should be reasonably high (e.g., > 80) to avoid false positives
       // 3. Must belong to a major kingdom (Animalia, Plantae, Fungi, etc.) to filter out noise
       
+      let pbdbData = null;
+      
+      // Parallel Check: Paleobiology Database (PBDB) for extinct/fossil context
+      // Useful for "Deinosuchus", "Tyrannosaurus", etc.
+      try {
+          const pbdbController = new AbortController();
+          const pbdbTimeout = setTimeout(() => pbdbController.abort(), 3000); // Fast timeout
+          const pbdbUrl = `https://paleobiodb.org/data1.2/taxa/list.json?name=${encodeURIComponent(word)}&limit=1`;
+          
+          const pbdbRes = await fetch(pbdbUrl, { signal: pbdbController.signal });
+          clearTimeout(pbdbTimeout);
+          
+          if (pbdbRes.ok) {
+              const json = await pbdbRes.json();
+              if (json.records && json.records.length > 0) {
+                  pbdbData = json.records[0];
+              }
+          }
+      } catch (e) {
+          // PBDB failure is non-fatal
+          console.log("PBDB check failed:", e);
+      }
+
+      // GBIF Validation
       if (data.matchType === "NONE" || data.confidence < 85) {
+        // If GBIF failed but PBDB succeeded, we might still accept it as a fossil!
+        if (pbdbData) {
+            console.log("BioAPI: GBIF weak/none, but PBDB matched!", pbdbData);
+            // Use PBDB data as primary
+            const taxonRank = pbdbData.rnk ? getPbdbRankName(pbdbData.rnk) : 'taxon';
+            const rarity = this.rankToRarity[taxonRank.toUpperCase()] || "epic";
+            
+            return {
+                origin: `Prehistoric Life: ${pbdbData.nam} (${taxonRank})\nTime Period: ${formatPbdbInterval(pbdbData)}`,
+                rarity: "legendary", // Fossils are cool
+                tags: ["bio", "noun", "prehistoric", "fossil"],
+                frequency: 0.01,
+                source: "pbdb_api"
+            };
+        }
         return null;
       }
 
@@ -52,7 +91,7 @@ const BioAPI = {
 
       // Calculate Rarity based on Rank
       const rank = (data.rank || "").toUpperCase();
-      const rarity = this.rankToRarity[rank] || "rare";
+      let rarity = this.rankToRarity[rank] || "rare";
 
       // Build Origin/Definition Text
       let originText = `Scientific Name: ${data.scientificName}\n`;
@@ -68,6 +107,13 @@ const BioAPI = {
       const tags = ["bio", "noun"];
       if (data.kingdom) tags.push(data.kingdom.toLowerCase());
       
+      // Merge PBDB data if available (Enrichment)
+      if (pbdbData) {
+          originText += `\n\n[Fossil Record Found]\nTime Period: ${formatPbdbInterval(pbdbData)}`;
+          tags.push("prehistoric");
+          rarity = "legendary"; // Boost rarity for fossils
+      }
+      
       console.log(`BioAPI: Found "${word}" -> ${data.scientificName} (${rank})`);
 
       return {
@@ -75,7 +121,7 @@ const BioAPI = {
         rarity: rarity,
         tags: tags,
         frequency: 0.05, // Bio terms are generally rarer in common speech
-        source: "gbif_api"
+        source: pbdbData ? "bio_api_fossil" : "gbif_api"
       };
 
     } catch (err) {
@@ -84,6 +130,16 @@ const BioAPI = {
     }
   }
 };
+
+// Helper to decode PBDB rank codes (integers)
+function getPbdbRankName(code) {
+    const ranks = { 3: "kingdom", 5: "phylum", 9: "class", 13: "order", 15: "family", 20: "genus", 23: "species" };
+    return ranks[code] || "taxon";
+}
+
+function formatPbdbInterval(data) {
+    return data.tei ? `${data.tei} - ${data.tli || 'Present'}` : "Prehistoric";
+}
 
 // Export for browser/worker environment
 if (typeof self !== 'undefined') {

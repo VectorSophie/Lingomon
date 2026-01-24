@@ -91,7 +91,7 @@ const AstroAPI = {
                 rarity: rarity,
                 tags: ["astro", "noun", type.replace(/\s+/g, '')],
                 frequency: 0.05,
-                source: "solar_system_api",
+                source: "solar_api",
                 data: data
             };
         }

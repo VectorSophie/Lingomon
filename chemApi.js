@@ -55,7 +55,8 @@ const ChemAPI = {
     // 2. Check PubChem API for Compounds (Async)
     try {
         // Skip short words or obvious non-chemicals to save bandwidth
-        if (word.length < 3) return null;
+        // Also skip 'sun' to avoid confusion with the Star
+        if (word.length < 3 || lower === 'sun') return null;
 
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 5000);

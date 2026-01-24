@@ -79,9 +79,9 @@ const TechAPI = {
     // 1. Check Local Static Data (Fastest)
     if (TECHNICAL_DATA[lower]) {
       return {
-        ...TECHNICAL_DATA[lower],
         frequency: 0.5,
-        source: 'tech_api_local'
+        source: 'tech_api_local',
+        ...TECHNICAL_DATA[lower]
       };
     }
     
@@ -145,32 +145,6 @@ const TechAPI = {
           }
       } catch (e) {
           console.log("StackExchange API error:", e);
-      }
-    }
-    
-    return null;
-  }
-};
-
-// Export for browser/worker environment
-if (typeof self !== 'undefined') {
-  self.TechAPI = TechAPI;
-}
-if (typeof window !== 'undefined') {
-  window.TechAPI = TechAPI;
-}
-
-    
-    // Pattern match
-    for (const p of PATTERNS) {
-      if (p.regex.test(lower)) {
-        return {
-          rarity: p.rarity,
-          tags: [p.tag, "noun"], // Assume noun for pattern matches mostly
-          origin: "A specialized technical or biological term.",
-          frequency: 0.1,
-          source: 'tech_pattern'
-        };
       }
     }
     

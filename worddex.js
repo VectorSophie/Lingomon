@@ -281,6 +281,54 @@ function displayWordDex(sortType = 'alpha') {
           
           metaRow.appendChild(rarityBadge);
 
+          // SOURCE BADGE (New for v1.8.1) - No Emojis Version
+          if (info.frequencySource) {
+              const sourceBadge = document.createElement('span');
+              sourceBadge.className = 'tag-badge source-badge';
+              sourceBadge.style.fontSize = '9px';
+              sourceBadge.style.opacity = '0.8';
+              
+              let sourceText = info.frequencySource;
+              
+              if (sourceText.includes('stack_exchange')) {
+                  sourceText = 'StackOverflow';
+                  sourceBadge.style.background = '#ffe0b2'; // Orange tint
+                  sourceBadge.style.color = '#e65100';
+                  sourceBadge.style.borderColor = '#ffcc80';
+              } else if (sourceText.includes('bio_api')) {
+                  sourceText = 'GBIF';
+                  sourceBadge.style.background = '#e8f5e9'; // Green tint
+                  sourceBadge.style.color = '#2e7d32';
+                  sourceBadge.style.borderColor = '#a5d6a7';
+              } else if (sourceText.includes('chem_api')) {
+                  sourceText = 'PubChem';
+                  sourceBadge.style.background = '#fffde7'; // Yellow tint
+                  sourceBadge.style.color = '#fbc02d';
+                  sourceBadge.style.borderColor = '#fff59d';
+              } else if (sourceText.includes('astro_api')) {
+                  sourceText = 'SolarData';
+                  sourceBadge.style.background = '#f3e5f5'; // Purple tint
+                  sourceBadge.style.color = '#7b1fa2';
+                  sourceBadge.style.borderColor = '#ce93d8';
+              } else if (sourceText.includes('project_moon')) {
+                  sourceText = 'Project Moon';
+                  sourceBadge.style.background = '#311b92'; // Deep Indigo
+                  sourceBadge.style.color = '#ede7f6';
+                  sourceBadge.style.borderColor = '#b39ddb';
+              } else if (sourceText.includes('easter_egg')) {
+                  sourceText = 'Easter Egg';
+                  sourceBadge.style.background = '#fff8e1';
+                  sourceBadge.style.color = '#ff6f00';
+                  sourceBadge.style.borderColor = '#ffca28';
+              } else if (sourceText.includes('tech_api')) {
+                  sourceText = 'TechDict';
+              }
+              
+              sourceBadge.textContent = sourceText;
+              sourceBadge.title = `Data Source: ${info.frequencySource}`;
+              metaRow.appendChild(sourceBadge);
+          }
+
           const tagContainer = document.createElement('div');
           tagContainer.className = 'inline-tag-container';
           

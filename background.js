@@ -54,6 +54,32 @@ const commonWords = new Set([
   'because', 'any', 'these', 'give', 'day', 'most', 'us', 'is', 'was', 'are', 'been', 'has', 'had', 'were', 'said', 'did', 'having', 'may'
 ]);
 
+// Centralized Easter Eggs
+const EASTER_EGGS = {
+  "lingomon": { 
+      origin: "The legendary creature of vocabulary! Catches words to grow stronger.", 
+      rarity: "god", 
+      frequency: 0.000001 
+  },
+  "heathcliff": { 
+      rarity: "epic", 
+      tags: ["noun", "literary", "project_moon"], 
+      origin: "A brooding hero/villain from Wuthering Heights... or perhaps a sinner from the City?"
+  },
+  "yisang": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "The Ideal. A winged soul seeking flight in the mirror." },
+  "faust": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "A genius who knows all outcomes. 'Faust knows all.'" },
+  "donquixote": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "MANAGER ESQUIRE! To the adventure of a lifetime for JUSTICE!" },
+  "ryoshu": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "A smoker who speaks in acronyms. P.A.I.N.T." },
+  "meursault": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "A man of few words and strict orders. The sun was too bright." },
+  "honglu": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "A carefree rich boy with a jade eye. 'Is this commoner food?'" },
+  "ishmael": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "A sailor obsessed with the white whale. The voyage never ends." },
+  "rodya": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "A lover of food and money. 'Ice cold justice.'" },
+  "sinclair": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "A timid boy facing a volatile past. The bird fights its way out of the egg." },
+  "outis": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "A loyal soldier with a hidden agenda. 'The Odyssey had a purpose.'" },
+  "gregor": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "A veteran with a bug arm. 'Suddenly, I was vermin.'" },
+  "dante": { rarity: "legendary", tags: ["noun", "literary", "project_moon"], origin: "The Clockhead Manager. <Tick-Tock-Tick>" }
+};
+
 // Helper: Resolve specialized data with correct priority
 // Bio -> Chem -> Astro -> Tech (Fallback)
 async function resolveSpecializedData(word) {
@@ -69,23 +95,24 @@ async function resolveSpecializedData(word) {
         }
     }
 
-    // 2. Check Chem API (Async)
-    if (typeof ChemAPI !== 'undefined') {
-        try {
-            data = await ChemAPI.lookup(word);
-            if (data) return data;
-        } catch (e) {
-            console.log('ChemAPI lookup failed:', e);
-        }
-    }
-
-    // 3. Check Astro API (Async)
+    // 2. Check Astro API (Async)
+    // Swapped priority: Astro > Chem to prioritize Planets/Stars over Elements/Compounds for ambiguous words like "Mercury" or "Sun"
     if (typeof AstroAPI !== 'undefined') {
         try {
             data = await AstroAPI.lookup(word);
             if (data) return data;
         } catch (e) {
              console.log('AstroAPI lookup failed:', e);
+        }
+    }
+
+    // 3. Check Chem API (Async)
+    if (typeof ChemAPI !== 'undefined') {
+        try {
+            data = await ChemAPI.lookup(word);
+            if (data) return data;
+        } catch (e) {
+            console.log('ChemAPI lookup failed:', e);
         }
     }
 
@@ -412,22 +439,30 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         console.log(`Lingomon: Found specialized term "${word}"`, techData);
         if (techData.tags) types.push(...techData.tags);
         
-        // Priority Override: If it's a special Easter Egg (e.g. Project Moon), skip external API
-        if (techData.tags.includes('project_moon') || techData.tags.includes('easter_egg')) {
-            console.log("Lingomon: Priority term detected, skipping Dictionary API");
+        // Priority Override: If specialized API provides an origin, use it!
+        // This ensures "Python" is defined as a language (Tech), not a snake (Dict).
+        if (techData.origin) {
+            console.log("Lingomon: Using specialized definition from", techData.source);
             origin = techData.origin;
             rarity = techData.rarity;
-            freqData = { frequency: techData.frequency || 0.1, source: techData.source || 'local' };
+            // Use specialized frequency/source if available, otherwise we might fetch it later?
+            // Usually specialized data includes its own "frequency" (or fixed value)
+            if (techData.frequency) {
+                freqData = { frequency: techData.frequency, source: techData.source };
+            }
         }
     }
 
     if (origin) {
-        // Already found
-    } else if (word.toLowerCase() === 'lingomon') {
-      console.log('Lingomon: Caught "lingomon"! Triggering Easter Egg.');
-      origin = "The legendary creature of vocabulary! Catches words to grow stronger.";
-      rarity = "god";
-      freqData = { frequency: 0.000001, source: 'easter_egg' };
+        // Already found (Specialized Data with Origin)
+        if (!freqData) freqData = { frequency: 0.1, source: 'specialized' }; // Fallback safety
+    } else if (EASTER_EGGS[word.toLowerCase()]) {
+      const egg = EASTER_EGGS[word.toLowerCase()];
+      console.log(`Lingomon: Caught Easter Egg "${word}"!`);
+      origin = egg.origin;
+      rarity = egg.rarity;
+      if (egg.tags) types.push(...egg.tags);
+      freqData = { frequency: egg.frequency || 0.000001, source: 'easter_egg' };
     } else if (currentLanguage === 'ko') {
       // Korean Mode
       console.log(`Lingomon: Using Korean API for "${word}"`);
