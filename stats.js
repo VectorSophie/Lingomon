@@ -193,7 +193,7 @@ function displayBadges(badges) {
       const nextName = badge.next ? (badge.next.nameKey ? t(badge.next.nameKey) : badge.next.name) : null;
       hexagon.title = badgeName + (nextName ? ` - ${t('nextBadge')} ${nextName}` : ` - ${t('maxLevel')}`);
 
-      const color = rarityScale[badge.rarity] || '#cccccc';
+      const color = rarityColors[badge.rarity] || '#cccccc';
       hexagon.style.setProperty('--badge-color', color);
       hexagon.style.background = color;
 
@@ -255,6 +255,8 @@ function displayBadges(badges) {
         badgeName = t('meta');
       } else if (badge.type === 'huh') {
         badgeName = t('huh');
+      } else if (badge.type === 'limbusCompany') {
+        badgeName = t('limbusCompany');
       } else if (badge.type === 'rarityKiller') {
         const killerKey = `${badge.rarity}Killer`;
         badgeName = t(killerKey);
@@ -262,12 +264,15 @@ function displayBadges(badges) {
 
       hexagon.title = badgeName + (badge.count ? ` (${badge.count})` : '');
 
-      // Meta badge gets special black color, Huh??? badge gets rainbow
-      let color = rarityScale[badge.rarity] || '#cccccc';
+      // Meta badge gets special black color, Huh??? badge gets rainbow, Limbus gets Custom
+      let color = rarityColors[badge.rarity] || '#cccccc';
       if (badge.type === 'meta') {
         color = '#000000';
       } else if (badge.type === 'huh') {
         color = 'linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3)';
+      } else if (badge.type === 'limbusCompany') {
+        // Black background with specific accent text logic handled below or via override
+        color = '#000000';
       }
       
       hexagon.style.setProperty('--badge-color', color);
@@ -277,11 +282,42 @@ function displayBadges(badges) {
         hexagon.style.backgroundSize = '400% 400%';
         hexagon.style.animation = 'gradient-shift 3s ease infinite';
       }
-
-      const content = document.createElement('div');
-      content.className = 'badge-content';
-      content.textContent = badgeName;
-      hexagon.appendChild(content);
+      
+      // Custom content for Limbus Company badge (Moon Icon)
+      if (badge.type === 'limbusCompany') {
+          // Remove hexagon background, make it transparent
+          hexagon.style.background = 'transparent';
+          hexagon.style.boxShadow = 'none';
+          
+          // Create Waxing Crescent Moon Shape using CSS
+          const moon = document.createElement('div');
+          moon.style.width = '40px';
+          moon.style.height = '40px';
+          moon.style.borderRadius = '50%';
+          moon.style.boxShadow = '-8px 0 0 0 #ffe5b8'; // The crescent shape
+          moon.style.position = 'absolute';
+          moon.style.top = '50%';
+          moon.style.left = '55%'; // Offset slightly right to center the visual crescent
+          moon.style.transform = 'translate(-50%, -60%) rotate(-15deg)';
+          
+          hexagon.appendChild(moon);
+          
+          // Badge text below icon
+          const content = document.createElement('div');
+          content.className = 'badge-content';
+          content.textContent = badgeName;
+          content.style.color = '#ffe5b8'; // Custom text color
+          content.style.marginTop = '25px'; // Push text down further
+          content.style.fontSize = '10px';
+          content.style.textShadow = '0 0 5px #000'; // Shadow for legibility
+          hexagon.appendChild(content);
+      } else {
+          // Standard Badge Content
+          const content = document.createElement('div');
+          content.className = 'badge-content';
+          content.textContent = badgeName;
+          hexagon.appendChild(content);
+      }
 
       badgeWrapper.appendChild(hexagon);
       container.appendChild(badgeWrapper);

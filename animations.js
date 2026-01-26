@@ -135,7 +135,37 @@ function showCatchAnimation(word, origin, rarity, isNew, firstCaught, frequency,
   const wordTitle = document.createElement('div');
   wordTitle.style.fontSize = '36px';
   wordTitle.style.fontWeight = 'bold';
-  wordTitle.style.color = rarityScale[rarity] || '#6b5b95';
+  
+  // Project Moon Character Colors
+  const pmColors = {
+      'yisang': '#d4dfe8',
+      'faust': '#ffbfb4',
+      'donquixote': '#FFEF23',
+      'ryoshu': '#cf0000',
+      'meursault': '#293b95',
+      'honglu': '#5BFFDE',
+      'heathcliff': '#4e3076',
+      'ishmael': '#ff9500',
+      'rodya': '#820000',
+      'dante': '#b01c37',
+      'sinclair': '#8b9c15',
+      'outis': '#325339',
+      'gregor': '#69350b'
+  };
+  
+  const lowerWord = word.toLowerCase();
+  
+  if (pmColors[lowerWord]) {
+      wordTitle.style.color = pmColors[lowerWord];
+      // Add subtle glow matching the color
+      wordTitle.style.textShadow = `0 0 10px ${pmColors[lowerWord]}80`;
+      
+      // Update the popup border too?
+      catchPopup.style.border = `3px solid ${pmColors[lowerWord]}`;
+      catchPopup.style.boxShadow = `0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px ${pmColors[lowerWord]}40 inset`;
+  } else {
+      wordTitle.style.color = rarityScale[rarity] || '#6b5b95';
+  }
   
   if (rarity === 'god') {
      wordTitle.style.backgroundImage = rarityScale[rarity];

@@ -16,6 +16,26 @@ const typeMap = {
   interjection: 'type_interj'
 };
 
+const rarityOrder = {
+  common: 1,
+  uncommon: 2,
+  rare: 3,
+  epic: 4,
+  legendary: 5,
+  mythic: 6,
+  god: 7
+};
+
+const rarityColors = {
+  common: '#707070',
+  uncommon: '#2b9348',
+  rare: '#0077b6',
+  epic: '#9d4edd',
+  legendary: '#d00000',
+  mythic: '#ffba08',
+  god: 'linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3)'
+};
+
 function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
@@ -166,15 +186,7 @@ function displayWordDex(sortType = 'alpha') {
         dexDiv.innerHTML = `<p style="color: gray; text-align: center; padding: 20px;">${t('noWordsMessage')}</p>`;
       } else {
     // --- Rarity Styles ---
-    const rarityColors = {
-      common: '#707070',
-      uncommon: '#2b9348',
-      rare: '#0077b6',
-      epic: '#9d4edd',
-      legendary: '#d00000',
-      mythic: '#ffba08',
-      god: 'linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3)'
-    };
+    // (rarityColors is now global)
     
     // Helper to get specialized card class/style
     const getCardStyle = (tags) => {
@@ -220,13 +232,43 @@ function displayWordDex(sortType = 'alpha') {
           wordStrong.textContent = word;
           wordStrong.style.overflowWrap = 'anywhere'; // Ensure long words wrap
           wordStrong.style.display = 'block'; // Ensure it takes width to wrap properly
-          wordStrong.style.color = rarityScale[rarity] || '#6b5b95';
+          wordStrong.style.color = rarityColors[rarity] || '#6b5b95';
           if (rarity === 'common') {
             wordStrong.style.color = '#9b9b9b';
           }
           
-          // Rainbow effect for 'lingomon'
-          if (word.toLowerCase() === 'lingomon') {
+          // Project Moon Character Colors
+          const pmColors = {
+              'yisang': '#d4dfe8',
+              'faust': '#ffbfb4',
+              'donquixote': '#FFEF23',
+              'ryoshu': '#cf0000',
+              'meursault': '#293b95',
+              'honglu': '#5BFFDE',
+              'heathcliff': '#4e3076',
+              'ishmael': '#ff9500',
+              'rodya': '#820000',
+              'dante': '#b01c37',
+              'sinclair': '#8b9c15',
+              'outis': '#325339',
+              'gregor': '#69350b'
+          };
+
+          const lowerWord = word.toLowerCase();
+          if (pmColors[lowerWord]) {
+              const charColor = pmColors[lowerWord];
+              // Force override with !important logic via inline styles
+              wordStrong.style.setProperty('color', charColor, 'important');
+              
+              div.style.borderLeft = `4px solid ${charColor}`;
+              // Use a stronger gradient to make it visible
+              div.style.background = `linear-gradient(90deg, ${charColor}33 0%, transparent 100%)`; // 33 = 20% opacity
+              
+              // Add subtle text shadow for lighter colors to ensure readability
+              if (['yisang', 'faust', 'donquixote', 'honglu'].includes(lowerWord)) {
+                  wordStrong.style.textShadow = '0px 0px 2px rgba(0,0,0,0.5)';
+              }
+          } else if (word.toLowerCase() === 'lingomon') {
             wordStrong.style.backgroundImage = 'linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet)';
             wordStrong.style.backgroundSize = '200% auto';
             wordStrong.style.webkitBackgroundClip = 'text';
@@ -246,13 +288,15 @@ function displayWordDex(sortType = 'alpha') {
             }
           }
           
-          // Custom color for Heathcliff
+          // Custom color for Heathcliff - REMOVED (Handled by pmColors now)
+          /*
           if (word.toLowerCase() === 'heathcliff') {
               wordStrong.style.color = '#4e3076';
               // Also style the border of the card?
               div.style.borderLeft = '4px solid #4e3076';
               div.style.background = 'linear-gradient(90deg, rgba(78, 48, 118, 0.1) 0%, transparent 100%)';
           }
+          */
 
           // Inline Tag Container
           const metaRow = document.createElement('div');
@@ -271,7 +315,7 @@ function displayWordDex(sortType = 'alpha') {
              rarityBadge.classList.add('rainbow-text');
              // Border handled by CSS class now
           } else {
-             const rColor = rarityScale[rarity] || '#9b8bb5';
+             const rColor = rarityColors[rarity] || '#9b8bb5';
              rarityBadge.style.color = rColor;
              rarityBadge.style.borderColor = rColor;
              // Light background tint based on rarity color?
@@ -312,7 +356,7 @@ function displayWordDex(sortType = 'alpha') {
                   sourceBadge.style.borderColor = '#ce93d8';
               } else if (sourceText.includes('project_moon')) {
                   sourceText = 'Project Moon';
-                  sourceBadge.style.background = '#311b92'; // Deep Indigo
+                  sourceBadge.style.background = '#ffe5b8'; // Deep Indigo
                   sourceBadge.style.color = '#ede7f6';
                   sourceBadge.style.borderColor = '#b39ddb';
               } else if (sourceText.includes('easter_egg')) {
@@ -611,9 +655,9 @@ function showWordContext(word, info) {
   const title = document.createElement('h2');
   title.textContent = word;
   title.style.margin = '0 0 16px 0';
-  title.style.color = rarityScale[info.rarity] || '#333';
+  title.style.color = rarityColors[info.rarity] || '#333';
   if (info.rarity === 'god') {
-     title.style.backgroundImage = rarityScale[info.rarity];
+     title.style.backgroundImage = rarityColors[info.rarity];
      title.style.backgroundSize = '200% auto';
      title.style.webkitBackgroundClip = 'text';
      title.style.webkitTextFillColor = 'transparent';
@@ -642,7 +686,7 @@ function showWordContext(word, info) {
       // Create regex to match word (case insensitive)
       const regex = new RegExp(`(${word})`, 'gi');
       
-      let highlightStyle = `color: ${rarityScale[info.rarity] || '#000'}; font-weight: bold;`;
+      let highlightStyle = `color: ${rarityColors[info.rarity] || '#000'}; font-weight: bold;`;
       if (info.rarity === 'god') {
           // For god tier text, we can't easily do gradient text in inline replacement without more complex HTML
           // So just use a fallback color or simple style
@@ -656,7 +700,7 @@ function showWordContext(word, info) {
     <div style="margin-bottom: 8px;"><strong>First Caught:</strong> ${firstDate}</div>
     <div style="margin-bottom: 8px;"><strong>Last Caught:</strong> ${lastDate}</div>
     <div style="margin-bottom: 16px;"><strong>Caught On:</strong> ${caughtOn}</div>
-    <div style="background: #f5f5f5; padding: 12px; border-radius: 8px; border-left: 4px solid ${rarityScale[info.rarity] || '#ccc'};">
+    <div style="background: #f5f5f5; padding: 12px; border-radius: 8px; border-left: 4px solid ${rarityColors[info.rarity] || '#ccc'};">
         <strong>Context:</strong><br/>
         <span style="font-style: italic;">"${contextHtml}"</span>
     </div>
@@ -979,7 +1023,7 @@ function showTagFilterMenu() {
 
         // Rarities
         rarities.forEach(r => {
-            const rColor = rarityScale[r] || '#333';
+            const rColor = rarityColors[r] || '#333';
             scrollArea.appendChild(createCheckbox(t(r.toUpperCase()), r, rColor));
         });
 

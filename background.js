@@ -61,23 +61,19 @@ const EASTER_EGGS = {
       rarity: "god", 
       frequency: 0.000001 
   },
-  "heathcliff": { 
-      rarity: "epic", 
-      tags: ["noun", "literary", "project_moon"], 
-      origin: "A brooding hero/villain from Wuthering Heights... or perhaps a sinner from the City?"
-  },
-  "yisang": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "The Ideal. A winged soul seeking flight in the mirror." },
-  "faust": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "A genius who knows all outcomes. 'Faust knows all.'" },
-  "donquixote": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "MANAGER ESQUIRE! To the adventure of a lifetime for JUSTICE!" },
-  "ryoshu": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "A smoker who speaks in acronyms. P.A.I.N.T." },
-  "meursault": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "A man of few words and strict orders. The sun was too bright." },
-  "honglu": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "A carefree rich boy with a jade eye. 'Is this commoner food?'" },
-  "ishmael": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "A sailor obsessed with the white whale. The voyage never ends." },
-  "rodya": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "A lover of food and money. 'Ice cold justice.'" },
-  "sinclair": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "A timid boy facing a volatile past. The bird fights its way out of the egg." },
-  "outis": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "A loyal soldier with a hidden agenda. 'The Odyssey had a purpose.'" },
-  "gregor": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "A veteran with a bug arm. 'Suddenly, I was vermin.'" },
-  "dante": { rarity: "legendary", tags: ["noun", "literary", "project_moon"], origin: "The Clockhead Manager. <Tick-Tock-Tick>" }
+  "yisang": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "Did you call?" },
+  "faust": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "Faust knows all." },
+  "donquixote": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "MANAGER ESQUIREEEEEE" },
+  "ryoshu": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "S.T.F.U" },
+  "meursault": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "The sun was too bright." },
+  "honglu": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "uwahh~" },
+  "heathcliff": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "▢▢▢▢▢▢▢▢▢!!!"},
+  "ishmael": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "THE FAULT LIES WITH YOU, ISHMAEL." },
+  "rodya": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "Honestly quite incredible" },
+  "dante": { rarity: "legendary", tags: ["noun", "literary", "project_moon"], origin: "🕐🕚🕡🕣🕤" },
+  "sinclair": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "Go german boy gooo" },
+  "outis": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "The Odyssey didnt have a purpose." },
+  "gregor": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "Suddenly, one day..." }
 };
 
 // Helper: Resolve specialized data with correct priority
