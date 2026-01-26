@@ -36,6 +36,7 @@ Lingomon is an educational browser extension that makes learning new words fun a
 - **Context preservation(v1.8)**: Preserves where you caught the word
 - **Custom tags(v1.8)**: You can tag and filter words as you want!
 - **Cloud storage(v1.8)**: Now your data is secure and able to load everywhere!
+- **Science Expansion(v1.8.1)**: Catch chemical elements, planets, and species to see real scientific data!
 
 ## Want Your Language in Lingomon?
 

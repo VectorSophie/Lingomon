@@ -1,40 +1,43 @@
+# Privacy Policy for Lingomon
 
-# Lingomon Privacy Policy
+**Last Updated:** January 26, 2026
 
-Last updated: January 21, 2026
+## 1. Introduction
+Lingomon ("we", "our", or "us") respects your privacy. This Privacy Policy explains how we collect, use, and protect your information when you use our Chrome Extension.
 
-## Data Collection
-Lingomon collects and stores the following data:
-- **Vocabulary**: Words you select and catch from web pages.
-- **Context**: The specific sentence where you found the word (to help you remember how it was used).
-- **Definitions**: Word definitions and etymology fetched from dictionary APIs.
-- **Statistics**: Website domains where words were caught, your achievements, streaks, and badges.
-- **Profile**: Your username, avatar preference, and battle team configuration.
-- **Language Preference**: Whether you are using English or Korean mode.
+## 2. Data Collection and Usage
 
-## Data Storage & Cloud Sync
-- **Local Storage**: All data is initially stored locally on your device using Chrome's storage API.
-- **Cloud Backup (New in v1.8)**: To prevent data loss and enable cross-device sync, your WordDex collection, stats, and profile are securely backed up to our cloud database (Supabase). This ensures you can restore your progress if you reinstall the extension or switch devices.
-- **Authentication**: We use **Google Sign-In** (via Supabase Auth) to securely identify your account and manage your cloud backup.
+### 2.1. Local Data Storage
+All gameplay data, including your "WordDex" (collected words), achievements, battle teams, and stats, is **primarily stored locally on your device** using Chrome's `chrome.storage.local` API. This data remains on your machine unless you explicitly choose to sync it via the optional multiplayer features.
 
-## Multiplayer & Sharing
-Lingomon includes multiplayer features (Battle Mode, Friend List).
-- **Public Profile**: Your username, avatar, battle team, and win/loss statistics are visible to other Lingomon users to facilitate battles and leaderboards.
-- **Private Data**: Your full WordDex collection and personal learning history are **NOT** shared with other users.
+### 2.2. External API Usage
+Lingomon connects to the following third-party APIs solely to fetch word definitions, scientific data, and game assets:
+*   **DictionaryAPI.dev**: To retrieve English word definitions.
+*   **Datamuse API**: To determine word frequency and rarity.
+*   **StackExchange API**: To identify technical/IT terms.
+*   **PubChem (NIH)**: To retrieve chemical data (formulas, molecular weight) for the Chemistry module.
+*   **Solar System OpenData**: To retrieve astronomical data for the Space module.
+*   **GBIF**: To retrieve biological taxonomy data.
+*   **Korean Learners' Dictionary API**: To retrieve Korean definitions.
+*   **Supabase**: Used *only* if you opt-in to the multiplayer Friend System (to store your Defense Team and fetch Leaderboards).
+*   **DiceBear API**: To generate random robot avatars.
 
-## Third-Party Services
-Lingomon uses the following services to provide functionality:
-- **Supabase** (supabase.com): Provides secure database storage, authentication, and real-time features for multiplayer.
-- **Dictionary API** (api.dictionaryapi.dev): Provides English word definitions.
-- **Datamuse API** (api.datamuse.com): Provides word frequency data.
-- **Korean Learners' Dictionary API** (krdict.korean.go.kr): Provides Korean definitions.
-- **MyMemory Translation API** (api.mymemory.translated.net): Provides translations.
-- **DiceBear API** (api.dicebear.com): Generates robot avatars based on your User ID.
+**No personal browsing history is sent to these services.** Only the specific word you select/catch is transmitted to fetch its definition.
 
-## Your Rights
-- You can **export** your local data at any time (via Chrome Storage).
-- You can **delete** your account and cloud data by contacting us or using the delete options within the extension (if available).
-- You can use the extension without logging in, but cloud backup and multiplayer features will be unavailable.
+### 2.3. User Identity (Multiplayer)
+If you use the Battle Arena features:
+*   We generate a random anonymous User ID.
+*   We store your chosen display name, avatar, and battle team configuration in our cloud database.
+*   We do **not** collect email addresses or real names.
 
-## Contact
-For questions or concerns, please open an issue at: [https://github.com/VectorSophie/Lingomon/issues](https://github.com/VectorSophie/Lingomon/issues)
+## 3. Permissions
+The extension requests the following permissions:
+*   **Context Menus**: To allow you to right-click words to "catch" them.
+*   **Storage**: To save your game progress locally.
+*   **Host Permissions**: To connect to the definition APIs listed above.
+
+## 4. Data Security
+Communication with external APIs is performed over secure HTTPS connections. Your local data remains on your machine and is subject to your browser's security protections.
+
+## 5. Contact
+If you have questions about this policy, please open an issue on our [GitHub Repository](https://github.com/VectorSophie/Lingomon/issues).

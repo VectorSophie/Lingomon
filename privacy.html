@@ -56,41 +56,37 @@
 <body>
     <div class="container">
         <h1>Lingomon Privacy Policy</h1>
-        <p class="last-updated">Last updated: January 21, 2026</p>
+        <p class="last-updated">Last updated: January 26, 2026</p>
 
         <h2>Data Collection</h2>
         <p>Lingomon collects and stores the following data:</p>
         <ul>
             <li><strong>Vocabulary:</strong> Words you select and catch from web pages.</li>
             <li><strong>Context:</strong> The specific sentence where you found the word (saved locally to help you remember usage).</li>
-            <li><strong>Definitions:</strong> Word definitions and etymology fetched from dictionary APIs.</li>
-            <li><strong>Statistics:</strong> Website domains where words were caught, your achievements, streaks, and badges.</li>
+            <li><strong>Definitions:</strong> Word definitions and scientific data fetched from various external APIs.</li>
+            <li><strong>Statistics:</strong> Website domains where words were caught (saved locally to track unique site visits), your achievements, streaks, and badges.</li>
             <li><strong>Profile:</strong> Your username, avatar preference, and battle team configuration.</li>
             <li><strong>Language Preference:</strong> Whether you are using English or Korean mode.</li>
         </ul>
 
-        <h2>Data Storage & Cloud Sync</h2>
+        <h2>Data Storage</h2>
         <ul>
-            <li><strong>Local Storage:</strong> All data is initially stored locally on your device using Chrome's storage API.</li>
-            <li><strong>Cloud Backup (New in v1.8):</strong> To prevent data loss and enable cross-device sync, your WordDex collection, stats, and profile are securely backed up to our cloud database (Supabase). This ensures you can restore your progress if you reinstall the extension.</li>
-            <li><strong>Authentication:</strong> We use <strong>Google Sign-In</strong> (via Supabase Auth) to securely identify your account and manage your cloud backup.</li>
+            <li><strong>Local Storage:</strong> All gameplay data (WordDex, achievements, stats) is primarily stored locally on your device using Chrome's <code>chrome.storage.local</code> API.</li>
+            <li><strong>Cloud Sync (Optional):</strong> If you choose to enable multiplayer features, your Profile (username, avatar, battle team) and limited stats (win/loss record) are stored in our secure cloud database (Supabase).</li>
+            <li><strong>Authentication:</strong> We use an anonymous User ID generated locally. We do not collect email addresses or passwords.</li>
         </ul>
 
-        <h2>Multiplayer & Sharing</h2>
-        <p>Lingomon includes multiplayer features (Battle Mode, Friend List) which require sharing limited data:</p>
+        <h2>Third-Party Services & APIs</h2>
+        <p>Lingomon connects to the following external services to fetch definitions and game data. <strong>No personal browsing history is sent to these services.</strong> Only the specific word you catch is transmitted.</p>
         <ul>
-            <li><strong>Public Profile:</strong> Your username, avatar, battle team, and win/loss statistics are visible to other Lingomon users to facilitate battles.</li>
-            <li><strong>Private Data:</strong> Your full WordDex collection and personal learning history are <strong>NOT</strong> shared with other users.</li>
-        </ul>
-
-        <h2>Third-Party Services</h2>
-        <p>Lingomon uses the following services to provide functionality:</p>
-        <ul>
-            <li><strong>Supabase</strong> (supabase.com): Provides secure database storage, authentication, and real-time features for multiplayer.</li>
+            <li><strong>Supabase</strong> (supabase.com): Stores public profiles and matchmaking data for the Battle Arena.</li>
             <li><strong>Dictionary API</strong> (api.dictionaryapi.dev): Provides English word definitions.</li>
-            <li><strong>Datamuse API</strong> (api.datamuse.com): Provides word frequency data.</li>
-            <li><strong>Korean Learners' Dictionary API</strong> (krdict.korean.go.kr): Provides Korean-English dictionary definitions.</li>
-            <li><strong>MyMemory Translation API</strong> (api.mymemory.translated.net): Provides English-to-Korean translation.</li>
+            <li><strong>Datamuse API</strong> (api.datamuse.com): Provides word frequency and related terms.</li>
+            <li><strong>PubChem (NIH)</strong> (pubchem.ncbi.nlm.nih.gov): Retrieves chemical data (formulas, molecular weight) for the Chemistry module.</li>
+            <li><strong>Solar System OpenData</strong> (api.le-systeme-solaire.net): Retrieves astronomical data for planets and stars.</li>
+            <li><strong>GBIF</strong> (api.gbif.org): Retrieves biological taxonomy data for species.</li>
+            <li><strong>StackExchange API</strong> (api.stackexchange.com): Identifies technical/IT terms and tags.</li>
+            <li><strong>Korean Learners' Dictionary API</strong> (krdict.korean.go.kr): Provides Korean definitions.</li>
             <li><strong>DiceBear API</strong> (api.dicebear.com): Generates robot avatars based on your User ID.</li>
         </ul>
 
