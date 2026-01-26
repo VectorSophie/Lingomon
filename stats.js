@@ -285,31 +285,19 @@ function displayBadges(badges) {
       
       // Custom content for Limbus Company badge (Moon Icon)
       if (badge.type === 'limbusCompany') {
-          // Remove hexagon background, make it transparent
-          hexagon.style.background = 'transparent';
-          hexagon.style.boxShadow = 'none';
+          // Limbus Company Colors: Red Background, Gold Text
+          hexagon.style.background = '#930101';
+          hexagon.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
           
-          // Create Waxing Crescent Moon Shape using CSS
-          const moon = document.createElement('div');
-          moon.style.width = '40px';
-          moon.style.height = '40px';
-          moon.style.borderRadius = '50%';
-          moon.style.boxShadow = '-8px 0 0 0 #ffe5b8'; // The crescent shape
-          moon.style.position = 'absolute';
-          moon.style.top = '50%';
-          moon.style.left = '55%'; // Offset slightly right to center the visual crescent
-          moon.style.transform = 'translate(-50%, -60%) rotate(-15deg)';
-          
-          hexagon.appendChild(moon);
-          
-          // Badge text below icon
+          // Badge text centered
           const content = document.createElement('div');
           content.className = 'badge-content';
           content.textContent = badgeName;
-          content.style.color = '#ffe5b8'; // Custom text color
-          content.style.marginTop = '25px'; // Push text down further
-          content.style.fontSize = '10px';
-          content.style.textShadow = '0 0 5px #000'; // Shadow for legibility
+          content.style.color = '#fac915'; // Gold Text
+          content.style.fontWeight = 'bold';
+          content.style.textShadow = '0 1px 2px rgba(0,0,0,0.5)';
+          content.style.fontSize = '9px'; // Adjust if needed
+          
           hexagon.appendChild(content);
       } else {
           // Standard Badge Content

@@ -261,9 +261,20 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   if (details.reason === 'update' || details.reason === 'install') {
       console.log('Lingomon: Running migration for v1.8.1 specialized tags...');
       storageMutex.dispatch(async () => {
-          const data = await chrome.storage.local.get(['wordDex']);
+          const data = await chrome.storage.local.get(['wordDex', 'badges']);
           const wordDex = data.wordDex || {};
+          let badges = data.badges || { main: [], hidden: [] };
           let changed = false;
+          
+          // --- BADGE CLEANUP (Remove legacy 'catherine' badge if present) ---
+          if (badges.hidden) {
+              const beforeCount = badges.hidden.length;
+              badges.hidden = badges.hidden.filter(b => b.type !== 'catherine');
+              if (badges.hidden.length !== beforeCount) {
+                  console.log("Migration: Removed legacy 'catherine' badge.");
+                  changed = true;
+              }
+          }
           
           for (const word of Object.keys(wordDex)) {
               const entry = wordDex[word];
@@ -285,8 +296,8 @@ chrome.runtime.onInstalled.addListener(async (details) => {
           }
           
           if (changed) {
-              await chrome.storage.local.set({ wordDex });
-              console.log('Lingomon: Migration complete. WordDex updated.');
+              await chrome.storage.local.set({ wordDex, badges });
+              console.log('Lingomon: Migration complete. WordDex and Badges updated.');
           } else {
               console.log('Lingomon: No migration needed.');
           }
@@ -943,8 +954,30 @@ function updateBadges(wordDex, achievements, streakData, sitesExplored, currentR
     badges.hidden.push({ type: 'huh', name: 'huh', rarity: 'god', unlocked: true });
   }
   
+  // Catherine...? Badge - REMOVED (Merged into Limbus Company collection)
+  /*
   if (isNew && wordDex['heathcliff'] && !badges.hidden.some(b => b.type === 'catherine')) {
       badges.hidden.push({ type: 'catherine', name: 'Catherine...?', rarity: 'epic', unlocked: true });
+  }
+  */
+
+  // Limbus Company Badge (Collect all 13 Project Moon Sinners)
+  const pmCharacters = [
+      'yisang', 'faust', 'donquixote', 'ryoshu', 'meursault', 'honglu', 
+      'heathcliff', 'ishmael', 'rodya', 'dante', 'sinclair', 'outis', 'gregor'
+  ];
+  const caughtPM = pmCharacters.filter(char => wordDex[char]);
+  
+  if (caughtPM.length === pmCharacters.length) {
+      const hasLimbus = badges.hidden.some(b => b.type === 'limbusCompany');
+      if (!hasLimbus) {
+          badges.hidden.push({
+              type: 'limbusCompany',
+              name: 'Limbus Company', // Will be translated via i18n
+              rarity: 'legendary',
+              unlocked: true
+          });
+      }
   }
 
   return badges;

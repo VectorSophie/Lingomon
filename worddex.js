@@ -31,8 +31,8 @@ const rarityColors = {
   uncommon: '#2b9348',
   rare: '#0077b6',
   epic: '#9d4edd',
-  legendary: '#d00000',
-  mythic: '#ffba08',
+  legendary: '#ffba08',
+  mythic: '#d00000',
   god: 'linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3)'
 };
 

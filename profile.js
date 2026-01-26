@@ -1029,17 +1029,33 @@ async function fetchTeam(userId) {
     currentTeam = data.team_data;
     while(currentTeam.length < MAX_TEAM_SLOTS) currentTeam.push(null);
     
-    // Enrich with local Dex data to get tags
+    // Enrich with local Dex data to get tags and Sanitize Team
     chrome.storage.local.get(['wordDex'], (localData) => {
         const dex = localData.wordDex || {};
         currentTeam = currentTeam.map(member => {
             if (!member) return null;
-            // If the team member has no tags, try to find them in local dex
+            
+            const wordLower = member.word.toLowerCase();
+            
+            // Retroactive Ban Check: Remove Easter Eggs if they are already in the slot
+            if (wordLower === 'lingomon') return null;
+            
+            // Check tags from local dex if not present on member object
+            const tags = member.tags || (dex[member.word] ? dex[member.word].tags : []);
+            
+            if (tags && (tags.includes('project_moon') || tags.includes('easter_egg'))) {
+                return null; // Remove from team
+            }
+
+            // If the team member has no tags, try to find them in local dex (Enrichment)
             if (!member.tags && dex[member.word]) {
                 return { ...member, tags: dex[member.word].tags };
             }
             return member;
         });
+        
+        // Save cleaned team back to DB if changes occurred? 
+        // Optional, but good for consistency. For now just UI render.
         renderTeamUI();
     });
   } else {

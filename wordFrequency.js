@@ -1,8 +1,18 @@
+if (typeof self !== 'undefined') {
+  self.wordFrequencyMap = {
+    // ...
+  };
+} else if (typeof window !== 'undefined') {
+  window.wordFrequencyMap = {
+    // ...
+  };
+}
+
 // Word frequency database - frequencies are per million words
 // Source: Based on Google's Trillion Word Corpus analysis
 // Ordered from most to least frequent
 
-self.wordFrequencyMap = {
+const frequencyMap = {
   // Ultra-common words (1000+ per million) - rank 1-50
   "the": 5000, "of": 2500, "and": 2000, "to": 1900, "a": 1800,
   "in": 1700, "for": 1200, "is": 1200, "on": 1100, "that": 1050,
@@ -121,12 +131,11 @@ self.wordFrequencyMap = {
   "interesting": 3.9, "beautiful": 3.6, "significant": 3.3, "excellent": 3.0, "effective": 2.7
 };
 
-// Export for browser/window environment (if loaded via <script> tag in popup)
-if (typeof window !== 'undefined') {
-  window.wordFrequencyMap = self.wordFrequencyMap;
+if (typeof self !== 'undefined') {
+  self.wordFrequencyMap = frequencyMap;
+} else if (typeof window !== 'undefined') {
+  window.wordFrequencyMap = frequencyMap;
 }
-
-// Export for Node.js environment (if needed for testing)
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = self.wordFrequencyMap;
+  module.exports = frequencyMap;
 }
