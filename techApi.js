@@ -71,7 +71,11 @@ const PATTERNS = [
 
 const TechAPI = {
   // Common English words to avoid looking up on StackOverflow (to save API quota and avoid false positives)
-  commonWords: new Set(['the', 'and', 'for', 'with', 'table', 'date', 'string', 'value', 'type', 'list', 'map', 'set', 'tree', 'graph', 'view', 'model', 'control', 'text', 'file', 'code', 'data', 'input', 'output']),
+  commonWords: new Set([
+      'the', 'and', 'for', 'with', 'table', 'date', 'string', 'value', 'type', 'list', 'map', 'set', 'tree', 'graph', 'view', 'model', 'control', 'text', 'file', 'code', 'data', 'input', 'output',
+      // Exclude Project Moon names from StackOverflow lookup to ensure Easter Egg precedence
+      'sinclair', 'dante', 'gregor', 'ishmael', 'faust', 'heathcliff'
+  ]),
 
   lookup: async function(word) {
     const lower = word.toLowerCase();

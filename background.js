@@ -326,6 +326,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const achievements = data.achievements || {};
         const word = message.word;
         
+        console.log(`Background: Deleting word "${word}". Exists in Dex: ${!!wordDex[word]}`);
+        
         // Use the actual rarity stored in DB for decrementing, if available
         const actualRarity = (wordDex[word] && wordDex[word].rarity) || message.rarity;
 

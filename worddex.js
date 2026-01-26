@@ -1121,6 +1121,11 @@ function deleteWord(word, rarity) {
   }
 
   // Send delete request to background script to avoid race conditions
+  // We MUST send the exact word as stored in the DB (case-sensitive key)
+  // 'word' here comes from the entries iteration, so it should be correct.
+  // But let's log to be sure.
+  console.log(`Sending delete request for: "${word}"`);
+  
   chrome.runtime.sendMessage({ type: 'deleteWord', word, rarity }, (response) => {
       if (chrome.runtime.lastError) {
           console.error('Delete error:', chrome.runtime.lastError);
