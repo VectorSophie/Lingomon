@@ -62,18 +62,18 @@ const EASTER_EGGS = {
       frequency: 0.000001 
   },
   "yisang": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "Did you call?" },
-  "faust": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "Faust knows all." },
-  "donquixote": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "MANAGER ESQUIREEEEEE" },
+  "faust": { rarity: "common", tags: ["noun", "literary", "project_moon"], origin: "Faust knows all." },
+  "donquixote": { rarity: "common", tags: ["noun", "literary", "project_moon"], origin: "MANAGER ESQUIREEEEEE" },
   "ryoshu": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "S.T.F.U" },
-  "meursault": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "The sun was too bright." },
+  "meursault": { rarity: "rare", tags: ["noun", "literary", "project_moon"], origin: "The sun was too bright." },
   "honglu": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "uwahh~" },
-  "heathcliff": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "▢▢▢▢▢▢▢▢▢!!!"},
-  "ishmael": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "THE FAULT LIES WITH YOU, ISHMAEL." },
-  "rodya": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "Honestly quite incredible" },
-  "dante": { rarity: "legendary", tags: ["noun", "literary", "project_moon"], origin: "🕐🕚🕡🕣🕤" },
-  "sinclair": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "Go german boy gooo" },
-  "outis": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "The Odyssey didnt have a purpose." },
-  "gregor": { rarity: "epic", tags: ["noun", "literary", "project_moon"], origin: "Suddenly, one day..." }
+  "heathcliff": { rarity: "uncommon", tags: ["noun", "literary", "project_moon"], origin: "▢▢▢▢▢▢▢▢▢!!!"},
+  "ishmael": { rarity: "uncommon", tags: ["noun", "literary", "project_moon"], origin: "THE FAULT LIES WITH YOU, ISHMAEL." },
+  "rodya": { rarity: "uncommon", tags: ["noun", "literary", "project_moon"], origin: "Honestly quite incredible" },
+  "dante": { rarity: "common", tags: ["noun", "literary", "project_moon"], origin: "🕐🕚🕡🕣🕤" },
+  "sinclair": { rarity: "rare", tags: ["noun", "literary", "project_moon"], origin: "Go german boy gooo" },
+  "outis": { rarity: "rare", tags: ["noun", "literary", "project_moon"], origin: "The Odyssey didnt have a purpose." },
+  "gregor": { rarity: "uncommon", tags: ["noun", "literary", "project_moon"], origin: "Suddenly, one day..." }
 };
 
 // Helper: Resolve specialized data with correct priority
@@ -281,17 +281,38 @@ chrome.runtime.onInstalled.addListener(async (details) => {
               if (!entry.tags) entry.tags = [];
               
               // Skip if already tagged with special type
-              if (entry.tags.some(t => ['tech', 'chem', 'astro', 'bio'].includes(t))) continue;
+              // Exception: Re-check Project Moon characters to update rarity
+              const isPM = entry.tags.includes('project_moon');
+              
+              if (!isPM && entry.tags.some(t => ['tech', 'chem', 'astro', 'bio'].includes(t))) continue;
               
               // Use unified resolver
               const match = await resolveSpecializedData(word);
               
-              if (match && match.tags && match.tags.length > 0) {
-                  // Merge tags avoiding duplicates
-                  const tagSet = new Set([...entry.tags, ...match.tags]);
-                  entry.tags = Array.from(tagSet);
-                  console.log(`Migrated "${word}": Added tags [${match.tags.join(', ')}]`);
-                  changed = true;
+              if (match) {
+                  let entryChanged = false;
+                  
+                  // Update tags
+                  if (match.tags && match.tags.length > 0) {
+                      const tagSet = new Set([...entry.tags, ...match.tags]);
+                      const newTags = Array.from(tagSet);
+                      if (newTags.length !== entry.tags.length) {
+                          entry.tags = newTags;
+                          entryChanged = true;
+                          console.log(`Migrated "${word}": Added tags [${match.tags.join(', ')}]`);
+                      }
+                  }
+                  
+                  // Update Rarity for Project Moon characters (if changed in TechAPI)
+                  if (match.tags && match.tags.includes('project_moon')) {
+                      if (entry.rarity !== match.rarity) {
+                          console.log(`Migrated "${word}": Rarity updated ${entry.rarity} -> ${match.rarity}`);
+                          entry.rarity = match.rarity;
+                          entryChanged = true;
+                      }
+                  }
+                  
+                  if (entryChanged) changed = true;
               }
           }
           

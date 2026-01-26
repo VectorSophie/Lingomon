@@ -285,6 +285,7 @@ function displayBadges(badges) {
       
       // Custom content for Limbus Company badge (Moon Icon)
       if (badge.type === 'limbusCompany') {
+          // ... (existing limbus logic)
           // Limbus Company Colors: Red Background, Gold Text
           hexagon.style.background = '#930101';
           hexagon.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
@@ -300,6 +301,7 @@ function displayBadges(badges) {
           
           hexagon.appendChild(content);
       } else {
+          // Standard Badge Content
           // Standard Badge Content
           const content = document.createElement('div');
           content.className = 'badge-content';

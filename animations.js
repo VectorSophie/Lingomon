@@ -165,18 +165,10 @@ function showCatchAnimation(word, origin, rarity, isNew, firstCaught, frequency,
       catchPopup.style.boxShadow = `0 20px 60px rgba(0,0,0,0.15), 0 0 0 1px ${pmColors[lowerWord]}40 inset`;
   } else {
       wordTitle.style.color = rarityScale[rarity] || '#6b5b95';
-  }
-  
-  if (rarity === 'god') {
-     wordTitle.style.backgroundImage = rarityScale[rarity];
-     wordTitle.style.backgroundSize = '200% auto';
-     wordTitle.style.webkitBackgroundClip = 'text';
-     wordTitle.style.webkitTextFillColor = 'transparent';
-     wordTitle.style.animation = 'rainbow 2s linear infinite';
-  }
-
-  if (rarity === 'common') {
-    wordTitle.style.color = '#9b9b9b';
+      
+      if (rarity === 'common') {
+        wordTitle.style.color = '#9b9b9b';
+      }
   }
   wordTitle.style.textAlign = 'center';
   wordTitle.style.marginBottom = '4px'; // Reduced bottom margin for tags

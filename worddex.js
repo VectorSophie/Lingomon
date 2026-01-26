@@ -232,10 +232,12 @@ function displayWordDex(sortType = 'alpha') {
           wordStrong.textContent = word;
           wordStrong.style.overflowWrap = 'anywhere'; // Ensure long words wrap
           wordStrong.style.display = 'block'; // Ensure it takes width to wrap properly
-          wordStrong.style.color = rarityColors[rarity] || '#6b5b95';
-          if (rarity === 'common') {
-            wordStrong.style.color = '#9b9b9b';
-          }
+          
+          // Default color logic moved below to avoid override
+          // wordStrong.style.color = rarityColors[rarity] || '#6b5b95';
+          // if (rarity === 'common') {
+          //   wordStrong.style.color = '#9b9b9b';
+          // }
           
           // Project Moon Character Colors
           const pmColors = {
@@ -268,7 +270,15 @@ function displayWordDex(sortType = 'alpha') {
               if (['yisang', 'faust', 'donquixote', 'honglu'].includes(lowerWord)) {
                   wordStrong.style.textShadow = '0px 0px 2px rgba(0,0,0,0.5)';
               }
-          } else if (word.toLowerCase() === 'lingomon') {
+          } else {
+              // Apply standard rarity color only if NOT a PM character
+              wordStrong.style.color = rarityColors[rarity] || '#6b5b95';
+              if (rarity === 'common') {
+                   wordStrong.style.color = '#9b9b9b';
+              }
+          }
+          
+          if (word.toLowerCase() === 'lingomon') {
             wordStrong.style.backgroundImage = 'linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet)';
             wordStrong.style.backgroundSize = '200% auto';
             wordStrong.style.webkitBackgroundClip = 'text';
