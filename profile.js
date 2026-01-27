@@ -1043,7 +1043,7 @@ async function fetchTeam(userId) {
             // Check tags from local dex if not present on member object
             const tags = member.tags || (dex[member.word] ? dex[member.word].tags : []);
             
-            if (tags && tags.includes('easter_egg')) {
+            if (tags && tags.includes('easter_egg') && !tags.includes('project_moon')) {
                 return null; // Remove from team
             }
 
