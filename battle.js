@@ -1232,7 +1232,7 @@ function startBotBattle() {
 }
 
 function initiateBattle(enemyTeamData, metadata = {}) {
-    const pTeam = currentTeam.filter(w => w && w.rarity !== 'god');
+    const pTeam = currentTeam.filter(w => w);
     battleSystem = new BattleSystem(pTeam, enemyTeamData, metadata);
     battleSystem.start();
 }

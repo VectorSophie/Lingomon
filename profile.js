@@ -1038,12 +1038,14 @@ async function fetchTeam(userId) {
             const wordLower = member.word.toLowerCase();
             
             // Retroactive Ban Check: Remove Easter Eggs if they are already in the slot
-            if (wordLower === 'lingomon') return null;
+            // if (wordLower === 'lingomon') return null;
             
             // Check tags from local dex if not present on member object
             const tags = member.tags || (dex[member.word] ? dex[member.word].tags : []);
             
-
+            if (tags && tags.includes('easter_egg')) {
+                return null; // Remove from team
+            }
 
             // If the team member has no tags, try to find them in local dex (Enrichment)
             if (!member.tags && dex[member.word]) {
