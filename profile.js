@@ -1041,10 +1041,16 @@ async function fetchTeam(userId) {
             if (wordLower === 'lingomon') return null;
             
             // Check tags from local dex if not present on member object
-            const tags = member.tags || (dex[member.word] ? dex[member.word].tags : []);
+            const wordInfo = dex[member.word];
+            const tags = member.tags || (wordInfo ? wordInfo.tags : []);
+            const source = member.frequencySource || (wordInfo ? wordInfo.frequencySource : '');
             
-            if (tags && tags.includes('easter_egg')) {
-                return null; // Remove from team
+            // Ban logic: Easter Eggs (tag/source) and Project Moon (tag)
+            if (tags && (tags.includes('easter_egg') || tags.includes('project_moon'))) {
+                return null; 
+            }
+            if (source === 'easter_egg') {
+                return null;
             }
 
             // If the team member has no tags, try to find them in local dex (Enrichment)
@@ -1374,9 +1380,11 @@ function renderMiniDex(dex, filter = '') {
   list.appendChild(header);
 
   const entries = Object.entries(dex).filter(([word, info]) => {
-    if (info.rarity === 'god') return false; // Keep god banned for now or check? user said god=3
-    // If we want to allow God: 
-    // if (info.rarity === 'god') return true; 
+    if (info.rarity === 'god') return false; 
+    
+    // Ban Easter Eggs and Project Moon from selector
+    if (info.tags && (info.tags.includes('easter_egg') || info.tags.includes('project_moon'))) return false;
+    if (info.frequencySource === 'easter_egg') return false;
     
     if (!filter) return true;
     return word.toLowerCase().includes(filter.toLowerCase());
