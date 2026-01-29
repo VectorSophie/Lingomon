@@ -14,7 +14,7 @@ All gameplay data, including your "WordDex" (collected words), achievements, bat
 Lingomon connects to the following third-party APIs solely to fetch word definitions, scientific data, and game assets:
 *   **DictionaryAPI.dev**: To retrieve English word definitions.
 *   **Datamuse API**: To determine word frequency and rarity.
-*   **StackExchange API**: To identify technical/IT terms.
+*   **Context7 API**: To provide semantic AI-powered definitions for technical/coding terms.
 *   **PubChem (NIH)**: To retrieve chemical data (formulas, molecular weight) for the Chemistry module.
 *   **Solar System OpenData**: To retrieve astronomical data for the Space module.
 *   **GBIF**: To retrieve biological taxonomy data.

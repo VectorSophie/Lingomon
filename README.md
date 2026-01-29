@@ -37,10 +37,9 @@ Lingomon is an educational browser extension that makes learning new words fun a
 - **Custom tags(v1.8)**: You can tag and filter words as you want!
 - **Cloud storage(v1.8)**: Now your data is secure and able to load everywhere!
 - **Science Expansion(v1.8.1)**: Catch chemical elements, planets, and species to see real scientific data!
-- **RPG Update(v1.8.2)**: 
-  - **Evolution System:** Train words in quiz to level them up and evolve into stronger forms (Bronze ★, Silver ★★, Gold ★★★)!
-  - **Daily Training:** Earn SRS (Spaced Repetition System) XP to make words battle-ready.
-  - **Tech Cards 2.0:** Matrix-themed cards for programming terms, powered by Semantic Context7 AI.
+- **Evolution System(v1.8.2):** Train words in quiz to level them up and evolve into stronger forms (Bronze ★, Silver ★★, Gold ★★★)!
+- **Daily Training(v1.8.2):** Earn SRS (Spaced Repetition System) XP to make words battle-ready.
+- **Tech Cards 2.0(v1.8.2):** Matrix-themed cards for programming terms, powered by Semantic Context7 AI.
 
 ## Want Your Language in Lingomon?
 
@@ -177,6 +176,10 @@ Lingomon values your privacy:
   - [Korean Learners' Dictionary](https://krdict.korean.go.kr/) - Korean-English dictionary (Korean mode only)
   - [MyMemory Translation API](https://mymemory.translated.net/) - English-to-Korean translation (Korean mode only)
   - [DiceBear API](https://www.dicebear.com/) - Generates unique robot avatars for user profiles
+  - [Context7 API](https://context7.com) - Semantic Tech Definitions (Powered by AI)
+  - [GBIF API](https://www.gbif.org/) - Biological species data
+  - [PubChem API](https://pubchem.ncbi.nlm.nih.gov/) - Chemical element data
+  - [Solar System OpenData](https://api.le-systeme-solaire.net/) - Planet/Moon data
 - Fallback: Local frequency database used when APIs are unavailable
 
 ## Contributing
