@@ -85,6 +85,21 @@ function displayCharts(wordDex, achievements) {
 
   statsDiv.appendChild(graphDiv);
 
+  // --- Mastery Rank (Stars) ---
+  // REMOVED for now as requested
+  /*
+  let totalStars = 0;
+  Object.values(wordDex).forEach(w => {
+      if (w.evolution && w.evolution.stage) {
+          totalStars += w.evolution.stage;
+      }
+  });
+
+  const masteryDiv = document.createElement('div');
+  // ... (Mastery Bar Code) ...
+  statsDiv.appendChild(masteryDiv);
+  */
+
   // Rarity distribution pie chart
   const pieDiv = document.createElement('div');
   pieDiv.style.marginTop = '16px';

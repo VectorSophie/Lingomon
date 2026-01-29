@@ -3,6 +3,16 @@
 let currentSort = 'alpha';
 let activeFilters = new Set();
 let wordData = null;
+// Remove duplicate declaration of EVO_COLORS if Evolution.colors is present
+// We need to be careful not to redeclare if already in scope (though 'const' is block scoped, these are global scripts)
+// Best approach: Use a different name for local fallback or check window
+const EVO_COLORS_LOCAL = {
+    1: '#FF7043', // Vibrant Bronze
+    2: '#4FC3F7', // Vibrant Silver
+    3: '#FFD700'  // Vibrant Gold
+};
+const EVO_COLORS_REF = (typeof Evolution !== 'undefined' && Evolution.colors) ? Evolution.colors : EVO_COLORS_LOCAL;
+
 let searchQuery = '';
 
 const typeMap = {
@@ -27,12 +37,12 @@ const rarityOrder = {
 };
 
 const rarityColors = {
-  common: '#707070',
-  uncommon: '#2b9348',
-  rare: '#0077b6',
-  epic: '#9d4edd',
-  legendary: '#ffba08',
-  mythic: '#d00000',
+  common: '#ebebeb',
+  uncommon: '#a1ff96',
+  rare: '#96c7ff',
+  epic: '#b996ff',
+  legendary: '#fffa96',
+  mythic: '#ff6969',
   god: 'linear-gradient(45deg, #ff0000, #ff7f00, #ffff00, #00ff00, #0000ff, #4b0082, #9400d3)'
 };
 
@@ -189,13 +199,19 @@ function displayWordDex(sortType = 'alpha') {
     // (rarityColors is now global)
     
     // Helper to get specialized card class/style
-    const getCardStyle = (tags) => {
-        if (!tags || !tags.length) return '';
-        if (tags.includes('tech')) return 'tech-card';
-        if (tags.includes('bio')) return 'bio-card';
-        if (tags.includes('chem')) return 'chem-card';
-        if (tags.includes('astro')) return 'astro-card';
-        return '';
+    const getCardStyle = (tags, evolution) => {
+        let classes = '';
+        if (tags) {
+            if (tags.includes('tech')) classes += ' tech-card';
+            else if (tags.includes('bio')) classes += ' bio-card';
+            else if (tags.includes('chem')) classes += ' chem-card';
+            else if (tags.includes('astro')) classes += ' astro-card';
+        }
+        
+        if (evolution && evolution.stage > 0) {
+            classes += ` evo-stage-${evolution.stage}`;
+        }
+        return classes;
     };
 
     entries.forEach(([word, info]) => {
@@ -221,17 +237,58 @@ function displayWordDex(sortType = 'alpha') {
           }
 
           const div = document.createElement("div");
-          div.className = "word-entry " + getCardStyle(info.tags);
+          div.className = "word-entry" + getCardStyle(info.tags, info.evolution);
           div.style.position = 'relative';
           div.style.paddingRight = '60px'; // Prevent text overlap with delete button
+
+          // specialized background logic for Tech and Chem (Refactored to CSS classes)
+          // Classes .tech-card and .chem-card are now applied in getCardStyle based on tags
+          // Just need to apply overrides that are dynamic or not covered by standard CSS
+          
+          /* Inline styles removed in favor of CSS classes in popup.html */
+          
+          // Evolution Glow Override
+          // REFACTOR: Use text-shadow Aura instead of box-shadow Border
+          if (info.evolution && info.evolution.stage > 0) {
+              const evoColor = EVO_COLORS_REF[info.evolution.stage] || '#CD7F32'; // Use shared constant
+              
+              // Apply aura to the title text
+              // We need to wait for wordStrong to be created? No, we can set style on it later.
+              // Actually, wordStrong is created below. Let's set a flag or style it after creation.
+              
+              // Remove old box-shadow logic if present (it was applied to 'div')
+              div.style.boxShadow = 'none'; 
+              
+              // Add a subtle background tint if not Tech/Chem
+              if (!info.tags || (!info.tags.includes('tech') && !info.tags.includes('chem'))) {
+                  // Very subtle gradient to hint at evolution without overwhelming
+                  div.style.background = `linear-gradient(135deg, rgba(255,255,255,0.8) 0%, ${evoColor}22 100%)`;
+              }
+          }
 
           const rarity = info.rarity || 'common';
           const origin = info.origin || info.definition || 'No information available';
 
           const wordStrong = document.createElement('strong');
-          wordStrong.textContent = word;
+          
+          // Name + Stars
+          let displayName = word;
+          if (info.evolution && info.evolution.stage > 0) {
+              const stars = '★'.repeat(info.evolution.stage); // Dynamic stars
+              displayName += ` ${stars}`;
+              
+              // AURA EFFECT
+              const evoColor = EVO_COLORS_REF[info.evolution.stage] || '#CD7F32';
+              // Multiple shadows for "Aura" effect
+              wordStrong.style.textShadow = `0 0 5px ${evoColor}, 0 0 10px ${evoColor}, 0 0 20px ${evoColor}66`;
+              // Make text slightly larger or bolder?
+              wordStrong.style.fontWeight = '900';
+          }
+          wordStrong.textContent = displayName;
+          
           wordStrong.style.overflowWrap = 'anywhere'; // Ensure long words wrap
           wordStrong.style.display = 'block'; // Ensure it takes width to wrap properly
+
           
           // Default color logic moved below to avoid override
           // wordStrong.style.color = rarityColors[rarity] || '#6b5b95';
@@ -383,8 +440,63 @@ function displayWordDex(sortType = 'alpha') {
               metaRow.appendChild(sourceBadge);
           }
 
+          // Tag Management Section
           const tagContainer = document.createElement('div');
           tagContainer.className = 'inline-tag-container';
+          
+          // Evolve Button (If Eligible)
+          // We need to check if Evolution global is available OR check logic manually here
+          // But wait, info.evolution.canEvolve might be stale if we just bumped level via script without updating flag
+          // So let's double check eligibility
+          let showEvolveBtn = false;
+          
+          if (info.evolution) {
+              if (info.evolution.canEvolve) showEvolveBtn = true;
+              else {
+                  // Fallback check
+                  const stg = info.evolution.stage || 0;
+                  const lvl = info.srs ? info.srs.level : 0;
+                  // SRS 1 -> Evo 1 (Bronze)
+                  if (stg < 1 && lvl >= 1) showEvolveBtn = true;
+                  // SRS 3 -> Evo 2 (Silver)
+                  if (stg < 2 && lvl >= 3) showEvolveBtn = true;
+                  // SRS 5 -> Evo 3 (Gold)
+                  if (stg < 3 && lvl >= 5) showEvolveBtn = true;
+              }
+          }
+          
+          if (showEvolveBtn) {
+              const evolveBtn = document.createElement('button');
+              evolveBtn.textContent = t('evolve');
+              evolveBtn.className = 'tag-badge';
+              
+              // Determine next stage color
+              const nextStage = (info.evolution ? info.evolution.stage : 0) + 1;
+              const nextColor = EVO_COLORS_REF[nextStage] || '#FFD700'; // Default gold if unknown
+              
+              // REMOVED Gradient, used Solid Color for flat look
+              evolveBtn.style.background = nextColor;
+              
+              // Dark text for lighter backgrounds (Silver/Gold), White for darker (Bronze)?
+              // Actually Bronze #CD7F32 is darkish, Silver #BCC6CC is light, Gold #FEDA75 is light.
+              // Let's use a text shadow or adjust color.
+              evolveBtn.style.color = '#333'; 
+              if (nextStage === 1) evolveBtn.style.color = 'white'; // Bronze looks better with white text
+              
+              evolveBtn.style.fontWeight = 'bold';
+              evolveBtn.style.border = 'none';
+              evolveBtn.style.cursor = 'pointer';
+              evolveBtn.style.animation = 'pulse 1s infinite';
+              evolveBtn.style.marginLeft = '8px'; // Spacing
+              
+              evolveBtn.onclick = async (e) => {
+                  e.stopPropagation();
+                  if (typeof confirmEvolution !== 'undefined') {
+                      confirmEvolution(word, info);
+                  }
+              };
+              metaRow.appendChild(evolveBtn);
+          }
           
           const refreshInlineTags = () => {
               tagContainer.innerHTML = '';
@@ -449,6 +561,15 @@ function displayWordDex(sortType = 'alpha') {
           let originHtml = escapeHtml(originText).replace(/\n/g, '<br>');
           
           originDiv.innerHTML = originHtml;
+          
+          // Special Text Color for Tech Cards (Ensure description is legible)
+          // Handled via CSS .tech-card .word-info now
+          /*
+          if (info.tags && info.tags.includes('tech')) {
+              originDiv.style.color = '#e0f7fa'; // Light cyan for description text (readable on black)
+              originDiv.style.textShadow = 'none'; // No glow on body text for readability
+          }
+          */
 
           const frequencyDiv = document.createElement('div');
           frequencyDiv.className = 'frequency-info';

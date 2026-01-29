@@ -14,9 +14,23 @@ const BioAPI = {
     "SUBSPECIES": "mythic"
   },
 
+  // Ambiguous terms that are primarily Tech/Common but technically exist in Bio
+  // We block these here so they fall through to TechAPI or Dictionary API
+  ambiguousBlocklist: new Set([
+      'python', 'java', 'ruby', 'rust', 'swift', 'shell', 'mouse', 'bug', 'virus', 'web', 'net', 'root', 'tree', 'monitor', 'ram', 'ant' 
+  ]),
+
   // Lookup a word in the GBIF taxonomy backbone
   lookup: async function(word) {
     try {
+      const lower = word.toLowerCase();
+      
+      // 0. Check Blocklist (Ambiguous Tech Terms)
+      if (this.ambiguousBlocklist.has(lower)) {
+          console.log(`BioAPI: Skipping ambiguous term "${word}" (reserved for Tech/Common)`);
+          return null;
+      }
+
       // Basic validation to avoid spamming API with obviously non-bio words
       if (!word || word.length < 3 || /[^a-zA-Z]/.test(word)) return null;
 

@@ -49,11 +49,28 @@ function renderQuizMenu() {
           </div>
         </div>
 
-        <button id="btnStartCustomQuiz" class="quiz-start-btn" style="font-size:16px;">${t('quizStartBtn')}</button>
+        <button id="btnStartCustomQuiz" class="quiz-start-btn" style="font-size:16px; margin-bottom:12px;">${t('quizStartBtn')}</button>
+        <button id="btnStartTraining" class="quiz-start-btn" style="font-size:16px; background: #333; color: white; border: 1px solid #666;">${t('dailyTraining')}</button>
       </div>
     `;
 
     const range = document.getElementById('quizSize');
+    
+    // Check if training is already done today
+    chrome.storage.local.get(['lastTrainingDate'], (res) => {
+        const lastDate = res.lastTrainingDate;
+        const today = new Date().toDateString();
+        
+        const trainingBtn = document.getElementById('btnStartTraining');
+        if (lastDate === today) {
+            trainingBtn.disabled = true;
+            trainingBtn.textContent = `${t('dailyTraining')} (Done)`;
+            trainingBtn.style.opacity = '0.5';
+            trainingBtn.style.cursor = 'not-allowed';
+            trainingBtn.style.background = '#ccc';
+            trainingBtn.style.color = '#666';
+        }
+    });
     
     // Validate range values
     const maxVal = Math.min(20, totalWords);
@@ -67,43 +84,70 @@ function renderQuizMenu() {
     range.oninput = () => valDisplay.textContent = range.value;
 
     document.getElementById('btnStartCustomQuiz').onclick = () => {
-      startQuiz({ size: parseInt(range.value) });
+      startQuiz({ size: parseInt(range.value), mode: 'random' });
+    };
+    
+    document.getElementById('btnStartTraining').onclick = () => {
+        startQuiz({ size: 10, mode: 'training' });
     };
   });
 }
 
-function startQuiz(options = { size: 5 }) {
+function startQuiz(options = { size: 5, mode: 'random' }) {
   const container = document.getElementById('quizContainer');
   // If we are already in the middle of a quiz (and not just starting from menu), don't reset unless force
+  
+  // Store mode for later use in results
+  quizData.mode = options.mode;
   
   chrome.storage.local.get(['wordDex'], (data) => {
     const wordDex = data.wordDex || {};
     
     // Exclude GOD rarity words
     const words = Object.entries(wordDex).filter(([word, info]) => info.rarity !== 'god');
-
-    // Filter scientific words if available
-    const scientificWords = words.filter(([word, info]) => 
-        info.tags && (info.tags.includes('chem') || info.tags.includes('astro') || info.tags.includes('bio'))
-    );
     
-    // Mix standard and scientific questions
-    // 30% chance for a specialized scientific question if we have enough scientific words
-    // ... logic inside question generation ...
-
-    // Select random words
-    const shuffled = words.sort(() => 0.5 - Math.random());
-    const quizSize = options.size || 5;
-    quizData.questions = shuffled.slice(0, Math.min(quizSize, words.length));
+    let selectedWords = [];
     
-    // Generate Questions
-    quizData.questions = quizData.questions.map(([word, info]) => {
+    if (options.mode === 'training') {
+        // SRS Filter: Due for review
+        const now = Date.now();
+        const dueWords = words.filter(([word, info]) => {
+            if (!info.srs) return true; // Treat new/migrated words as due
+            return now >= info.srs.nextReview;
+        });
+        
+        if (dueWords.length === 0) {
+            // Smart Fallback: Review words that are coming up soon, or lowest SRS level
+            // For now, simple fallback to random but show toast?
+            // Actually, let's grab words with lowest SRS levels
+            selectedWords = words.sort((a, b) => {
+                const srsA = a[1].srs ? a[1].srs.level : 0;
+                const srsB = b[1].srs ? b[1].srs.level : 0;
+                return srsA - srsB;
+            }).slice(0, 10);
+            
+            // alert("No words strictly due! Reviewing your weakest words."); // UX improvement needed later
+        } else {
+            selectedWords = dueWords.sort((a,b) => {
+                 // Sort by how overdue they are (descending)
+                 return (b[1].srs ? b[1].srs.nextReview : 0) - (a[1].srs ? a[1].srs.nextReview : 0);
+            }).slice(0, Math.min(10, dueWords.length));
+        }
+    } else {
+        // Select random words
+        const shuffled = words.sort(() => 0.5 - Math.random());
+        const quizSize = options.size || 5;
+        selectedWords = shuffled.slice(0, Math.min(quizSize, words.length));
+    }
+
+    quizData.questions = selectedWords.map(([word, info]) => {
         // Default Question: Definition -> Word
         let type = 'definition';
         let questionText = info.origin || 'No definition available';
         let answer = word.toLowerCase();
         let label = t('quizDefinition');
         let hint = t('quizFillBlank');
+
 
         // Specialized Questions
         if (info.tags) {
@@ -181,6 +225,44 @@ function showQuestion() {
   };
 }
 
+// Simple Mutex Implementation to prevent race conditions during Async SRS updates
+const QuizMutex = {
+    _locked: false,
+    _queue: [],
+    
+    // Acquire lock
+    acquire: function() {
+        return new Promise(resolve => {
+            if (!this._locked) {
+                this._locked = true;
+                resolve();
+            } else {
+                this._queue.push(resolve);
+            }
+        });
+    },
+    
+    // Release lock
+    release: function() {
+        if (this._queue.length > 0) {
+            const next = this._queue.shift();
+            next(); // Grant lock to next in line
+        } else {
+            this._locked = false;
+        }
+    },
+    
+    // Run an async task with lock protection
+    dispatch: async function(task) {
+        await this.acquire();
+        try {
+            await task();
+        } finally {
+            this.release();
+        }
+    }
+};
+
 function checkAnswer(correctWord) {
   if (quizData.processing) return;
   quizData.processing = true;
@@ -199,6 +281,53 @@ function checkAnswer(correctWord) {
 
   if (isCorrect) {
     quizData.score++;
+  }
+  
+  // SRS Update
+  const currentQ = quizData.questions[quizData.currentIndex];
+  
+  if (currentQ.word) {
+      // Async update SRS with Mutex Protection
+      QuizMutex.dispatch(async () => {
+          return new Promise((resolve) => {
+              chrome.storage.local.get(['wordDex'], (data) => {
+                  const dex = data.wordDex || {};
+                  const entry = dex[currentQ.word];
+                  if (entry) {
+                     // Init SRS if missing (double safety)
+                     if (!entry.srs) entry.srs = { level: 0, streak: 0, nextReview: 0 };
+                     
+                     if (typeof SRS !== 'undefined') {
+                         const newSrs = SRS.calculateSRS(entry.srs, isCorrect);
+                         entry.srs = newSrs;
+                         
+                         // Evolution Trigger Logic (3 Stages)
+                         if (newSrs.level >= 1 && (!entry.evolution || entry.evolution.stage < 1)) {
+                             // Eligible for Evo 1 (Bronze)
+                             if (!entry.evolution) entry.evolution = { stage: 0 };
+                             entry.evolution.canEvolve = true;
+                         }
+                         if (newSrs.level >= 3 && (!entry.evolution || entry.evolution.stage < 2)) {
+                             // Eligible for Evo 2 (Silver)
+                             entry.evolution.canEvolve = true;
+                         }
+                         if (newSrs.level >= 5 && (!entry.evolution || entry.evolution.stage < 3)) {
+                             // Eligible for Evo 3 (Gold)
+                             entry.evolution.canEvolve = true;
+                         }
+                         
+                         chrome.storage.local.set({ wordDex: dex }, () => {
+                             resolve(); // Release mutex after write complete
+                         });
+                     } else {
+                         resolve();
+                     }
+                  } else {
+                      resolve();
+                  }
+              });
+          });
+      });
   }
 
   const quizContainer = document.getElementById('quizContainer');
@@ -223,6 +352,11 @@ function checkAnswer(correctWord) {
 function showResults() {
   const quizContainer = document.getElementById('quizContainer');
   const percentage = Math.round((quizData.score / quizData.total) * 100);
+
+  // Mark Daily Training as Done ONLY if completed
+  if (quizData.mode === 'training') {
+      chrome.storage.local.set({ lastTrainingDate: new Date().toDateString() });
+  }
 
   let message = '';
   if (percentage === 100) {

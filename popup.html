@@ -40,17 +40,24 @@
       justify-content: space-between;
       align-items: center;
       margin-bottom: 12px;
+      /* Remove height constraint if present */
+    }
+    .header-container h3 {
+        margin: 0;
+        font-size: 18px;
     }
     .dark-mode-toggle {
       background: #f0f0f0;
       border: 2px solid #e0e0e0;
       cursor: pointer;
-      font-size: 12px;
-      padding: 6px 12px;
+      font-size: 11px; /* Slightly smaller text */
+      padding: 6px 8px; /* Tighter padding */
       border-radius: 6px;
       font-weight: 600;
       transition: all 0.2s;
       color: #000000;
+      min-width: 32px; /* Ensure minimum width for "?" */
+      text-align: center;
     }
     .dark-mode-toggle:hover {
       background: #e0e0e0;
@@ -420,19 +427,29 @@
       width: 100%;
       padding: 14px 20px;
       margin-top: 16px;
-      background: linear-gradient(135deg, #96c7ff, #b996ff);
-      color: #ffffff;
-      border: none;
+      background: #ffffff;
+      color: #000000;
+      border: 2px solid #000000;
       border-radius: 8px;
       font-size: 15px;
       font-weight: 700;
       cursor: pointer;
       transition: all 0.3s;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
     .quiz-start-btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+      background: #f0f0f0;
+    }
+    body.dark-mode .quiz-start-btn {
+      background: #000000;
+      color: #ffffff;
+      border-color: #ffffff;
+      box-shadow: 0 4px 12px rgba(255,255,255,0.1);
+    }
+    body.dark-mode .quiz-start-btn:hover {
+      background: #1a1a1a;
     }
     
     /* Profile Styles */
@@ -1394,24 +1411,31 @@
     
     /* Specialized Card Styles - Thematic Decorators */
     
-    /* Tech: Circuit traces */
+    /* Tech: Circuit traces & Matrix Rain */
     .word-entry.tech-card {
-        border-left: 4px solid #61DAFB;
-        background-color: #f0fbff;
+        border-left: 4px solid #00ff00; /* Matrix Green */
+        background-color: #000000;
+        color: #ffffff;
+        font-family: "Courier New", Courier, monospace;
+        text-shadow: 0 0 5px #00ff00; /* Glow on main text */
+        
+        /* Matrix Rain Effect */
         background-image: 
-            linear-gradient(90deg, transparent 50%, rgba(97, 218, 251, 0.1) 50%),
-            linear-gradient(0deg, transparent 50%, rgba(97, 218, 251, 0.1) 50%);
-        background-size: 20px 20px;
+            linear-gradient(0deg, rgba(0,255,0,0.1) 25%, transparent 25%, transparent 50%, rgba(0,255,0,0.1) 50%, rgba(0,255,0,0.1) 75%, transparent 75%, transparent), 
+            linear-gradient(0deg, transparent 20%, rgba(0,255,0,0.2) 20%, rgba(0,255,0,0.2) 40%, transparent 40%, transparent 60%, rgba(0,255,0,0.2) 60%, rgba(0,255,0,0.2) 80%, transparent 80%);
+        background-size: 20px 40px, 30px 60px;
+    }
+    .word-entry.tech-card .word-info {
+        color: #e0f7fa !important; /* Light cyan for readability */
+        text-shadow: none; /* No glow on description */
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; /* Readable font for description */
+    }
+    .word-entry.tech-card strong {
+        color: #00ff00 !important; /* Green Title */
     }
     .word-entry.tech-card::after {
-        content: "10110";
-        position: absolute;
-        top: 5px;
-        right: 5px;
-        font-family: monospace;
-        font-size: 10px;
-        color: #61DAFB;
-        opacity: 0.5;
+        /* Optional: Old binary decoration removal or update */
+        content: ""; 
     }
 
     /* Bio: Organic Leaves */
@@ -1506,6 +1530,7 @@
         <h3 style="margin:0; font-size:18px;">Lingomon</h3>
     </div>
     <div style="display: flex; gap: 8px;">
+      <button class="dark-mode-toggle" id="helpToggle" title="Help / How to Play">?</button>
       <button class="dark-mode-toggle" id="langToggle" title="Change language">EN</button>
       <button class="dark-mode-toggle" id="darkModeToggle" title="Toggle dark mode">Dark</button>
     </div>
@@ -1560,11 +1585,52 @@
       <button id="saveCustomizeBtn" class="save-team-btn" style="margin-top:16px;">Save Changes</button>
     </div>
   </div>
+  
+  <!-- Help Modal -->
+  <div id="helpModal" class="modal-overlay">
+    <div class="modal-content" style="height:500px; width:320px;">
+      <div class="modal-header">
+        <h3 style="margin:0;font-size:18px;">How to Play Lingomon</h3>
+        <button id="closeHelp" style="background:none;border:none;cursor:pointer;font-size:20px;color:inherit;">✕</button>
+      </div>
+      <div style="overflow-y:auto; flex:1; padding-right:8px; font-size:13px; line-height:1.5;">
+          
+          <h4 style="color:#6b5b95; margin-bottom:4px;">1. Catching Words</h4>
+          <p style="margin-top:0;">Double-click or highlight any word on a webpage and select "Catch [Word]" from the context menu.</p>
+          
+          <h4 style="color:#6b5b95; margin-bottom:4px;">2. Training & Evolution</h4>
+          <p style="margin-top:0;">
+            Go to the <strong>Quiz</strong> tab and select <strong>Daily Training</strong>.<br>
+            • Correct answers increase a word's <strong>SRS Level</strong>.<br>
+            • <strong>Level 1:</strong> Unlocks <span style="color:#FF7043; font-weight:bold;">Bronze Form (★)</span>.<br>
+            • <strong>Level 3:</strong> Unlocks <span style="color:#4FC3F7; font-weight:bold;">Silver Form (★★)</span>.<br>
+            • <strong>Level 5:</strong> Unlocks <span style="color:#FFD700; font-weight:bold;">Gold Form (★★★)</span>.<br>
+            <em>Evolving boosts stats significantly!</em>
+          </p>
+          
+          <h4 style="color:#6b5b95; margin-bottom:4px;">3. Battle</h4>
+          <p style="margin-top:0;">Build a team of 5 words. Combos (e.g. "Fire/Water/Earth") and Parts of Speech grant special bonuses!</p>
+          
+          <h4 style="color:#6b5b95; margin-bottom:4px;">4. Special Types</h4>
+          <p style="margin-top:0;">
+            Some words are special:<br>
+            • <span style="color:#00ff00;">Tech (Matrix)</span>: Coding terms.<br>
+            • <span style="color:#fbc02d;">Chem (Lab)</span>: Elements.<br>
+            • <span style="color:#7FFF00;">Bio (Nature)</span>: Species.<br>
+            • <span style="color:#9370DB;">Astro (Space)</span>: Celestial bodies.
+          </p>
+      </div>
+    </div>
+  </div>
+
   <div id="kofi-container"></div>
   <script src="kofi-widget.js"></script>
   <script src="libs/supabase.min.js"></script>
   <script src="config.js"></script>
   <script src="i18n.js"></script>
+  <script src="srs.js"></script>
+  <script src="evolution.js"></script>
+  <script src="evolution-modal.js"></script>
   <script src="wordFrequency.js"></script>
   <script src="techApi.js"></script>
   <script src="bioApi.js"></script>

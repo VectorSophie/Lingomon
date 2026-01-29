@@ -162,6 +162,8 @@ async function saveWordToStorage(word, data, tab, isMetaCatch) {
       const rarityRank = { 'common': 1, 'uncommon': 2, 'rare': 3, 'epic': 4, 'legendary': 5, 'mythic': 6, 'god': 7 };
       let finalRarity = rarity;
       
+      // Shiny Charm Logic REMOVED (User request)
+      
       if (!isNew && wordDex[word].rarity) {
           const oldRarity = wordDex[word].rarity;
           const oldRank = rarityRank[oldRarity] || 0;
@@ -245,10 +247,9 @@ async function saveWordToStorage(word, data, tab, isMetaCatch) {
         frequency: frequency,
         frequencySource: source,
         tags: tags
-      }).then(response => {
-        console.log('Lingomon: Message sent successfully, response:', response);
       }).catch(err => {
-        console.log('Lingomon: Could not send message (content script may not be loaded):', err.message);
+        // Only log warning if message strictly failed
+        console.warn('Lingomon: Content script not ready:', err.message);
       });
     });
 }
@@ -259,12 +260,40 @@ chrome.runtime.onInstalled.addListener(async (details) => {
   await updateContextMenu();
   
   if (details.reason === 'update' || details.reason === 'install') {
-      console.log('Lingomon: Running migration for v1.8.1 specialized tags...');
+      console.log('Lingomon: Running migration for v1.8.2 SRS & Evolutions...');
       storageMutex.dispatch(async () => {
           const data = await chrome.storage.local.get(['wordDex', 'badges']);
           const wordDex = data.wordDex || {};
           let badges = data.badges || { main: [], hidden: [] };
           let changed = false;
+
+          // 1. SRS & Evolution Schema Migration
+          for (const word of Object.keys(wordDex)) {
+              const entry = wordDex[word];
+              let entryChanged = false;
+
+              // Add SRS Object if missing
+              if (!entry.srs) {
+                  entry.srs = {
+                      level: 0,
+                      streak: 0,
+                      nextReview: Date.now(), // Due immediately
+                      lastReviewed: 0
+                  };
+                  entryChanged = true;
+              }
+
+              // Add Evolution Object if missing
+              if (!entry.evolution) {
+                  entry.evolution = {
+                      stage: 0,
+                      canEvolve: false
+                  };
+                  entryChanged = true;
+              }
+
+              if (entryChanged) changed = true;
+          }
           
           // --- BADGE CLEANUP (Remove legacy 'catherine' badge if present) ---
           if (badges.hidden) {
@@ -577,7 +606,7 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
       }
     }
 
-    // Save Word
+      // Save Word
     const saveData = {
         origin,
         rarity,
@@ -585,7 +614,17 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         source: freqData.source,
         tags: types,
         context,
-        language: currentLanguage
+        language: currentLanguage,
+        srs: {
+            level: 0,
+            streak: 0,
+            nextReview: Date.now(),
+            lastReviewed: 0
+        },
+        evolution: {
+            stage: 0,
+            canEvolve: false
+        }
     };
     
     await saveWordToStorage(word, saveData, tab, isMetaCatch);
@@ -606,7 +645,17 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
                 source: fallbackData.source,
                 tags: fallbackData.tags || [],
                 context,
-                language: 'en' // Default to en for tech terms
+                language: 'en', // Default to en for tech terms
+                srs: {
+                    level: 0,
+                    streak: 0,
+                    nextReview: Date.now(),
+                    lastReviewed: 0
+                },
+                evolution: {
+                    stage: 0,
+                    canEvolve: false
+                }
             };
             
             await saveWordToStorage(word, saveData, tab, isMetaCatch);

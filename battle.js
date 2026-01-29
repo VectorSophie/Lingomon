@@ -1,5 +1,6 @@
 
 // Standardized Power Calculation for Display
+// Include Evolution/SRS bonus in Power Calc
 window.calculatePower = (u) => {
     if (!u) return 0;
     const len = u.word.length;
@@ -10,8 +11,21 @@ window.calculatePower = (u) => {
         'legendary': 40, 'mythic': 80, 'god': 200
     }[u.rarity ? u.rarity.toLowerCase() : 'common'] || 0;
     
-    // Power Score = Base Power
-    return (effectiveLen * 2) + rarityBonus;
+    // Evolution Bonus (Large impact on power score)
+    let evoBonus = 0;
+    if (u.evolution && u.evolution.stage) {
+        evoBonus = u.evolution.stage * 15; // +15 per star
+    }
+    
+    // Power Score = Base Power + Evo
+    return (effectiveLen * 2) + rarityBonus + evoBonus;
+};
+
+// --- Evolution Constants (Redefined here if needed, or check global) ---
+const BATTLE_EVO_COLORS = {
+    1: '#FF7043', // Vibrant Bronze (Amber/Red-Orange)
+    2: '#4FC3F7', // Vibrant Silver (Platinum/Cyan-Blue)
+    3: '#FFD700'  // Vibrant Gold (Pure Yellow)
 };
 
 if (typeof window.COMBOS === 'undefined') {
@@ -147,11 +161,8 @@ class BattleSystem {
     const getStat = (u, type) => {
         let val = 10;
         
-        // Logarithmic scaling for length to prevent exponential runaway for long words
-        // Base stat = (Length * 2) + RarityBonus
-        // RarityBonus: Common=0, Uncommon=5, Rare=10, Epic=20, Legendary=40, Mythic=80, God=200
+        // Logarithmic scaling for length
         const len = u.word.length;
-        // Cap length contribution at 20 chars (40 points) to stop pneumono... from dominating
         const effectiveLen = Math.min(len, 20); 
         
         const rarityBonus = {
@@ -159,12 +170,26 @@ class BattleSystem {
             'legendary': 40, 'mythic': 80, 'god': 200
         }[u.rarity.toLowerCase()] || 0;
         
-        let basePower = (effectiveLen * 2) + rarityBonus;
+        // Evolution Bonus (Stats)
+        let evoBonus = 0;
+        if (u.evolution && u.evolution.stage) {
+            // Significant stat multiplier base
+            evoBonus = u.evolution.stage * 10; 
+        }
+        
+        let basePower = (effectiveLen * 2) + rarityBonus + evoBonus;
         
         // HP is higher base
         if (type === 'hp') val = basePower * 5;
         // ATK is lower base
         if (type === 'atk') val = basePower;
+        
+        // Apply Evolution Multiplier (Percentage boost on top of flat bonus)
+        if (u.evolution && u.evolution.stage) {
+            // Stage 1: +10%, Stage 2: +20%, Stage 3: +30%
+            const multiplier = 1 + (u.evolution.stage * 0.1);
+            val = Math.floor(val * multiplier);
+        }
         
         // Apply modifiers (Combos)
         if (type === 'atk' && u.atkModifier) val = Math.floor(val * u.atkModifier);
@@ -540,8 +565,12 @@ class BattleSystem {
     if (this.eIndex < this.eTeam.length) {
         const enemy = this.eTeam[this.eIndex];
         const eSprite = document.getElementById('enemySprite');
-        // Restore full word display (Tags hidden)
-        eSprite.innerHTML = `${enemy.word}`;
+        // Restore full word display with Evolution Stars
+        let displayName = enemy.word;
+        if (enemy.evolution && enemy.evolution.stage > 0) {
+            displayName += ` ${'★'.repeat(enemy.evolution.stage)}`;
+        }
+        eSprite.innerHTML = displayName;
         
         if (enemy.rarity === 'god') {
              eSprite.style.backgroundImage = rarityScale[enemy.rarity];
@@ -549,12 +578,23 @@ class BattleSystem {
              eSprite.style.webkitBackgroundClip = 'text';
              eSprite.style.webkitTextFillColor = 'transparent';
              eSprite.style.animation = 'rainbow 2s linear infinite';
+             eSprite.style.textShadow = 'none';
         } else {
              eSprite.style.backgroundImage = 'none';
              eSprite.style.webkitBackgroundClip = 'initial';
              eSprite.style.webkitTextFillColor = 'initial';
              eSprite.style.color = rarityScale[enemy.rarity] || '#000';
              eSprite.style.animation = 'none';
+             
+             // Evolution Aura (Text Shadow)
+             if (enemy.evolution && enemy.evolution.stage > 0) {
+                 const evoColor = BATTLE_EVO_COLORS[enemy.evolution.stage] || '#CD7F32';
+                 eSprite.style.textShadow = `0 0 10px ${evoColor}, 0 0 20px ${evoColor}`;
+                 eSprite.style.fontWeight = '900';
+             } else {
+                 eSprite.style.textShadow = 'none';
+                 eSprite.style.fontWeight = 'bold';
+             }
         }
         
         const ePct = (enemy.currentHp / enemy.maxHp) * 100;
@@ -568,8 +608,12 @@ class BattleSystem {
     if (this.pIndex < this.pTeam.length) {
         const player = this.pTeam[this.pIndex];
         const pSprite = document.getElementById('playerSprite');
-        // Restore full word display (Tags hidden)
-        pSprite.innerHTML = `${player.word}`;
+        // Restore full word display with Evolution Stars
+        let displayName = player.word;
+        if (player.evolution && player.evolution.stage > 0) {
+            displayName += ` ${'★'.repeat(player.evolution.stage)}`;
+        }
+        pSprite.innerHTML = displayName;
         
         if (player.rarity === 'god') {
              pSprite.style.backgroundImage = rarityScale[player.rarity];
@@ -577,12 +621,23 @@ class BattleSystem {
              pSprite.style.webkitBackgroundClip = 'text';
              pSprite.style.webkitTextFillColor = 'transparent';
              pSprite.style.animation = 'rainbow 2s linear infinite';
+             pSprite.style.textShadow = 'none';
         } else {
              pSprite.style.backgroundImage = 'none';
              pSprite.style.webkitBackgroundClip = 'initial';
              pSprite.style.webkitTextFillColor = 'initial';
              pSprite.style.color = rarityScale[player.rarity] || '#000';
              pSprite.style.animation = 'none';
+             
+             // Evolution Aura (Text Shadow)
+             if (player.evolution && player.evolution.stage > 0) {
+                 const evoColor = BATTLE_EVO_COLORS[player.evolution.stage] || '#CD7F32';
+                 pSprite.style.textShadow = `0 0 10px ${evoColor}, 0 0 20px ${evoColor}`;
+                 pSprite.style.fontWeight = '900';
+             } else {
+                 pSprite.style.textShadow = 'none';
+                 pSprite.style.fontWeight = 'bold';
+             }
         }
         
         const pPct = (player.currentHp / player.maxHp) * 100;

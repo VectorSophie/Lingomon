@@ -205,6 +205,30 @@ async function initializePopup() {
   await setupDarkMode();
   await setupLanguageToggle();
   
+  // Help Modal Logic
+  const helpToggle = document.getElementById('helpToggle');
+  const helpModal = document.getElementById('helpModal');
+  const closeHelp = document.getElementById('closeHelp');
+  
+  if (helpToggle && helpModal) {
+      helpToggle.onclick = () => {
+          helpModal.style.display = 'flex';
+      };
+      
+      if(closeHelp) {
+          closeHelp.onclick = () => {
+              helpModal.style.display = 'none';
+          };
+      }
+      
+      // Close on outside click
+      helpModal.onclick = (e) => {
+          if (e.target === helpModal) {
+              helpModal.style.display = 'none';
+          }
+      };
+  }
+  
   if (typeof setupSortButtons !== 'undefined') setupSortButtons();
   if (typeof setupSearchBar !== 'undefined') setupSearchBar();
   setupTabs();

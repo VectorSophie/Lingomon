@@ -235,7 +235,21 @@ const translations = {
     quizChemistry: "Chemistry Question",
     quizSymbolQuestion: "Which Element has the symbol",
     quizElementName: "Element Name",
-    quizFact: "Fact"
+    quizFact: "Fact",
+    
+    // New Mechanics (v1.8.2) - SRS & Evolution
+    dailyTraining: "Daily Training",
+    trainButton: "Train",
+    evolve: "Evolve",
+    evolutionReady: "Evolution Available!",
+    evolutionConfirm: "Evolve {word}?",
+    evolutionSuccess: "Congratulations! Your {word} evolved!",
+    masteryRank: "Mastery Rank",
+    nextUnlock: "Next Unlock",
+    
+    // Tech API Contexts
+    techDefContext7: "Technical Definition (Context7)",
+    techTermStack: "Technical Term (StackOverflow)"
   },
   
   ko: {
@@ -471,7 +485,21 @@ const translations = {
     quizChemistry: "화학 퀴즈",
     quizSymbolQuestion: "다음 원소 기호의 이름은 무엇입니까:",
     quizElementName: "원소 이름",
-    quizFact: "설명"
+    quizFact: "설명",
+    
+    // New Mechanics (v1.8.2) - SRS & Evolution
+    dailyTraining: "일일 훈련",
+    trainButton: "훈련",
+    evolve: "진화",
+    evolutionReady: "진화 가능!",
+    evolutionConfirm: "{word}을(를) 진화시키겠습니까?",
+    evolutionSuccess: "축하합니다! {word}이(가) 진화했습니다!",
+    masteryRank: "마스터리 랭크",
+    nextUnlock: "다음 잠금 해제",
+    
+    // Tech API Contexts
+    techDefContext7: "기술 정의 (Context7)",
+    techTermStack: "기술 용어 (StackOverflow)"
   }
 };
 
