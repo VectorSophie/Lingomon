@@ -1519,7 +1519,52 @@
     body.dark-mode .tag-badge.tech { background: #01579b; color: #e1f5fe; border-color: #0288d1; }
     body.dark-mode .tag-badge.bio { background: #1b5e20; color: #e8f5e9; border-color: #388e3c; }
     body.dark-mode .tag-badge.chem { background: #f57f17; color: #fffde7; border-color: #fbc02d; }
-    body.dark-mode .tag-badge.astro { background: #4a148c; color: #f3e5f5; border-color: #7b1fa2; }
+    .tag-badge.astro { background: #4a148c; color: #f3e5f5; border-color: #7b1fa2; }
+
+    /* Evolution & Fusion Modals */
+    .evolution-overlay {
+        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+        background: rgba(0,0,0,0.85);
+        backdrop-filter: blur(5px);
+        z-index: 30000;
+        display: flex; align-items: center; justify-content: center;
+        animation: fadeIn 0.3s;
+    }
+    .evolution-modal {
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+        color: white;
+        padding: 32px; border-radius: 24px;
+        text-align: center; width: 340px;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.1) inset;
+        border: 1px solid rgba(255,255,255,0.1);
+    }
+    .evo-preview {
+        display: flex; align-items: center; justify-content: center;
+        gap: 20px; margin: 30px 0; font-size: 24px; font-weight: 800;
+    }
+    .evo-word { text-shadow: 0 0 15px rgba(255,255,255,0.3); }
+    .evo-arrow { color: #888; font-size: 20px; }
+    .evo-actions { display: flex; justify-content: center; gap: 12px; margin-top: 30px; }
+    
+    .branch-options { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
+    .branch-btn { 
+        padding: 12px; border-radius: 12px; border: 1px solid #444; 
+        background: #333; color: white; cursor: pointer; text-align: left;
+        transition: background 0.2s;
+    }
+    .branch-btn:hover { background: #444; }
+    .branch-type { font-size: 10px; text-transform: uppercase; color: #888; display: block; }
+    .branch-word { font-size: 18px; font-weight: bold; }
+    
+    .fusion-list { margin: 20px 0; font-size: 13px; color: #888; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 12px; border: 1px dashed #444; }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes evolvePulse {
+        0% { transform: scale(1); filter: brightness(1) drop-shadow(0 0 0px rgba(255,215,0,0)); }
+        50% { transform: scale(1.15); filter: brightness(1.5) drop-shadow(0 0 30px rgba(255,215,0,0.8)); }
+        100% { transform: scale(1); filter: brightness(1) drop-shadow(0 0 0px rgba(255,215,0,0)); }
+    }
+    @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
   </style>
 </head>
@@ -1602,10 +1647,9 @@
           <p style="margin-top:0;">
             Go to the <strong>Quiz</strong> tab and select <strong>Daily Training</strong>.<br>
             • Correct answers increase a word's <strong>SRS Level</strong>.<br>
-            • <strong>Level 1:</strong> Unlocks <span style="color:#FF7043; font-weight:bold;">Bronze Form (★)</span>.<br>
-            • <strong>Level 3:</strong> Unlocks <span style="color:#4FC3F7; font-weight:bold;">Silver Form (★★)</span>.<br>
-            • <strong>Level 5:</strong> Unlocks <span style="color:#FFD700; font-weight:bold;">Gold Form (★★★)</span>.<br>
-            <em>Evolving boosts stats significantly!</em>
+            • <strong>Level 1:</strong> Bronze (★). <strong>Level 3:</strong> Silver (★★).<br>
+            • <strong>Level 5:</strong> <span style="color:#FFD700; font-weight:bold;">Gold (★★★)</span>. Choose a <strong>Branch</strong> (HP/ATK/CRIT).<br>
+            • <strong>Ascension:</strong> Fuse 5 Gold words of a family for <span style="color:#E1BEE7; font-weight:bold;">Mythic (✧)</span> form!<br>
           </p>
           
           <h4 style="color:#6b5b95; margin-bottom:4px;">3. Battle</h4>
@@ -1631,6 +1675,7 @@
   <script src="srs.js"></script>
   <script src="evolution.js"></script>
   <script src="evolution-modal.js"></script>
+  <script src="ascension-modal.js"></script>
   <script src="wordFrequency.js"></script>
   <script src="techApi.js"></script>
   <script src="bioApi.js"></script>

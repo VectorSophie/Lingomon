@@ -11,21 +11,27 @@ window.calculatePower = (u) => {
         'legendary': 40, 'mythic': 80, 'god': 200
     }[u.rarity ? u.rarity.toLowerCase() : 'common'] || 0;
     
-    // Evolution Bonus (Large impact on power score)
-    let evoBonus = 0;
     if (u.evolution && u.evolution.stage) {
-        evoBonus = u.evolution.stage * 15; // +15 per star
+        evoBonus = u.evolution.stage * 15; 
+        if (u.evolution.stage >= 4) evoBonus += 100; 
     }
     
     // Power Score = Base Power + Evo
-    return (effectiveLen * 2) + rarityBonus + evoBonus;
+    let score = (effectiveLen * 2) + rarityBonus + evoBonus;
+    
+    // Branch Multipliers
+    if (u.evolution?.branch === 'noun') score = Math.floor(score * 1.1);
+    if (u.evolution?.branch === 'verb') score = Math.floor(score * 1.1);
+    if (u.evolution?.branch === 'adj') score = Math.floor(score * 1.1);
+    
+    return score;
 };
 
-// --- Evolution Constants (Redefined here if needed, or check global) ---
 const BATTLE_EVO_COLORS = {
-    1: '#FF7043', // Vibrant Bronze (Amber/Red-Orange)
-    2: '#4FC3F7', // Vibrant Silver (Platinum/Cyan-Blue)
-    3: '#FFD700'  // Vibrant Gold (Pure Yellow)
+    1: '#FF7043', 
+    2: '#4FC3F7', 
+    3: '#FFD700', 
+    4: '#E1BEE7'  
 };
 
 if (typeof window.COMBOS === 'undefined') {
@@ -184,16 +190,19 @@ class BattleSystem {
         // ATK is lower base
         if (type === 'atk') val = basePower;
         
-        // Apply Evolution Multiplier (Percentage boost on top of flat bonus)
         if (u.evolution && u.evolution.stage) {
-            // Stage 1: +10%, Stage 2: +20%, Stage 3: +30%
-            const multiplier = 1 + (u.evolution.stage * 0.1);
+            let multiplier = 1 + (Math.min(u.evolution.stage, 3) * 0.1);
+            if (u.evolution.stage >= 4) multiplier = 1.5;
             val = Math.floor(val * multiplier);
         }
+
+        if (u.evolution?.branch === 'noun' && type === 'hp') val = Math.floor(val * 1.25);
+        if (u.evolution?.branch === 'verb' && type === 'atk') val = Math.floor(val * 1.2);
         
-        // Apply modifiers (Combos)
         if (type === 'atk' && u.atkModifier) val = Math.floor(val * u.atkModifier);
         if (type === 'hp' && u.hpModifier) val = Math.floor(val * u.hpModifier);
+        
+        // Special branch crit chance (Handled in performAttack)
         
         return Math.floor(val);
     };
@@ -568,7 +577,8 @@ class BattleSystem {
         // Restore full word display with Evolution Stars
         let displayName = enemy.word;
         if (enemy.evolution && enemy.evolution.stage > 0) {
-            displayName += ` ${'★'.repeat(enemy.evolution.stage)}`;
+            const stars = (typeof Evolution !== 'undefined') ? Evolution.stars[enemy.evolution.stage] : '★'.repeat(enemy.evolution.stage);
+            displayName += ` ${stars}`;
         }
         eSprite.innerHTML = displayName;
         
@@ -611,7 +621,8 @@ class BattleSystem {
         // Restore full word display with Evolution Stars
         let displayName = player.word;
         if (player.evolution && player.evolution.stage > 0) {
-            displayName += ` ${'★'.repeat(player.evolution.stage)}`;
+            const stars = (typeof Evolution !== 'undefined') ? Evolution.stars[player.evolution.stage] : '★'.repeat(player.evolution.stage);
+            displayName += ` ${stars}`;
         }
         pSprite.innerHTML = displayName;
         
@@ -727,8 +738,10 @@ class BattleSystem {
         extraMsg += ' (BURST!)';
     }
     
-    // Critical Hit Check (Adjective Synergy)
-    if (attacker.critChance && Math.random() < attacker.critChance) {
+    let critChance = attacker.critChance || 0;
+    if (attacker.evolution?.branch === 'adj') critChance += 0.25;
+
+    if (critChance && Math.random() < critChance) {
         damage = Math.floor(damage * 1.5);
         extraMsg += ' (CRITICAL!)';
     }

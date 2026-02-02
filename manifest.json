@@ -16,18 +16,19 @@
    },
    "content_scripts": [
      {
-       "matches": ["<all_urls>"],
-       "js": ["i18n.js", "animations.js", "content.js"]
-     }
-   ],
-  "web_accessible_resources": [
+        "matches": ["<all_urls>"],
+        "js": ["i18n.js", "animations.js", "content.js", "ascension-modal.js"]
+      }
+    ],
+   "web_accessible_resources": [
     {
       "resources": [
         "content.js",
         "animations.js",
         "stats.js", 
         "i18n.js", 
-        "lingomon.png"
+        "lingomon.png",
+        "ascension-modal.js"
       ],
       "matches": ["<all_urls>"]
     }

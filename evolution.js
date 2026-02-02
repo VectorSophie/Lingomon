@@ -1,93 +1,132 @@
-// evolution.js - Evolution System Logic
-
 const EVO_COLORS = {
-    1: '#FF7043', // Vibrant Bronze (Amber/Red-Orange)
-    2: '#4FC3F7', // Vibrant Silver (Platinum/Cyan-Blue)
-    3: '#FFD700'  // Vibrant Gold (Pure Yellow)
+    1: '#FF7043',
+    2: '#4FC3F7',
+    3: '#FFD700',
+    4: '#E1BEE7'
 };
 
 const EVO_STARS = {
     1: '★',
     2: '★★',
-    3: '★★★'
+    3: '★★★',
+    4: '✧'
 };
 
-/**
- * Checks if a word is eligible for evolution.
- * @param {Object} entry - Word entry object from wordDex
- * @returns {boolean}
- */
 function canEvolve(entry) {
     if (!entry || !entry.srs || !entry.evolution) return false;
     
-    // Check if evolution is pending
     if (entry.evolution.canEvolve) return true;
     
-    // Safety check in case SRS leveled up but flag wasn't set
     const currentStage = entry.evolution.stage || 0;
     const srsLevel = entry.srs.level || 0;
     
-    if (currentStage < 1 && srsLevel >= 1) return true; // Bronze
-    if (currentStage < 2 && srsLevel >= 3) return true; // Silver
-    if (currentStage < 3 && srsLevel >= 5) return true; // Gold
+    if (currentStage < 1 && srsLevel >= 1) return true;
+    if (currentStage < 2 && srsLevel >= 3) return true;
+    if (currentStage < 3 && srsLevel >= 5) return true;
     
     return false;
 }
 
-/**
- * Performs the evolution logic.
- * @param {string} word - The word being evolved
- * @param {Object} entry - The word entry object
- * @returns {Promise<Object>} - Returns the updated entry
- */
-async function performEvolution(word, entry) {
+async function getBranches(word) {
+    try {
+        const res = await fetch(`https://api.datamuse.com/words?ml=${encodeURIComponent(word)}&md=p&max=20`);
+        const data = await res.json();
+        
+        const branches = { noun: null, verb: null, adj: null };
+        const root = word.toLowerCase().substring(0, 3);
+
+        data.forEach(item => {
+            if (item.word.toLowerCase() === word.toLowerCase()) return;
+            if (!item.tags) return;
+
+            const isRelated = item.word.toLowerCase().includes(root);
+            
+            if (item.tags.includes('n') && !branches.noun && isRelated) branches.noun = item.word;
+            if (item.tags.includes('v') && !branches.verb && isRelated) branches.verb = item.word;
+            if (item.tags.includes('adj') && !branches.adj && isRelated) branches.adj = item.word;
+        });
+
+        if (!branches.noun) branches.noun = word + "ion"; 
+        if (!branches.verb) branches.verb = word + "ize";
+        if (!branches.adj) branches.adj = word + "ic";
+
+        return branches;
+    } catch (e) {
+        console.error("Failed to fetch branches:", e);
+        return { noun: word + " (Noun)", verb: word + " (Verb)", adj: word + " (Adj)" };
+    }
+}
+
+async function performEvolution(word, entry, branchWord = null, branchType = null) {
     if (!canEvolve(entry)) throw new Error("This word is not ready to evolve.");
     
-    const nextStage = (entry.evolution.stage || 0) + 1;
+    const currentStage = entry.evolution.stage || 0;
+    const nextStage = currentStage + 1;
+    let newWord = word;
     
-    // Fetch Hidden Move (Synonym) for Evo 3 (Gold)
+    if (nextStage === 3 && branchWord) {
+        newWord = branchWord;
+        if (!entry.tags) entry.tags = [];
+        if (branchType && !entry.tags.includes(branchType)) {
+            entry.tags.push(branchType);
+        }
+    }
+
     let hiddenMove = entry.evolution.hiddenMove || null;
-    
     if (nextStage === 3 && !hiddenMove) {
         try {
-            // Use Datamuse to find a strong synonym
-            const res = await fetch(`https://api.datamuse.com/words?rel_syn=${encodeURIComponent(word)}&max=5`);
+            const res = await fetch(`https://api.datamuse.com/words?rel_syn=${encodeURIComponent(newWord)}&max=5`);
             const data = await res.json();
-            
             if (data && data.length > 0) {
-                const best = data.find(w => w.word.toLowerCase() !== word.toLowerCase());
+                const best = data.find(w => w.word.toLowerCase() !== newWord.toLowerCase());
                 if (best) hiddenMove = best.word;
             }
         } catch (e) {
-            console.warn("Failed to fetch synonym for evolution:", e);
-            hiddenMove = "SUPER " + word.toUpperCase(); // Fallback
+            hiddenMove = "ULTRA " + newWord.toUpperCase();
         }
     }
     
-    // Update State
     entry.evolution.stage = nextStage;
-    entry.evolution.canEvolve = false; // Reset trigger
+    entry.evolution.canEvolve = false; 
     if (hiddenMove) entry.evolution.hiddenMove = hiddenMove;
+    if (branchType) entry.evolution.branch = branchType;
     
-    // Save to Storage
     return new Promise((resolve) => {
         chrome.storage.local.get(['wordDex'], (data) => {
             const dex = data.wordDex || {};
-            dex[word] = entry;
             
-            // Check for Mastery Rank Updates (Passive Global Calculation happens elsewhere, but we trigger save)
+            if (newWord !== word) {
+                delete dex[word];
+                if (dex[newWord]) {
+                    const existing = dex[newWord];
+                    if ((existing.evolution?.stage || 0) > entry.evolution.stage) {
+                        entry.evolution.stage = existing.evolution.stage;
+                    }
+                }
+            }
+            
+            dex[newWord] = entry;
+            
             chrome.storage.local.set({ wordDex: dex }, () => {
-                resolve(entry);
+                resolve({ word: newWord, entry });
             });
         });
     });
 }
 
-// Export
+function getFusionCandidates(familyId, dex) {
+    if (!familyId) return [];
+    return Object.entries(dex)
+        .filter(([word, info]) => info.familyId === familyId && info.evolution?.stage === 3)
+        .map(([word]) => word);
+}
+
 if (typeof window !== 'undefined') {
     window.Evolution = {
         canEvolve,
+        getBranches,
         performEvolution,
+        getFusionCandidates,
         colors: EVO_COLORS,
         stars: EVO_STARS
     };

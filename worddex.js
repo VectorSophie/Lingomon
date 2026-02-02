@@ -7,11 +7,21 @@ let wordData = null;
 // We need to be careful not to redeclare if already in scope (though 'const' is block scoped, these are global scripts)
 // Best approach: Use a different name for local fallback or check window
 const EVO_COLORS_LOCAL = {
-    1: '#FF7043', // Vibrant Bronze
-    2: '#4FC3F7', // Vibrant Silver
-    3: '#FFD700'  // Vibrant Gold
+    1: '#FF7043',
+    2: '#4FC3F7',
+    3: '#FFD700',
+    4: '#E1BEE7'
 };
+
+const EVO_STARS_LOCAL = {
+    1: '★',
+    2: '★★',
+    3: '★★★',
+    4: '✧'
+};
+
 const EVO_COLORS_REF = (typeof Evolution !== 'undefined' && Evolution.colors) ? Evolution.colors : EVO_COLORS_LOCAL;
+const EVO_STARS_REF = (typeof Evolution !== 'undefined' && Evolution.stars) ? Evolution.stars : EVO_STARS_LOCAL;
 
 let searchQuery = '';
 
@@ -274,7 +284,7 @@ function displayWordDex(sortType = 'alpha') {
           // Name + Stars
           let displayName = word;
           if (info.evolution && info.evolution.stage > 0) {
-              const stars = '★'.repeat(info.evolution.stage); // Dynamic stars
+              const stars = EVO_STARS_REF[info.evolution.stage] || '★'.repeat(info.evolution.stage);
               displayName += ` ${stars}`;
               
               // AURA EFFECT
@@ -335,14 +345,14 @@ function displayWordDex(sortType = 'alpha') {
               }
           }
           
-          if (word.toLowerCase() === 'lingomon') {
+          if (word.toLowerCase() === 'lingomon' || rarity === 'god') {
             wordStrong.style.backgroundImage = 'linear-gradient(45deg, red, orange, yellow, green, blue, indigo, violet)';
             wordStrong.style.backgroundSize = '200% auto';
             wordStrong.style.webkitBackgroundClip = 'text';
             wordStrong.style.webkitTextFillColor = 'transparent';
             wordStrong.style.animation = 'rainbow 2s linear infinite';
+            wordStrong.style.textShadow = 'none';
             
-            // Add style for keyframes if not present
             if (!document.getElementById('rainbow-style')) {
               const style = document.createElement('style');
               style.id = 'rainbow-style';
@@ -496,6 +506,28 @@ function displayWordDex(sortType = 'alpha') {
                   }
               };
               metaRow.appendChild(evolveBtn);
+          }
+
+          if (info.evolution?.stage === 3 && info.familyId) {
+              const familyWords = Object.entries(wordData || {})
+                  .filter(([w, entry]) => entry.familyId === info.familyId && entry.evolution?.stage === 3);
+              
+              if (familyWords.length >= 5) {
+                  const fusionBtn = document.createElement('button');
+                  fusionBtn.textContent = t('familyFusion');
+                  fusionBtn.className = 'tag-badge';
+                  fusionBtn.style.background = '#E1BEE7';
+                  fusionBtn.style.color = '#333';
+                  fusionBtn.style.fontWeight = 'bold';
+                  fusionBtn.style.animation = 'pulse 1s infinite';
+                  fusionBtn.onclick = (e) => {
+                      e.stopPropagation();
+                      if (typeof window.AscensionModal !== 'undefined') {
+                          window.AscensionModal.confirmFusion(word, info);
+                      }
+                  };
+                  metaRow.appendChild(fusionBtn);
+              }
           }
           
           const refreshInlineTags = () => {

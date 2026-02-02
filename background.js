@@ -76,6 +76,21 @@ const EASTER_EGGS = {
   "gregor": { rarity: "uncommon", tags: ["noun", "literary", "project_moon"], origin: "Suddenly, one day..." }
 };
 
+async function fetchFamilyId(word) {
+    try {
+        const res = await fetch(`https://api.datamuse.com/words?ml=${encodeURIComponent(word)}&max=1`);
+        const data = await res.json();
+        if (data && data.length > 0) {
+            const syn = data[0].word.toLowerCase();
+            const self = word.toLowerCase();
+            return self < syn ? self : syn;
+        }
+    } catch (e) {
+        console.warn("Family fetch failed:", e);
+    }
+    return word.toLowerCase();
+}
+
 // Helper: Resolve specialized data with correct priority
 // Bio -> Chem -> Astro -> Tech (Fallback)
 async function resolveSpecializedData(word) {
@@ -289,6 +304,11 @@ chrome.runtime.onInstalled.addListener(async (details) => {
                       stage: 0,
                       canEvolve: false
                   };
+                  entryChanged = true;
+              }
+
+              if (!entry.familyId) {
+                  entry.familyId = await fetchFamilyId(word);
                   entryChanged = true;
               }
 
@@ -624,7 +644,8 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
         evolution: {
             stage: 0,
             canEvolve: false
-        }
+        },
+        familyId: await fetchFamilyId(word)
     };
     
     await saveWordToStorage(word, saveData, tab, isMetaCatch);
@@ -655,7 +676,8 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
                 evolution: {
                     stage: 0,
                     canEvolve: false
-                }
+                },
+                familyId: await fetchFamilyId(word)
             };
             
             await saveWordToStorage(word, saveData, tab, isMetaCatch);
